@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fill Rate · Conexões da História</title>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Raleway', sans-serif;
+      background: #0f1923;
+      color: #f0e6d3;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #0a1520;
+      border-bottom: 1px solid #1a2d3d;
+      padding: 0 2rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-logo { font-weight: 700; font-size: 0.88rem; color: #f0e6d3; text-decoration: none; margin-right: auto; }
+    .nav-link  { font-size: 0.78rem; color: #3a5a6a; text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover  { color: #e8a838; }
+    .nav-link.active { color: #e8a838; font-weight: 600; }
+
+    /* ── Page wrap ── */
+    .page-wrap { max-width: 1340px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+
+    /* ── Header ── */
+    .page-tag { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 3px; color: #e8a838; margin-bottom: 0.6rem; }
+    h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
+    h1 span { color: #e8a838; }
+
+    .page-desc {
+      font-size: 0.86rem;
+      color: #4a6a7a;
+      font-weight: 300;
+      line-height: 1.85;
+      max-width: 760px;
+      margin-bottom: 2.25rem;
+    }
+    .page-desc strong { color: #7a9aaa; font-weight: 600; }
+
+    /* ── Summary cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.25rem;
+    }
+    @media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+
+    .summary-card { background: #111b27; border: 1px solid #1a2d3d; border-radius: 10px; padding: 1.25rem; }
+    .s-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 2px; color: #2a4a5a; margin-bottom: 0.4rem; }
+    .s-value { font-size: 1.65rem; font-weight: 700; color: #e8a838; line-height: 1; margin-bottom: 0.3rem; }
+    .s-desc  { font-size: 0.7rem; color: #3a5a6a; }
+
+    /* ── 2-col layout ── */
+    .main-layout { display: flex; gap: 2rem; align-items: flex-start; }
+    @media (max-width: 980px) { .main-layout { flex-direction: column; } .chart-col { width: 100% !important; } }
+
+    .chart-col    { width: 460px; flex-shrink: 0; }
+    .problems-col { flex: 1; min-width: 0; }
+
+    /* ── Chart card ── */
+    .chart-card { background: #111b27; border: 1px solid #1a2d3d; border-radius: 12px; padding: 1.75rem; }
+    .chart-section-label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 3px; color: #2a4a5a; margin-bottom: 1rem; }
+
+    .chart-row { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.65rem; }
+    .chart-row:last-child { margin-bottom: 0; }
+
+    .field-label {
+      font-size: 0.7rem; color: #4a6a7a;
+      width: 110px; flex-shrink: 0;
+      text-align: right;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .bar-wrap { flex: 1; height: 17px; position: relative; border-radius: 4px; overflow: hidden; background: #0a1520; }
+    .zone { position: absolute; top: 0; bottom: 0; }
+    .zone-poor { left:   0%; width: 50%; background: rgba(220,60,60,0.1); }
+    .zone-mid  { left:  50%; width: 30%; background: rgba(220,160,40,0.1); }
+    .zone-good { left:  80%; width: 20%; background: rgba(60,180,60,0.1); }
+    .bar-filled { position: absolute; left: 0; top: 2px; bottom: 2px; background: #e8a838; border-radius: 3px; z-index: 1; }
+    .bar-target { position: absolute; top: 1px; bottom: 1px; left: 80%; width: 2px; background: rgba(200,200,200,0.16); z-index: 2; }
+
+    .bar-stats {
+      display: flex; align-items: center; gap: 0.35rem;
+      width: 148px; flex-shrink: 0; font-size: 0.65rem;
+    }
+    .stat-filled { color: #e8a838; font-weight: 600; min-width: 28px; text-align: right; }
+    .stat-sep    { color: #1a2d3d; }
+    .stat-empty  { color: #1e3a4a; flex: 1; }
+    .stat-pct    { font-weight: 700; font-size: 0.72rem; color: #7a8a9a; width: 34px; text-align: right; }
+
+    .chart-divider { height: 1px; background: #1a2d3d; margin: 1rem 0; }
+
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 0.9rem;
+      margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #1a2d3d;
+      font-size: 0.66rem; color: #2a4a5a;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+    .l-swatch { width: 16px; height: 5px; border-radius: 2px; }
+    .l-line   { width: 2px; height: 12px; border-radius: 1px; }
+
+    /* ── Problems column ── */
+    .problems-heading {
+      font-size: 0.62rem; text-transform: uppercase; letter-spacing: 3px;
+      color: #2a4a5a; margin-bottom: 1rem;
+    }
+
+    .problem-section {
+      background: #111b27; border: 1px solid #1a2d3d;
+      border-radius: 10px; margin-bottom: 0.75rem; overflow: hidden;
+    }
+
+    .problem-section > summary {
+      list-style: none;
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.9rem 1.2rem;
+      cursor: pointer; user-select: none;
+      transition: background 0.1s;
+    }
+    .problem-section > summary:hover { background: rgba(255,255,255,0.02); }
+    .problem-section[open] > summary  { border-bottom: 1px solid #1a2d3d; }
+    .problem-section > summary::-webkit-details-marker { display: none; }
+
+    .ps-chevron { font-size: 0.6rem; color: #2a4a5a; transition: transform 0.2s; flex-shrink: 0; margin-right: 0.1rem; }
+    .problem-section[open] .ps-chevron { transform: rotate(90deg); }
+    .ps-icon  { font-size: 0.95rem; flex-shrink: 0; }
+    .ps-title { font-size: 0.83rem; font-weight: 600; color: #c0b0a0; flex: 1; }
+
+    .ps-count {
+      font-size: 0.68rem; padding: 0.18rem 0.6rem;
+      border-radius: 12px; font-weight: 600; flex-shrink: 0;
+    }
+    .critical { background: rgba(220,60,60,0.15);   color: #e06060; border: 1px solid rgba(220,60,60,0.25); }
+    .warning  { background: rgba(232,168,56,0.12);  color: #e8a838; border: 1px solid rgba(232,168,56,0.25); }
+    .info     { background: rgba(74,144,217,0.12);  color: #6aaad9; border: 1px solid rgba(74,144,217,0.25); }
+    .ok-badge { background: rgba(60,180,60,0.1);    color: #4aaa4a; border: 1px solid rgba(60,180,60,0.2); }
+
+    .problem-list { max-height: 460px; overflow-y: auto; padding: 0.4rem 0; }
+    .problem-list::-webkit-scrollbar { width: 4px; }
+    .problem-list::-webkit-scrollbar-track { background: transparent; }
+    .problem-list::-webkit-scrollbar-thumb { background: #1a2d3d; border-radius: 2px; }
+
+    .entry-row {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.45rem 1.2rem;
+      border-bottom: 1px solid #0d1820;
+      transition: background 0.1s;
+    }
+    .entry-row:last-child { border-bottom: none; }
+    .entry-row:hover { background: rgba(255,255,255,0.02); }
+
+    .tipo-badge {
+      font-size: 0.57rem; text-transform: uppercase; letter-spacing: 1.5px;
+      padding: 0.14rem 0.5rem; border-radius: 10px; flex-shrink: 0; font-weight: 600;
+    }
+    .entry-name { font-size: 0.78rem; color: #c0b0a0; flex: 1; }
+    .entry-sub  { font-size: 0.66rem; color: #2a4a5a; flex-shrink: 0; }
+
+    .empty-state {
+      padding: 1.5rem; font-size: 0.78rem; color: #2a4a5a; text-align: center;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; font-size: 0.75rem; color: #1a3a4a;
+      padding: 2rem; border-top: 1px solid #0d1820; margin-top: 2.5rem;
+    }
+    footer a { color: #2a5a6a; text-decoration: none; }
+    footer a:hover { color: #e8a838; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Conexões da História</a>
+  <a class="nav-link" href="diagram.html">Diagrama</a>
+  <a class="nav-link" href="matrix.html">Matrix</a>
+  <a class="nav-link active" href="stats.html">Fill Rate</a>
+  <a class="nav-link" href="https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj&ll=-8.06055276702706%2C-34.882075024350215&z=15" target="_blank">Mapa ↗</a>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="page-tag">Qualidade dos Dados · Conexões da História</div>
+  <h1>Fill Rate do <span>Schema</span></h1>
+  <p class="page-desc">
+    Mede o percentual de preenchimento de cada campo dos registros cadastrados no projeto.
+    Funciona como <strong>painel de monitoramento de qualidade de dados</strong>: identifica lacunas no acervo
+    e orienta <strong>ações corretivas de curadoria</strong> — como preencher descrições ausentes,
+    corrigir textos placeholder e adicionar imagens — priorizando os campos com menor cobertura e
+    os registros com informações inconsistentes.
+  </p>
+
+  <div class="summary-grid" id="summary-grid"></div>
+
+  <div class="main-layout">
+
+    <!-- Left: bullet chart -->
+    <div class="chart-col">
+      <div class="chart-card">
+        <div id="chart-core"></div>
+        <div class="chart-divider"></div>
+        <div id="chart-conn"></div>
+        <div class="legend">
+          <div class="legend-item"><div class="l-swatch" style="background:#e8a838"></div>Preenchido</div>
+          <div class="legend-item"><div class="l-swatch" style="background:#0a1520"></div>Vazio</div>
+          <div class="legend-item"><div class="l-line"   style="background:rgba(200,200,200,0.16)"></div>Meta 80%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: problems -->
+    <div class="problems-col">
+      <div class="problems-heading">Problemas Identificados</div>
+
+      <details class="problem-section" open>
+        <summary>
+          <span class="ps-chevron">▶</span>
+          <span class="ps-icon">⚠️</span>
+          <span class="ps-title">Descrição Vazia</span>
+          <span class="ps-count critical" id="count-no-desc">–</span>
+        </summary>
+        <div class="problem-list" id="list-no-desc"></div>
+      </details>
+
+      <details class="problem-section">
+        <summary>
+          <span class="ps-chevron">▶</span>
+          <span class="ps-icon">🔤</span>
+          <span class="ps-title">Descrição com Texto Placeholder (latim)</span>
+          <span class="ps-count warning" id="count-lorem">–</span>
+        </summary>
+        <div class="problem-list" id="list-lorem"></div>
+      </details>
+
+      <details class="problem-section">
+        <summary>
+          <span class="ps-chevron">▶</span>
+          <span class="ps-icon">🖼</span>
+          <span class="ps-title">Imagem Vazia</span>
+          <span class="ps-count warning" id="count-no-img">–</span>
+        </summary>
+        <div class="problem-list" id="list-no-img"></div>
+      </details>
+
+      <details class="problem-section">
+        <summary>
+          <span class="ps-chevron">▶</span>
+          <span class="ps-icon">🏷</span>
+          <span class="ps-title">Tipo Vazio</span>
+          <span class="ps-count info" id="count-no-tipo">–</span>
+        </summary>
+        <div class="problem-list" id="list-no-tipo"></div>
+      </details>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <a href="index.html">← Voltar</a>
+  &nbsp;·&nbsp;
+  <a href="https://conexoesdahistoria.com/" target="_blank">conexoesdahistoria.com</a>
+</footer>
+
+<script>
+function parseCSVLine(line) {
+  var result = [], cur = '', inQ = false;
+  for (var i = 0; i < line.length; i++) {
+    var ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else inQ = !inQ;
+    } else if (ch === ',' && !inQ) {
+      result.push(cur); cur = '';
+    } else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+// Lorem ipsum / placeholder Latin text detection
+var LOREM_KEYS = [
+  'Donec','Phasellus','Fusce','Aenean','Vestibulum','Suspendisse',
+  'lobortis','Praesent','vitae','rutrum','tincidunt','euismod',
+  'Etiam','lacus','purus','augue','dictum','congue','porttitor',
+  'faucibus','maximus','ligula','sodales','viverra','mauris',
+  'Lorem ipsum','consectetur adipiscing','pellentesque','volutpat'
+];
+function isLorem(text) {
+  if (!text || text.length < 80) return false;
+  var hits = LOREM_KEYS.filter(function(k) { return text.indexOf(k) >= 0; }).length;
+  return hits >= 4;
+}
+
+var TIPO_STYLE = {
+  'Local':          { bg: 'rgba(74,144,217,0.15)',  color: '#4a90d9', border: 'rgba(74,144,217,0.3)'  },
+  'Personagem':     { bg: 'rgba(232,131,58,0.15)',  color: '#e8833a', border: 'rgba(232,131,58,0.3)'  },
+  'Fato Histórico': { bg: 'rgba(92,184,92,0.15)',   color: '#5cb85c', border: 'rgba(92,184,92,0.3)'   }
+};
+
+function tipoBadge(tipo) {
+  var s = TIPO_STYLE[tipo] || { bg:'rgba(140,140,140,0.12)', color:'#888', border:'rgba(140,140,140,0.25)' };
+  return '<span class="tipo-badge" style="background:'+s.bg+';color:'+s.color+';border:1px solid '+s.border+'">'+(tipo||'—')+'</span>';
+}
+
+function entryRow(r) {
+  return '<div class="entry-row">'+tipoBadge(r['Tipo'])+
+    '<span class="entry-name">'+r['Nome']+'</span>'+
+    '<span class="entry-sub">'+(r['Sub-Tipo']||'')+'</span>'+
+    '</div>';
+}
+
+function setCount(id, n, severity) {
+  var el = document.getElementById(id);
+  el.textContent = n + (n === 1 ? ' entrada' : ' entradas');
+  if (n === 0) el.className = 'ps-count ok-badge';
+}
+
+function setList(id, entries) {
+  var el = document.getElementById(id);
+  if (!entries.length) {
+    el.innerHTML = '<div class="empty-state">✓ Nenhum problema encontrado</div>';
+  } else {
+    el.innerHTML = entries.map(entryRow).join('');
+  }
+}
+
+function sectionLabel(text) {
+  return '<div class="chart-section-label">'+text+'</div>';
+}
+
+function rowHTML(r) {
+  var name = r.field.replace('Interconexão ','Intercon. ');
+  return '<div class="chart-row">'+
+    '<div class="field-label" title="'+r.field+'">'+name+'</div>'+
+    '<div class="bar-wrap">'+
+      '<div class="zone zone-poor"></div>'+
+      '<div class="zone zone-mid"></div>'+
+      '<div class="zone zone-good"></div>'+
+      '<div class="bar-filled" style="width:'+r.pct+'%"></div>'+
+      '<div class="bar-target"></div>'+
+    '</div>'+
+    '<div class="bar-stats">'+
+      '<span class="stat-filled">'+r.filled+'</span>'+
+      '<span class="stat-sep">+</span>'+
+      '<span class="stat-empty">'+r.empty+' ∅</span>'+
+      '<span class="stat-pct">'+r.pct+'%</span>'+
+    '</div>'+
+    '</div>';
+}
+
+function card(label, value, desc) {
+  return '<div class="summary-card">'+
+    '<div class="s-label">'+label+'</div>'+
+    '<div class="s-value">'+value+'</div>'+
+    '<div class="s-desc">'+desc+'</div>'+
+    '</div>';
+}
+
+fetch('lista-geral-do-mapeamento.csv')
+  .then(function(r) { return r.text(); })
+  .then(function(text) {
+    var lines = text.replace(/\r/g,'').split('\n').filter(function(l){ return l.trim(); });
+    var headers = parseCSVLine(lines[0]);
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var vals = parseCSVLine(lines[i]);
+      var row = {};
+      headers.forEach(function(h,j){ row[h]=(vals[j]||'').trim(); });
+      rows.push(row);
+    }
+    var N = rows.length;
+
+    // Fill rates per field
+    var rates = headers.map(function(h) {
+      var filled = rows.filter(function(r){ return r[h]&&r[h].length; }).length;
+      return { field:h, filled:filled, empty:N-filled, pct:Math.round(filled*100/N) };
+    });
+
+    // Summary cards
+    var coreFields = ['Nome','Tipo','Sub-Tipo','Local','Imagem','Descrição'];
+    var avgCore = Math.round(
+      rates.filter(function(r){ return coreFields.indexOf(r.field)>=0; })
+           .reduce(function(s,r){ return s+r.pct; },0) / coreFields.length
+    );
+    var rImg  = rates.find(function(r){ return r.field==='Imagem'; });
+    var rConn = rates.find(function(r){ return r.field==='Interconexão 1'; });
+
+    document.getElementById('summary-grid').innerHTML =
+      card('Total de Nós',    N,            'registros no CSV')+
+      card('Fill Rate Core',  avgCore+'%',  'Nome, Tipo, Local, Imagem…')+
+      card('Com Imagem',      rImg  ? rImg.filled  : '—', 'possuem URL de imagem')+
+      card('Sem Conexões',    rConn ? rConn.empty  : '—', 'nós isolados (0 interconexões)');
+
+    // Bullet chart
+    var connRates = rates.filter(function(r){ return r.field.indexOf('Intercon')===0; });
+    document.getElementById('chart-core').innerHTML =
+      sectionLabel('Campos Principais') +
+      coreFields.map(function(f){
+        var r = rates.find(function(x){ return x.field===f; });
+        return r ? rowHTML(r) : '';
+      }).join('');
+    document.getElementById('chart-conn').innerHTML =
+      sectionLabel('Interconexões') +
+      connRates.map(rowHTML).join('');
+
+    // Problem detection
+    var noDesc = rows.filter(function(r){ return !r['Descrição']; });
+    var lorems = rows.filter(function(r){ return isLorem(r['Descrição']); });
+    var noImg  = rows.filter(function(r){ return !r['Imagem']; });
+    var noTipo = rows.filter(function(r){ return !r['Tipo']; });
+
+    setCount('count-no-desc', noDesc.length);
+    setCount('count-lorem',   lorems.length);
+    setCount('count-no-img',  noImg.length);
+    setCount('count-no-tipo', noTipo.length);
+
+    setList('list-no-desc', noDesc);
+    setList('list-lorem',   lorems);
+    setList('list-no-img',  noImg);
+    setList('list-no-tipo', noTipo);
+  });
+</script>
+
+</body>
+</html>
