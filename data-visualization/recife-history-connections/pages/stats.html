@@ -155,21 +155,24 @@
     .problem-list::-webkit-scrollbar-track { background: transparent; }
     .problem-list::-webkit-scrollbar-thumb { background: #1a2d3d; border-radius: 2px; }
 
+    .issue-group { border-top: 1px solid #0d1820; }
+    .issue-group:first-child { border-top: none; }
+
+    .group-tipo-header {
+      display: flex; align-items: center;
+      padding: 0.55rem 1.2rem 0.3rem;
+      font-size: 0.58rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;
+    }
+    .group-tipo-count { margin-left: auto; font-weight: 400; opacity: 0.55; }
+
     .entry-row {
-      display: flex; align-items: center; gap: 0.7rem;
-      padding: 0.45rem 1.2rem;
-      border-bottom: 1px solid #0d1820;
-      transition: background 0.1s;
+      padding: 0.3rem 1.2rem 0.3rem 1.6rem;
+      font-size: 0.8rem; color: #c0b0a0; line-height: 1.4;
+      border-bottom: 1px solid #0a1018;
+      transition: background 0.1s, color 0.1s;
     }
     .entry-row:last-child { border-bottom: none; }
-    .entry-row:hover { background: rgba(255,255,255,0.02); }
-
-    .tipo-badge {
-      font-size: 0.57rem; text-transform: uppercase; letter-spacing: 1.5px;
-      padding: 0.14rem 0.5rem; border-radius: 10px; flex-shrink: 0; font-weight: 600;
-    }
-    .entry-name { font-size: 0.78rem; color: #c0b0a0; flex: 1; }
-    .entry-sub  { font-size: 0.66rem; color: #2a4a5a; flex-shrink: 0; }
+    .entry-row:hover { background: rgba(255,255,255,0.025); color: #e8c898; }
 
     .empty-state {
       padding: 1.5rem; font-size: 0.78rem; color: #2a4a5a; text-align: center;
@@ -315,19 +318,7 @@ var TIPO_STYLE = {
   'Fato Histórico': { bg: 'rgba(92,184,92,0.15)',   color: '#5cb85c', border: 'rgba(92,184,92,0.3)'   }
 };
 
-function tipoBadge(tipo) {
-  var s = TIPO_STYLE[tipo] || { bg:'rgba(140,140,140,0.12)', color:'#888', border:'rgba(140,140,140,0.25)' };
-  return '<span class="tipo-badge" style="background:'+s.bg+';color:'+s.color+';border:1px solid '+s.border+'">'+(tipo||'—')+'</span>';
-}
-
-function entryRow(r) {
-  return '<div class="entry-row">'+tipoBadge(r['Tipo'])+
-    '<span class="entry-name">'+r['Nome']+'</span>'+
-    '<span class="entry-sub">'+(r['Sub-Tipo']||'')+'</span>'+
-    '</div>';
-}
-
-function setCount(id, n, severity) {
+function setCount(id, n) {
   var el = document.getElementById(id);
   el.textContent = n + (n === 1 ? ' entrada' : ' entradas');
   if (n === 0) el.className = 'ps-count ok-badge';
@@ -337,9 +328,34 @@ function setList(id, entries) {
   var el = document.getElementById(id);
   if (!entries.length) {
     el.innerHTML = '<div class="empty-state">✓ Nenhum problema encontrado</div>';
-  } else {
-    el.innerHTML = entries.map(entryRow).join('');
+    return;
   }
+
+  var ORDER = ['Local', 'Personagem', 'Fato Histórico'];
+  var groups = {};
+  entries.forEach(function(r) {
+    var tipo = r['Tipo'] || '—';
+    if (!groups[tipo]) groups[tipo] = [];
+    groups[tipo].push(r['Nome']);
+  });
+
+  var html = '';
+  ORDER.concat(Object.keys(groups).filter(function(t) { return ORDER.indexOf(t) < 0; }))
+    .forEach(function(tipo) {
+      if (!groups[tipo] || !groups[tipo].length) return;
+      var s = TIPO_STYLE[tipo] || { color: '#888' };
+      html += '<div class="issue-group">'
+        + '<div class="group-tipo-header" style="color:' + s.color + '">'
+        + tipo
+        + '<span class="group-tipo-count">(' + groups[tipo].length + ')</span>'
+        + '</div>';
+      groups[tipo].forEach(function(nome) {
+        html += '<div class="entry-row">' + nome + '</div>';
+      });
+      html += '</div>';
+    });
+
+  el.innerHTML = html;
 }
 
 function sectionLabel(text) {
