@@ -1,1 +1,6 @@
-https://antonioaurel.github.io/Trilhas-Recife-Page-Teste/diagram.html
+WEB (GitHub Pages):
+https://antonioaurel.github.io/data/data-visualization/recife-history-connections/
+
+LOCAL:
+file:///C:/Git/Study/data/data/data-visualization/recife-history-connections/index.html
+C:\Git\Study\data\data\data-visualization\recife-history-connections\index.html
