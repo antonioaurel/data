@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fontes · Conexões da Historia do Recife</title>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Raleway', sans-serif;
+      background: #0f1923;
+      color: #f0e6d3;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #0a1520;
+      border-bottom: 1px solid #1a2d3d;
+      padding: 0 2rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-logo { font-weight: 700; font-size: 0.88rem; color: #f0e6d3; text-decoration: none; margin-right: auto; }
+    .nav-link  { font-size: 0.78rem; color: #3a5a6a; text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover  { color: #e8a838; }
+    .nav-link.active { color: #e8a838; font-weight: 600; }
+
+    /* ── Page wrap ── */
+    .page-wrap { max-width: 1040px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+    /* ── Header ── */
+    .page-tag { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 3px; color: #e8a838; margin-bottom: 0.6rem; }
+    h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
+    h1 span { color: #e8a838; }
+
+    .page-desc {
+      font-size: 0.86rem;
+      color: #4a6a7a;
+      font-weight: 300;
+      line-height: 1.85;
+      max-width: 680px;
+      margin-bottom: 3rem;
+    }
+
+    /* ── Book cards ── */
+    .books-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .book-card {
+      display: flex;
+      gap: 2.5rem;
+      align-items: flex-start;
+      background: #0a1520;
+      border: 1px solid #1a2d3d;
+      border-radius: 10px;
+      padding: 2rem;
+      transition: border-color 0.2s;
+    }
+    .book-card:hover { border-color: #2a4d6d; }
+
+    /* ── Book cover placeholder ── */
+    .book-cover {
+      flex-shrink: 0;
+      width: 120px;
+      height: 170px;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 4px 6px 20px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    .book-cover svg { width: 100%; height: 100%; display: block; }
+
+    /* ── Book info ── */
+    .book-info { flex: 1; }
+
+    .book-number {
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #e8a838;
+      margin-bottom: 0.5rem;
+    }
+
+    .book-title {
+      font-size: 1.22rem;
+      font-weight: 700;
+      color: #f0e6d3;
+      line-height: 1.3;
+      margin-bottom: 0.3rem;
+    }
+
+    .book-subtitle {
+      font-size: 0.78rem;
+      color: #4a6a7a;
+      font-style: italic;
+      margin-bottom: 0.9rem;
+    }
+
+    .book-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.2rem;
+      margin-bottom: 1.1rem;
+    }
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .meta-label {
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #2a4d6d;
+      font-weight: 600;
+    }
+    .meta-value {
+      font-size: 0.8rem;
+      color: #8aaabb;
+      font-weight: 400;
+    }
+
+    .book-desc {
+      font-size: 0.84rem;
+      color: #5a7a8a;
+      line-height: 1.8;
+      margin-bottom: 1.25rem;
+      max-width: 600px;
+    }
+
+    .book-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.74rem;
+      color: #e8a838;
+      text-decoration: none;
+      border: 1px solid rgba(232,168,56,0.3);
+      border-radius: 5px;
+      padding: 0.4rem 0.85rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .book-link:hover {
+      background: rgba(232,168,56,0.08);
+      border-color: rgba(232,168,56,0.6);
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.72rem;
+      color: #1e3545;
+    }
+    footer a { color: #2a4d6d; text-decoration: none; }
+    footer a:hover { color: #e8a838; }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a class="nav-logo" href="index.html">Conexões da Historia do Recife</a>
+  <a class="nav-link" href="diagram.html">Diagrama</a>
+  <a class="nav-link" href="matrix.html">Matrix</a>
+  <a class="nav-link" href="stats.html">Fill Rate</a>
+  <a class="nav-link active" href="sources.html">Fontes</a>
+  <a class="nav-link" href="https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj&ll=-8.06055276702706%2C-34.882075024350215&z=15" target="_blank">Mapa ↗</a>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="page-tag">Fontes · Conexões da Historia do Recife</div>
+  <h1>Material de <span>Referência</span></h1>
+  <p class="page-desc">
+    Os dados deste projeto foram extraídos e sistematizados a partir de três obras de referência
+    sobre a história, a cultura e a geografia urbana do Recife e de Pernambuco.
+  </p>
+
+  <div class="books-grid">
+
+    <!-- ── Livro 1 ── -->
+    <div class="book-card">
+      <div class="book-cover">
+        <svg viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg">
+          <rect width="120" height="170" fill="#1a3040"/>
+          <!-- spine shadow -->
+          <rect x="0" y="0" width="10" height="170" fill="#0d1e2a"/>
+          <!-- decorative top bar -->
+          <rect x="10" y="0" width="110" height="6" fill="#e8a838"/>
+          <!-- map silhouette -->
+          <g fill="none" stroke="#2a5070" stroke-width="1.2">
+            <path d="M30 60 Q45 45 60 55 Q75 65 90 50"/>
+            <path d="M25 80 Q40 70 55 78 Q70 86 88 72"/>
+            <path d="M35 100 Q50 90 65 98 Q80 106 95 92"/>
+          </g>
+          <!-- dot accent -->
+          <circle cx="60" cy="78" r="5" fill="#e8a838" opacity="0.7"/>
+          <circle cx="45" cy="65" r="3" fill="#e8a838" opacity="0.4"/>
+          <circle cx="82" cy="90" r="3" fill="#e8a838" opacity="0.4"/>
+          <!-- title area -->
+          <rect x="10" y="118" width="110" height="52" fill="#0d1e2a"/>
+          <text x="65" y="136" font-family="serif" font-size="7" fill="#e8a838" text-anchor="middle" font-weight="bold">TRILHAS</text>
+          <text x="65" y="147" font-family="serif" font-size="5.5" fill="#e8a838" text-anchor="middle">DO RECIFE</text>
+          <text x="65" y="162" font-family="serif" font-size="4.5" fill="#4a6a7a" text-anchor="middle">JOÃO BRAGA</text>
+        </svg>
+      </div>
+      <div class="book-info">
+        <div class="book-number">Fonte 01</div>
+        <div class="book-title">Trilhas do Recife</div>
+        <div class="book-subtitle">Guia Turístico, Histórico e Cultural</div>
+        <div class="book-meta">
+          <div class="meta-item">
+            <span class="meta-label">Autor</span>
+            <span class="meta-value">João Batista Meira Braga</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Ano</span>
+            <span class="meta-value">2000 (1ª ed.) · 2007 (2ª ed.)</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Editora</span>
+            <span class="meta-value">Assembleia Legislativa de Pernambuco</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Páginas</span>
+            <span class="meta-value">201</span>
+          </div>
+        </div>
+        <p class="book-desc">
+          Guia com 25 trilhas de caminhada pelo Recife, cada uma demarcada por fatos históricos
+          e culturais. A obra mapeia ruas, praças, igrejas e monumentos ligando-os às personagens
+          e eventos que os tornaram parte da identidade pernambucana — base principal da estrutura
+          de nós e conexões deste projeto.
+        </p>
+        <a class="book-link" href="#" target="_blank">Ver na Amazon ↗</a>
+      </div>
+    </div>
+
+    <!-- ── Livro 2 ── -->
+    <div class="book-card">
+      <div class="book-cover">
+        <svg viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg">
+          <rect width="120" height="170" fill="#1a2a3a"/>
+          <rect x="0" y="0" width="10" height="170" fill="#0d1820"/>
+          <rect x="10" y="0" width="110" height="6" fill="#c87828"/>
+          <!-- street grid pattern -->
+          <g stroke="#1e3850" stroke-width="1" fill="none">
+            <line x1="10" y1="30" x2="120" y2="30"/>
+            <line x1="10" y1="48" x2="120" y2="48"/>
+            <line x1="10" y1="66" x2="120" y2="66"/>
+            <line x1="10" y1="84" x2="120" y2="84"/>
+            <line x1="10" y1="102" x2="120" y2="102"/>
+            <line x1="32" y1="20" x2="32" y2="115"/>
+            <line x1="55" y1="20" x2="55" y2="115"/>
+            <line x1="78" y1="20" x2="78" y2="115"/>
+            <line x1="101" y1="20" x2="101" y2="115"/>
+          </g>
+          <!-- highlight intersection -->
+          <rect x="54" y="65" width="23" height="19" fill="#c87828" opacity="0.15"/>
+          <circle cx="65.5" cy="74.5" r="3.5" fill="#c87828" opacity="0.8"/>
+          <!-- title -->
+          <rect x="10" y="118" width="110" height="52" fill="#0d1820"/>
+          <text x="65" y="133" font-family="serif" font-size="6" fill="#c87828" text-anchor="middle" font-weight="bold">O RECIFE</text>
+          <text x="65" y="145" font-family="serif" font-size="5" fill="#c87828" text-anchor="middle">E SUAS RUAS</text>
+          <text x="65" y="162" font-family="serif" font-size="4" fill="#4a6a7a" text-anchor="middle">IAHGP · 2010</text>
+        </svg>
+      </div>
+      <div class="book-info">
+        <div class="book-number">Fonte 02</div>
+        <div class="book-title">O Recife e suas Ruas</div>
+        <div class="book-subtitle">Origem, história e nomenclatura das ruas do Recife</div>
+        <div class="book-meta">
+          <div class="meta-item">
+            <span class="meta-label">Organização</span>
+            <span class="meta-value">Instituto Arq., Hist. e Geog. Pernambucano</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Ano</span>
+            <span class="meta-value">2010</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ISBN</span>
+            <span class="meta-value">978-85-63601-01-8</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Páginas</span>
+            <span class="meta-value">420</span>
+          </div>
+        </div>
+        <p class="book-desc">
+          Obra de referência que cobre todos os bairros e mais de 1.200 ruas do Recife —
+          a origem dos nomes, a evolução histórica dos logradouros, denominações anteriores
+          e etimologia. Fundamental para compreender como a malha urbana da cidade reflete
+          camadas de ocupação, política e memória coletiva.
+        </p>
+        <a class="book-link" href="#" target="_blank">Ver na Estante Virtual ↗</a>
+      </div>
+    </div>
+
+    <!-- ── Livro 3 ── -->
+    <div class="book-card">
+      <div class="book-cover">
+        <svg viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg">
+          <rect width="120" height="170" fill="#1e2818"/>
+          <rect x="0" y="0" width="10" height="170" fill="#111a0e"/>
+          <rect x="10" y="0" width="110" height="6" fill="#7ab840"/>
+          <!-- abstract heritage pattern -->
+          <g fill="none" stroke="#223018" stroke-width="1.5">
+            <polygon points="65,28 85,55 65,82 45,55" />
+            <polygon points="65,35 80,55 65,75 50,55" />
+          </g>
+          <polygon points="65,45 74,58 65,71 56,58" fill="#7ab840" opacity="0.25"/>
+          <circle cx="65" cy="57.5" r="4" fill="#7ab840" opacity="0.7"/>
+          <!-- horizontal lines -->
+          <g stroke="#1e2e18" stroke-width="0.8" fill="none">
+            <line x1="20" y1="95" x2="100" y2="95"/>
+            <line x1="20" y1="105" x2="100" y2="105"/>
+          </g>
+          <!-- title -->
+          <rect x="10" y="118" width="110" height="52" fill="#111a0e"/>
+          <text x="65" y="132" font-family="serif" font-size="5.5" fill="#7ab840" text-anchor="middle" font-weight="bold">PERNAMBU-</text>
+          <text x="65" y="143" font-family="serif" font-size="5.5" fill="#7ab840" text-anchor="middle">CANIDADE</text>
+          <text x="65" y="158" font-family="serif" font-size="4" fill="#4a6a7a" text-anchor="middle">NILO PEREIRA · 1983</text>
+        </svg>
+      </div>
+      <div class="book-info">
+        <div class="book-number">Fonte 03</div>
+        <div class="book-title">Pernambucanidade</div>
+        <div class="book-subtitle">Alguns aspectos históricos</div>
+        <div class="book-meta">
+          <div class="meta-item">
+            <span class="meta-label">Autor</span>
+            <span class="meta-value">Nilo Pereira</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Ano</span>
+            <span class="meta-value">1983</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Editora</span>
+            <span class="meta-value">Sec. de Turismo, Cultura e Esportes de PE</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Volumes</span>
+            <span class="meta-value">3 volumes</span>
+          </div>
+        </div>
+        <p class="book-desc">
+          Ensaio histórico e cultural que investiga a identidade coletiva de Pernambuco —
+          o que torna a cultura pernambucana singular no contexto brasileiro. Nilo Pereira
+          explora aspectos políticos, artísticos e sociais com base em documentação histórica
+          primária, oferecendo um quadro interpretativo das raízes da pernambucaneidade.
+        </p>
+        <a class="book-link" href="#" target="_blank">Ver no Mercado Livre ↗</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <a href="index.html">← Voltar</a>
+  &nbsp;·&nbsp;
+  <a href="https://conexoesdahistoria.com/" target="_blank">conexoesdahistoria.com</a>
+</footer>
+
+</body>
+</html>
