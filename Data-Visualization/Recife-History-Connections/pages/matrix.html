@@ -457,7 +457,7 @@ window.addEventListener('load',   positionMinimap);
 window.addEventListener('resize', positionMinimap);
 
 /* ── Load CSV ─────────────────────────────────────────────────────────────── */
-d3.csv('lista-geral-do-mapeamento.csv', function(error, graph) {
+d3.csv('../data/lista-geral-do-mapeamento.csv', function(error, graph) {
   if (error) { console.error(error); return; }
 
   names = graph.map(function(r) { return r.Nome; });

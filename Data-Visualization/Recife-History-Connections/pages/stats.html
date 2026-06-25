@@ -373,7 +373,7 @@ function card(label, value, desc) {
     '</div>';
 }
 
-fetch('lista-geral-do-mapeamento.csv')
+fetch('../data/lista-geral-do-mapeamento.csv')
   .then(function(r) { return r.text(); })
   .then(function(text) {
     var lines = text.replace(/\r/g,'').split('\n').filter(function(l){ return l.trim(); });
