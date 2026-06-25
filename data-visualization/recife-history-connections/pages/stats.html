@@ -283,19 +283,24 @@
 </footer>
 
 <script>
-function parseCSVLine(line) {
-  var result = [], cur = '', inQ = false;
-  for (var i = 0; i < line.length; i++) {
-    var ch = line[i];
-    if (ch === '"') {
-      if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if (ch === ',' && !inQ) {
-      result.push(cur); cur = '';
-    } else { cur += ch; }
+function parseCSV(text) {
+  var rows = [], row = [], cur = '', inQ = false;
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (var i = 0; i < text.length; i++) {
+    var ch = text[i];
+    if (inQ) {
+      if (ch === '"' && text[i+1] === '"') { cur += '"'; i++; }
+      else if (ch === '"')                 { inQ = false; }
+      else                                 { cur += ch; }
+    } else {
+      if      (ch === '"')  { inQ = true; }
+      else if (ch === ',')  { row.push(cur); cur = ''; }
+      else if (ch === '\n') { row.push(cur); cur = ''; rows.push(row); row = []; }
+      else                  { cur += ch; }
+    }
   }
-  result.push(cur);
-  return result;
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows;
 }
 
 // Lorem ipsum / placeholder Latin text detection
@@ -393,15 +398,15 @@ function card(label, value, desc) {
 fetch('../data/lista-geral-do-mapeamento.csv')
   .then(function(r) { return r.text(); })
   .then(function(text) {
-    var lines = text.replace(/\r/g,'').split('\n').filter(function(l){ return l.trim(); });
-    var headers = parseCSVLine(lines[0]);
-    var rows = [];
-    for (var i = 1; i < lines.length; i++) {
-      var vals = parseCSVLine(lines[i]);
-      var row = {};
-      headers.forEach(function(h,j){ row[h]=(vals[j]||'').trim(); });
-      rows.push(row);
-    }
+    var parsed  = parseCSV(text);
+    var headers = parsed[0];
+    var rows = parsed.slice(1)
+      .filter(function(vals){ return vals.some(function(v){ return v.trim(); }); })
+      .map(function(vals){
+        var row = {};
+        headers.forEach(function(h,j){ row[h] = (vals[j]||'').trim(); });
+        return row;
+      });
     var N = rows.length;
 
     // Fill rates per field
