@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'Data-Visualization/Recife-History-Connections/**'
+      - 'data-visualization/recife-history-connections/**'
   workflow_dispatch:
 
 permissions:
@@ -27,8 +27,8 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Prepare site structure
         run: |
-          mkdir -p _site/Data-Visualization/Recife-History-Connections
-          cp -r Data-Visualization/Recife-History-Connections/. _site/Data-Visualization/Recife-History-Connections/
+          mkdir -p _site/data-visualization/recife-history-connections
+          cp -r data-visualization/recife-history-connections/. _site/data-visualization/recife-history-connections/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
