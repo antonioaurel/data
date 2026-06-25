@@ -4,7 +4,7 @@ An interactive D3.js force-directed diagram mapping the historical connections b
 
 Discover how seemingly unrelated locations, historical figures, and events are deeply linked across time — from the Dutch-Portuguese wars to the 1930 Brazilian Revolution and beyond.
 
-🌐 **Live site:** [antonioaurel.github.io/Trilhas-Recife-Page-Teste](https://antonioaurel.github.io/Trilhas-Recife-Page-Teste)  
+🌐 **Live site:** [antonioaurel.github.io/Data](https://antonioaurel.github.io/Data/)  
 🗺️ **Main project:** [conexoesdahistoria.com](https://conexoesdahistoria.com)
 
 ---
