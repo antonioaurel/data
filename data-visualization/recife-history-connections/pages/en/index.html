@@ -56,6 +56,49 @@
     }
     .nav-link:hover { background: #f1f3f4; color: var(--g-blue); }
 
+    /* ── Language toggle ── */
+    .lang-toggle {
+      display: inline-flex;
+      border: 1px solid #dadce0;
+      border-radius: 20px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .lang-btn {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.25rem 0.9rem;
+      text-decoration: none;
+      color: #5f6368;
+      background: transparent;
+      transition: background 0.15s, color 0.15s;
+      line-height: 1.6;
+    }
+    .lang-btn:hover { background: #f1f3f4; }
+    .lang-btn.active { background: #1a73e8; color: #fff; }
+
+    .hero-lang-toggle {
+      display: inline-flex;
+      border: 1px solid #dadce0;
+      border-radius: 24px;
+      overflow: hidden;
+      margin-bottom: 1.6rem;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.1);
+    }
+    .hero-lang-btn {
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 0.4rem 1.4rem;
+      text-decoration: none;
+      color: #5f6368;
+      background: transparent;
+      transition: background 0.15s, color 0.15s;
+      line-height: 1.6;
+      letter-spacing: 0.3px;
+    }
+    .hero-lang-btn:hover { background: #f1f3f4; }
+    .hero-lang-btn.active { background: #1a73e8; color: #fff; }
+
     /* ── Hero ── */
     .hero {
       max-width: 700px;
@@ -288,7 +331,10 @@
   <a class="nav-link" href="stats.html">Fill Rate</a>
   <a class="nav-link" href="sources.html">Sources</a>
   <a class="nav-link" href="https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj&ll=-8.06055276702706%2C-34.882075024350215&z=15" target="_blank">Map ↗</a>
-  <a class="nav-link" href="../index.html" style="border:1px solid #EA4335;color:#EA4335;border-radius:4px;padding:0.2rem 0.55rem;">PT</a>
+  <div class="lang-toggle">
+    <a class="lang-btn" href="../index.html">PT</a>
+    <span class="lang-btn active">EN</span>
+  </div>
 </nav>
 
 <!-- Hero -->
@@ -300,6 +346,11 @@
     <div class="g-dot" style="background:var(--g-red)"></div>
     <div class="g-dot" style="background:var(--g-yellow)"></div>
     <div class="g-dot" style="background:var(--g-green)"></div>
+  </div>
+
+  <div class="hero-lang-toggle">
+    <a class="hero-lang-btn" href="../index.html">Português</a>
+    <span class="hero-lang-btn active">English</span>
   </div>
 
   <p class="subtitle">
