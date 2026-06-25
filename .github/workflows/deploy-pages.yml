@@ -25,8 +25,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Prepare site structure
+        run: |
+          mkdir -p _site/Data-Visualization/Recife-History-Connections
+          cp -r Data-Visualization/Recife-History-Connections/. _site/Data-Visualization/Recife-History-Connections/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: Data-Visualization/Recife-History-Connections
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
