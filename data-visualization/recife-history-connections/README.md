@@ -15,9 +15,9 @@ The diagram visualises three categories of nodes:
 
 | Category | Description |
 |---|---|
-| **Local** | Historical locations in Recife and Pernambuco |
-| **Personagem** | Historical figures — politicians, writers, engineers, activists |
-| **Fato Histórico** | Historical events and movements |
+| **Location** | Historical locations in Recife and Pernambuco |
+| **Historical Figure** | Politicians, writers, engineers, activists |
+| **Historical Event** | Events and movements that shaped the region |
 
 Nodes are connected by edges representing documented historical relationships. Node size reflects how many connections each entry has.
 
@@ -29,7 +29,7 @@ This is a static HTML project — no build step required.
 
 **Option 1 — Python (recommended):**
 ```bash
-cd Trilhas-Recife-Page-Teste
+cd data-visualization/recife-history-connections
 python3 -m http.server 8000
 ```
 Then open [http://localhost:8000](http://localhost:8000) in your browser.
@@ -62,13 +62,13 @@ All data lives in `lista-geral-do-mapeamento.csv`. Columns:
 
 | Column | Description |
 |---|---|
-| Nome | Name of the entry |
-| Tipo | Category (Local / Personagem / Fato Histórico) |
-| Sub-Tipo | Subcategory |
-| Local | Neighbourhood or area in Recife |
-| Imagem | Image URL |
-| Descrição | Historical description |
-| Interconexão 1–15 | Names of connected entries |
+| Name | Name of the entry |
+| Type | Category (Location / Historical Figure / Historical Event) |
+| Sub-Type | Subcategory |
+| Location | Neighbourhood or area in Recife |
+| Image | Image URL |
+| Description | Historical description |
+| Connection 1–15 | Names of connected entries |
 
 ---
 
@@ -327,9 +327,9 @@ const result = await session.run("MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 200");
 3. Link notes using `[[double brackets]]`:
 ```markdown
 # Ariano Suassuna
-Dramaturgo pernambucano. Criou o [[Auto da Compadecida]].
-Secretário de Cultura durante o governo [[Eduardo Campos]].
-Ligado à [[Academia Pernambucana de Letras]].
+Playwright from Pernambuco. Created [[Auto da Compadecida]].
+Secretary of Culture under [[Eduardo Campos]] government.
+Linked to [[Academia Pernambucana de Letras]].
 ```
 4. Open **Graph View** (Ctrl+G) to see the full interactive map, colour-coded by folder or tag.
 5. Use the **Dataview** plugin to query entries by tipo, local, or era — similar to a database.
