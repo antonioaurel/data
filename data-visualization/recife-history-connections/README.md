@@ -58,10 +58,11 @@ Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ri
 
 ## Data
 
-All data lives in `lista-geral-do-mapeamento.csv`. Columns:
+**Source of truth:** `data/lista-geral-do-mapeamento.csv` (a Google Sheets export). Columns:
 
 | Column | Description |
 |---|---|
+| ID | Stable record id (`CH-XXXX`) |
 | Name | Name of the entry |
 | Type | Category (Location / Historical Figure / Historical Event) |
 | Sub-Type | Subcategory |
@@ -69,6 +70,33 @@ All data lives in `lista-geral-do-mapeamento.csv`. Columns:
 | Image | Image URL |
 | Description | Historical description |
 | Connection 1–15 | Names of connected entries |
+| Dados consolidados / Fonte | Denormalised export fields — **not used by the site** |
+
+### Derived files (generated — do not edit by hand)
+
+The pages do **not** load the big CSV. They load two lightweight files produced by `build.py`:
+
+| File | Size | Loaded | Purpose |
+|---|---|---|---|
+| `data/graph.json` | ~32 KB | immediately | nodes (name + type) + edges — enough to draw the whole graph/matrix |
+| `data/content.json` | ~344 KB | on demand | description / location / image per node, for the detail panel |
+
+This keeps first paint tiny (~32 KB instead of ~800 KB) and the heavy text loads in the background.
+
+### Rebuilding after editing the base
+
+```bash
+python3 build.py          # validates the CSV and regenerates graph.json + content.json
+python3 build.py --check  # CI mode: fails if the committed JSON is out of sync with the CSV
+```
+
+`build.py` validates the base (duplicate IDs/names, empty names → errors; dangling connection
+targets, missing fields → warnings). **Whenever you change the CSV, run `python3 build.py` and
+commit the regenerated JSON alongside it.** GitHub Actions (`.github/workflows/build.yml`) runs
+`--check` on every push so the published site can never drift from the base.
+
+> Deprecated/unused files were moved to `../../Depreciated/` (outside the published folder):
+> the old `matrix.csv` (no longer loaded by any page), and stray export dumps.
 
 ---
 
