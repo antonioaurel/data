@@ -39,6 +39,11 @@
     .back-link:hover { color: #e8a838; }
     .sources-link { margin-left: auto; color: #6a7a8a; text-decoration: none; font-size: 0.8rem; white-space: nowrap; transition: color .15s; }
     .sources-link:hover { color: #e8a838; }
+
+    .nav-links { display: flex; gap: 1.1rem; align-items: center; margin-left: auto; }
+    .nav-links a { font-size: 0.78rem; color: #6a7a8a; text-decoration: none; white-space: nowrap; transition: color .15s; }
+    .nav-links a:hover  { color: #e8a838; }
+    .nav-links a.active { color: #e8a838; font-weight: 600; }
     .header-title { font-size: 0.95rem; font-weight: 600; color: #f0e6d3; }
     .header-title span { color: #e8a838; }
 
@@ -283,9 +288,12 @@
     }
     .panel-placeholder p { font-size: 0.78rem; line-height: 1.7; color: #7a8a90; }
 
-    #panel-content { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+    #panel-content { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
 
-    .pd-header { padding: .85rem 1rem; border-bottom: 1px solid #1a2535; flex-shrink: 0; }
+    .pd-header {
+      padding: .85rem 1rem; border-bottom: 1px solid #1a2535; flex-shrink: 0;
+      position: sticky; top: 0; background: #111b27; z-index: 1;
+    }
     .pd-type { font-size: .6rem; text-transform: uppercase; letter-spacing: 2px; color: #e8a838; margin-bottom: .35rem; }
     .pd-name { font-size: 1rem; font-weight: 600; color: #f0e6d3; line-height: 1.3; }
     .pd-local { font-size: .7rem; color: #a09080; margin-top: .25rem; }
@@ -294,10 +302,10 @@
       padding: .75rem 1rem;
       font-size: .76rem; line-height: 1.7; color: #c0b0a0;
       border-bottom: 1px solid #1a2535;
-      flex-shrink: 0; max-height: 120px; overflow-y: auto;
+      flex-shrink: 0;
     }
 
-    .pd-conn-list { flex: 1; overflow-y: auto; padding: .6rem .9rem 1rem; }
+    .pd-conn-list { flex-shrink: 0; padding: .6rem .9rem 1rem; }
     .pd-conn-list::-webkit-scrollbar { width: 3px; }
     .pd-conn-list::-webkit-scrollbar-thumb { background: #2a3d52; }
 
@@ -342,7 +350,13 @@
 <header>
   <a class="back-link" href="index.html">← Início</a>
   <div class="header-title">Matrix · <span>Conexões da Historia do Recife</span></div>
-  <a class="sources-link" href="sources.html">Fontes</a>
+  <nav class="nav-links">
+    <a href="diagram.html">Diagrama</a>
+    <a class="active" href="matrix.html">Matrix</a>
+    <a href="stats.html">Fill Rate</a>
+    <a href="sources.html">Fontes</a>
+    <a href="https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj&ll=-8.06055276702706%2C-34.882075024350215&z=15" target="_blank">Mapa ↗</a>
+  </nav>
 </header>
 
 <div class="toolbar">

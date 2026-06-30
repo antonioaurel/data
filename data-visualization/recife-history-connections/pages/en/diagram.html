@@ -42,6 +42,11 @@
     .sources-link { margin-left: auto; color: #6a7a8a; text-decoration: none; font-size: 0.8rem; white-space: nowrap; transition: color 0.15s; }
     .sources-link:hover { color: #e8a838; }
 
+    .nav-links { display: flex; gap: 1.1rem; align-items: center; margin-left: 1.5rem; }
+    .nav-links a { font-size: 0.78rem; color: #6a7a8a; text-decoration: none; white-space: nowrap; transition: color 0.15s; }
+    .nav-links a:hover  { color: #e8a838; }
+    .nav-links a.active { color: #e8a838; font-weight: 600; }
+
     .header-title {
       font-size: 0.95rem;
       font-weight: 600;
@@ -149,6 +154,31 @@
     }
     .labels text.label-visible  { display: block; }
     .labels text.label-selected { fill: #e8a838; font-weight: 600; font-size: 10.5px; }
+
+    /* type filter chips */
+    #type-filter {
+      position: absolute; top: 58px; left: 12px; z-index: 6;
+      display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+    }
+    .tf-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #e8a838; font-weight: 600; }
+    .tf-desc  { font-size: 0.66rem; color: #7a8a96; line-height: 1.3; max-width: 190px; margin-bottom: 3px; }
+    .type-chip {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(15,25,35,0.92); border: 1px solid #2a3d52; border-radius: 14px;
+      color: #9fb3c0; font-size: 0.7rem; padding: 0.3rem 0.7rem;
+      cursor: pointer; user-select: none; transition: border-color .15s, color .15s, background .15s;
+    }
+    .type-chip:hover { border-color: #3a536e; }
+    .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .type-chip.active { color: #f0e6d3; }
+    .type-chip.active[data-type="Local"]          { border-color: #4a90d9; background: rgba(74,144,217,.16); }
+    .type-chip.active[data-type="Personagem"]     { border-color: #e8833a; background: rgba(232,131,58,.16); }
+    .type-chip.active[data-type="Fato Histórico"] { border-color: #5cb85c; background: rgba(92,184,92,.16); }
+
+    /* type filter highlighting */
+    .nodes circle.type-dim { opacity: 0.13; }
+    .nodes circle.type-on  { stroke: #e8a838; stroke-width: 2px; }
+    .links.links-hidden line { display: none; }
 
     .links line {
       stroke: rgba(150, 130, 110, 0.15);
@@ -365,6 +395,20 @@
       color: #2a3a4a;
       font-style: italic;
     }
+
+    /* connections grouped by type */
+    .conn-group { margin-bottom: 0.85rem; }
+    .conn-group-header {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.3rem 0.5rem; margin-bottom: 0.45rem;
+      border-left: 2px solid #4a90d9;
+      background: rgba(255,255,255,0.02);
+      border-radius: 0 4px 4px 0;
+    }
+    .cg-dot   { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .cg-name  { font-size: 0.72rem; color: #c0b0a0; font-weight: 600; }
+    .cg-latin { font-size: 0.6rem; color: #5a6a70; font-style: italic; margin-left: 0.2rem; }
+    .cg-count { font-size: 0.64rem; color: #5a6a70; margin-left: auto; }
   </style>
 </head>
 <body>
@@ -372,6 +416,13 @@
 <header>
   <a class="back-link" href="index.html">← Home</a>
   <div class="header-title">Connections <span>of History</span></div>
+  <nav class="nav-links">
+    <a class="active" href="diagram.html">Diagram</a>
+    <a href="matrix.html">Matrix</a>
+    <a href="stats.html">Fill Rate</a>
+    <a href="sources.html">Sources</a>
+    <a href="https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj&ll=-8.06055276702706%2C-34.882075024350215&z=15" target="_blank">Map ↗</a>
+  </nav>
   <div class="legend">
     <div class="legend-item">
       <div class="legend-dot" style="background:#4a90d9"></div> Location
@@ -386,7 +437,6 @@
       <div class="legend-dot" style="background:#9b59b6"></div> Other
     </div>
   </div>
-  <a class="sources-link" href="sources.html">Sources</a>
 </header>
 
 <div class="main">
@@ -394,6 +444,13 @@
     <div id="diagram-search">
       <input id="node-search" class="ds-input" type="text" placeholder="Search node…" autocomplete="off" list="node-list">
       <datalist id="node-list"></datalist>
+    </div>
+    <div id="type-filter">
+      <div class="tf-title">Filters</div>
+      <div class="tf-desc">select to view by node type</div>
+      <span class="type-chip" data-type="Local"          onclick="setFilter('Local')"><span class="chip-dot" style="background:#4a90d9"></span>Location</span>
+      <span class="type-chip" data-type="Personagem"     onclick="setFilter('Personagem')"><span class="chip-dot" style="background:#e8833a"></span>Historical Figure</span>
+      <span class="type-chip" data-type="Fato Histórico" onclick="setFilter('Fato Histórico')"><span class="chip-dot" style="background:#5cb85c"></span>Historical Event</span>
     </div>
     <div id="diagram-hint">
       <strong>How to navigate</strong>
@@ -429,6 +486,15 @@ function typeBadgeStyle(tipo) {
   return 'background:' + c + '22;color:' + c + ';border:1px solid ' + c + '55;';
 }
 
+var TIPO_META = {
+  'Local':           { label: 'Location',          latin: 'Loca Historica',     color: '#4a90d9' },
+  'Personagem':      { label: 'Historical Figure', latin: 'Personae Illustres', color: '#e8833a' },
+  'Fato Histórico':  { label: 'Historical Event',  latin: 'Res Gestae',         color: '#5cb85c' },
+};
+function tipoMeta(tipo) {
+  return TIPO_META[tipo] || { label: tipo || 'Other', latin: 'Alia', color: '#9b59b6' };
+}
+
 var leftEl  = document.getElementById('left');
 var tooltip = document.getElementById('tooltip');
 
@@ -442,16 +508,72 @@ var svg = d3.select('#left')
 
 var g = svg.append('g');
 
-svg.call(
-  d3.zoom()
-    .scaleExtent([0.05, 10])
-    .on('zoom', function() { g.attr('transform', d3.event.transform); })
-);
+var zoomBehavior = d3.zoom()
+  .scaleExtent([0.05, 10])
+  .on('zoom', function() { g.attr('transform', d3.event.transform); });
+svg.call(zoomBehavior);
 
-// click on empty canvas clears selection + highlight
-svg.on('click', function() {
+// pan/zoom the view to center a node (used by search + connection cards)
+function focusNode(nome) {
+  var n = getNode(nome);
+  if (!n || n.x == null) return;
+  var k = 1.6;
+  var t = d3.zoomIdentity.translate(width / 2 - k * n.x, height / 2 - k * n.y).scale(k);
+  svg.transition().duration(650).call(zoomBehavior.transform, t);
+}
+
+/* ── Type filter + selection state ────────────────────────────────────────── */
+var activeType   = null;   // null | 'Local' | 'Personagem' | 'Fato Histórico'
+var selectedName = null;   // currently clicked / searched node
+
+// view when no node is selected: dim other types, keep them visible, hide links
+function applyFilterView() {
+  d3.selectAll('.labels text').classed('label-visible', false).classed('label-selected', false);
+  d3.selectAll('.links line').classed('faded', false).classed('highlight', false);
+  if (activeType) {
+    d3.selectAll('.nodes circle')
+      .classed('faded', false).classed('neighbor', false)
+      .classed('type-dim', function(d) { return d.Tipo !== activeType; })
+      .classed('type-on',  function(d) { return d.Tipo === activeType; });
+    g.select('.links').classed('links-hidden', true);   // hide links until a node is clicked
+  } else {
+    d3.selectAll('.nodes circle')
+      .classed('faded', false).classed('neighbor', false)
+      .classed('type-dim', false).classed('type-on', false);
+    g.select('.links').classed('links-hidden', false);
+  }
+}
+
+// a node was clicked / searched: reveal its links + neighbours
+function showNodeSelection(nome) {
+  selectedName = nome;
+  g.select('.links').classed('links-hidden', false);
+  d3.selectAll('.nodes circle').classed('type-dim', false).classed('type-on', false);
+  highlightNeighbors(nome);
+}
+
+// empty-canvas click: drop the node selection but keep the active filter
+function clearSelection() {
+  selectedName = null;
   d3.selectAll('.nodes circle').classed('selected', false);
   clearHighlight();
+  applyFilterView();
+}
+
+// toggle a type filter chip
+function setFilter(type) {
+  activeType = (activeType === type) ? null : type;
+  document.querySelectorAll('.type-chip').forEach(function(el) {
+    el.classList.toggle('active', el.getAttribute('data-type') === activeType);
+  });
+  selectedName = null;
+  d3.selectAll('.nodes circle').classed('selected', false);
+  applyFilterView();
+}
+
+// click on empty canvas clears the node selection but keeps the active filter
+svg.on('click', function() {
+  clearSelection();
 });
 
 var linksArray = [];
@@ -509,7 +631,7 @@ d3.csv('../../data/lista-geral-do-mapeamento.csv', function(error, graph) {
       d3.event.stopPropagation();
       d3.selectAll('.nodes circle').classed('selected', false);
       d3.select(this).classed('selected', true);
-      highlightNeighbors(d.Nome);
+      showNodeSelection(d.Nome);
       showDetail(d);
     })
     .call(d3.drag()
@@ -634,17 +756,38 @@ function showDetail(d) {
   if (conns.length === 0) {
     connCards = '<div class="conn-empty">No connections registered.</div>';
   } else {
-    conns.forEach(function(target) {
+    function connCard(target) {
       var tName = target.Nome || target;
       var tImg  = target.Imagem || '';
       var thumb = tImg
         ? '<img class="conn-thumb" src="' + tImg + '" onerror="this.style.display=\'none\'">'
         : '<div class="conn-thumb" style="display:flex;align-items:center;justify-content:center;color:#1e2d3d;font-size:0.6rem">—</div>';
-      connCards += '<div class="conn-card" onclick="selectByName(\'' + tName.replace(/'/g, "\\'") + '\')">'
-        + thumb
-        + '<span class="conn-name">' + tName + '</span>'
-        + '</div>';
+      return '<div class="conn-card" onclick="selectByName(\'' + tName.replace(/'/g, "\\'") + '\')">'
+        + thumb + '<span class="conn-name">' + tName + '</span></div>';
+    }
+    // group by type (Location, Historical Figure, Historical Event, then others)
+    var groups = {};
+    conns.forEach(function(target) {
+      var t = target.Tipo || 'Outro';
+      (groups[t] = groups[t] || []).push(target);
     });
+    var ORDER = ['Local', 'Personagem', 'Fato Histórico'];
+    ORDER.concat(Object.keys(groups).filter(function(t) { return ORDER.indexOf(t) < 0; }))
+      .forEach(function(tipo) {
+        var arr = groups[tipo];
+        if (!arr || !arr.length) return;
+        var m = tipoMeta(tipo);
+        connCards +=
+          '<div class="conn-group">' +
+            '<div class="conn-group-header" style="border-left-color:' + m.color + '">' +
+              '<span class="cg-dot" style="background:' + m.color + '"></span>' +
+              '<span class="cg-name">' + m.label + '</span>' +
+              '<span class="cg-latin">' + m.latin + '</span>' +
+              '<span class="cg-count">(' + arr.length + ')</span>' +
+            '</div>' +
+            arr.map(connCard).join('') +
+          '</div>';
+      });
   }
 
   var tipo  = d.Tipo || 'Other';
@@ -675,8 +818,9 @@ function selectByName(nome) {
   d3.selectAll('.nodes circle')
     .filter(function(d) { return d.Nome === nome; })
     .classed('selected', true);
-  highlightNeighbors(nome);
+  showNodeSelection(nome);
   showDetail(node);
+  focusNode(nome);
 }
 
 </script>
