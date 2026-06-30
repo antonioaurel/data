@@ -1,0 +1,29 @@
+name: Validate data & derived files
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data-visualization/recife-history-connections/data/lista-geral-do-mapeamento.csv'
+      - 'data-visualization/recife-history-connections/data/graph.json'
+      - 'data-visualization/recife-history-connections/data/content.json'
+      - 'data-visualization/recife-history-connections/build.py'
+  pull_request:
+    paths:
+      - 'data-visualization/recife-history-connections/data/lista-geral-do-mapeamento.csv'
+      - 'data-visualization/recife-history-connections/data/graph.json'
+      - 'data-visualization/recife-history-connections/data/content.json'
+      - 'data-visualization/recife-history-connections/build.py'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate base & check derived files are in sync
+        working-directory: data-visualization/recife-history-connections
+        run: python3 build.py --check

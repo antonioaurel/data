@@ -431,7 +431,7 @@
 
 <div id="tooltip"></div>
 
-<script src="https://d3js.org/d3.v4.min.js"></script>
+<!-- d3 removed: the matrix loads JSON via fetch and draws on canvas (no library needed) -->
 <script>
 
 /* ── Constants ────────────────────────────────────────────────────────────── */
@@ -449,7 +449,7 @@ function tipoMeta(tipo) {
 }
 
 /* ── State ────────────────────────────────────────────────────────────────── */
-var names = [], nodeData = {}, adjMatrix, N;
+var names = [], nodeType = {}, nodeContent = {}, adjMatrix, N;
 var selectedRow = -1;
 var filterIndices = null; // null = no filter, Set = active filter
 
@@ -474,31 +474,26 @@ window.addEventListener('load',   positionMinimap);
 window.addEventListener('resize', positionMinimap);
 
 /* ── Load CSV ─────────────────────────────────────────────────────────────── */
-d3.csv('../data/lista-geral-do-mapeamento.csv', function(error, graph) {
-  if (error) { console.error(error); return; }
+// #1+#2+#3: load only the lightweight graph (~32 KB) to render; no d3.
+fetch('../data/graph.json').then(function(r) { return r.json(); }).then(function(graph) {
+  var raw = graph.nodes;                                  // [{n, t}] in file order
+  var order = raw.map(function(_, i) { return i; })
+                 .sort(function(a, b) { return raw[a].n.localeCompare(raw[b].n, 'pt-BR'); });
+  var remap = new Array(raw.length);
+  order.forEach(function(oldI, newI) { remap[oldI] = newI; });
 
-  graph.sort(function(a, b) { return a.Nome.localeCompare(b.Nome, 'pt-BR'); });
-  names = graph.map(function(r) { return r.Nome; });
+  names = order.map(function(oldI) { return raw[oldI].n; });
   N = names.length;
-
-  var nameIdx = {};
-  names.forEach(function(n, i) { nameIdx[n] = i; nodeData[n] = graph[i]; });
+  names.forEach(function(n, i) { nodeType[n] = raw[order[i]].t; });
 
   adjMatrix = new Uint8Array(N * N);
-  graph.forEach(function(row) {
-    var i = nameIdx[row.Nome];
-    Object.keys(row).forEach(function(k) {
-      if (k.startsWith('Intercon') && row[k].trim() !== '') {
-        var j = nameIdx[row[k].trim()];
-        if (j !== undefined) { adjMatrix[i * N + j] = 1; adjMatrix[j * N + i] = 1; }
-      }
-    });
+  graph.edges.forEach(function(e) {
+    var i = remap[e[0]], j = remap[e[1]];
+    adjMatrix[i * N + j] = 1; adjMatrix[j * N + i] = 1;
   });
 
-  var total = 0;
-  for (var x = 0; x < adjMatrix.length; x++) { if (adjMatrix[x]) total++; }
   document.getElementById('stats').innerHTML =
-    '<strong>' + N + '</strong> nós · <strong>' + (total / 2) + '</strong> conexões';
+    '<strong>' + N + '</strong> nós · <strong>' + graph.edges.length + '</strong> conexões';
 
   // Setup minimap canvas (physical N×N → CSS 160×160)
   minimapEl.width  = N;
@@ -506,7 +501,13 @@ d3.csv('../data/lista-geral-do-mapeamento.csv', function(error, graph) {
 
   buildLabels();
   applyZoom(CELL);
-});
+
+  // descriptions/locations aren't needed to render — load them in the background
+  fetch('../data/content.json').then(function(r) { return r.json(); }).then(function(c) {
+    nodeContent = c;
+    if (selectedRow >= 0) showNodeDetail(names[selectedRow]);   // refresh an open panel
+  }).catch(function() { /* panel just shows no description */ });
+}).catch(function(err) { console.error(err); });
 
 /* ── Build axis labels ────────────────────────────────────────────────────── */
 function buildLabels() {
@@ -797,8 +798,9 @@ document.getElementById('filter-clear').addEventListener('click', function() {
 
 /* ── Detail panel with grouped connections ────────────────────────────────── */
 function showNodeDetail(name) {
-  var d = nodeData[name];
-  if (!d) return;
+  var t = nodeType[name];
+  if (t === undefined) return;
+  var c = nodeContent[name] || {};   // {} until content.json finishes loading
 
   document.getElementById('panel-placeholder').style.display = 'none';
 
@@ -810,7 +812,7 @@ function showNodeDetail(name) {
   var groups = {};
   var ORDER  = ['Local', 'Personagem', 'Fato Histórico'];
   conns.forEach(function(cn) {
-    var tipo = (nodeData[cn] && nodeData[cn].Tipo) ? nodeData[cn].Tipo : 'Outro';
+    var tipo = nodeType[cn] || 'Outro';
     if (!groups[tipo]) groups[tipo] = [];
     groups[tipo].push(cn);
   });
@@ -842,11 +844,11 @@ function showNodeDetail(name) {
   var pc = document.getElementById('panel-content');
   pc.innerHTML =
     '<div class="pd-header">' +
-      (d.Tipo  ? '<div class="pd-type">' + d.Tipo + '</div>' : '') +
+      (t   ? '<div class="pd-type">' + t + '</div>' : '') +
       '<div class="pd-name">' + name + '</div>' +
-      (d.Local ? '<div class="pd-local">📍 ' + d.Local + '</div>' : '') +
+      (c.l ? '<div class="pd-local">📍 ' + c.l + '</div>' : '') +
     '</div>' +
-    (d['Descrição'] ? '<div class="pd-desc">' + d['Descrição'] + '</div>' : '') +
+    (c.d ? '<div class="pd-desc">' + c.d + '</div>' : '') +
     '<div class="pd-conn-list">' +
       '<div class="pd-conn-total">Conexões (' + conns.length + ')</div>' +
       groupHtml +
