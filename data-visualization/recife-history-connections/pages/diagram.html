@@ -94,6 +94,62 @@
       height: 100%;
     }
 
+    /* search box over the canvas */
+    #diagram-search { position: absolute; top: 12px; left: 12px; z-index: 6; }
+    .ds-input {
+      width: 220px;
+      background: rgba(15, 25, 35, 0.92);
+      border: 1px solid #2a3d52;
+      border-radius: 6px;
+      color: #f0e6d3;
+      font-family: 'Raleway', sans-serif;
+      font-size: 0.82rem;
+      padding: 0.45rem 0.7rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .ds-input::placeholder { color: #4a6070; }
+    .ds-input:focus { border-color: #e8a838; }
+
+    /* navigation hint */
+    #diagram-hint {
+      position: absolute; bottom: 12px; left: 12px; z-index: 6;
+      max-width: 360px;
+      background: rgba(15, 25, 35, 0.9);
+      border: 1px solid #2a3d52;
+      border-radius: 8px;
+      padding: 0.55rem 1.9rem 0.6rem 0.8rem;
+      color: #9fb3c0;
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+    #diagram-hint strong {
+      display: block; color: #e8a838;
+      font-size: 0.7rem; letter-spacing: 0.04em;
+      text-transform: uppercase; margin-bottom: 0.2rem;
+    }
+    #hint-close {
+      position: absolute; top: 3px; right: 7px;
+      background: none; border: none; color: #6a7a8a;
+      font-size: 1.05rem; cursor: pointer; line-height: 1;
+    }
+    #hint-close:hover { color: #e8a838; }
+
+    /* labels shown on selected node + its neighbors */
+    .labels text {
+      display: none;
+      font-family: 'Raleway', sans-serif;
+      font-size: 9px;
+      fill: #dce6ec;
+      paint-order: stroke;
+      stroke: rgba(10, 16, 22, 0.9);
+      stroke-width: 3px;
+      pointer-events: none;
+      user-select: none;
+    }
+    .labels text.label-visible  { display: block; }
+    .labels text.label-selected { fill: #e8a838; font-weight: 600; font-size: 10.5px; }
+
     .links line {
       stroke: rgba(150, 130, 110, 0.15);
       stroke-width: 1px;
@@ -112,6 +168,18 @@
     .nodes circle.selected {
       stroke: #e8a838 !important;
       stroke-width: 3px !important;
+    }
+
+    /* neighbor highlighting on selection */
+    .nodes circle.faded { opacity: 0.12; }
+    .links line.faded   { stroke-opacity: 0.04; }
+    .nodes circle.neighbor {
+      stroke: #e8a838;
+      stroke-width: 2.5px;
+    }
+    .links line.highlight {
+      stroke: rgba(232, 168, 56, 0.85);
+      stroke-width: 2px;
     }
 
     /* Tooltip */
@@ -323,6 +391,15 @@
 
 <div class="main">
   <div id="left">
+    <div id="diagram-search">
+      <input id="node-search" class="ds-input" type="text" placeholder="Buscar nó…" autocomplete="off" list="node-list">
+      <datalist id="node-list"></datalist>
+    </div>
+    <div id="diagram-hint">
+      <strong>Como navegar</strong>
+      <span>🖱️ Arraste para mover &nbsp;·&nbsp; 🔍 Scroll para dar zoom &nbsp;·&nbsp; Clique num nó para destacar suas conexões</span>
+      <button id="hint-close" title="Fechar">×</button>
+    </div>
     <div id="tooltip"></div>
   </div>
   <div id="right">
@@ -370,6 +447,12 @@ svg.call(
     .scaleExtent([0.05, 10])
     .on('zoom', function() { g.attr('transform', d3.event.transform); })
 );
+
+// click on empty canvas clears selection + highlight
+svg.on('click', function() {
+  d3.selectAll('.nodes circle').classed('selected', false);
+  clearHighlight();
+});
 
 var linksArray = [];
 var nodesArray = [];
@@ -442,8 +525,10 @@ d3.csv('../data/lista-geral-do-mapeamento.csv', function(error, graph) {
         tooltip.style.display = 'none';
       })
       .on('click', function(d) {
+        d3.event.stopPropagation();
         node.classed('selected', false);
         d3.select(this).classed('selected', true);
+        highlightNeighbors(d.Nome);
         showDetail(d);
       })
       .call(
@@ -461,6 +546,23 @@ d3.csv('../data/lista-geral-do-mapeamento.csv', function(error, graph) {
           })
       );
 
+  var label = g.append('g')
+    .attr('class', 'labels')
+    .selectAll('text')
+    .data(graph)
+    .enter().append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', function(d) { return -nodeRadius(d.Nome) - 5; })
+      .text(function(d) { return d.Nome; });
+
+  // populate search autocomplete
+  var dl = document.getElementById('node-list');
+  if (dl) {
+    dl.innerHTML = graph.map(function(d) {
+      return '<option value="' + d.Nome.replace(/"/g, '&quot;') + '">';
+    }).join('');
+  }
+
   simulation
     .nodes(graph)
     .on('tick', function() {
@@ -473,10 +575,60 @@ d3.csv('../data/lista-geral-do-mapeamento.csv', function(error, graph) {
       node
         .attr('cx', function(d) { return d.x; })
         .attr('cy', function(d) { return d.y; });
+
+      label
+        .attr('x', function(d) { return d.x; })
+        .attr('y', function(d) { return d.y; });
     });
 
   simulation.force('link').links(linksArray);
 });
+
+function highlightNeighbors(nome) {
+  var keep = {};
+  keep[nome] = true;
+  getConnections(nome).forEach(function(t) { keep[t.Nome || t] = true; });
+
+  d3.selectAll('.nodes circle')
+    .classed('faded', function(d) { return !keep[d.Nome]; })
+    .classed('neighbor', function(d) { return keep[d.Nome] && d.Nome !== nome; });
+
+  d3.selectAll('.links line')
+    .classed('highlight', function(l) {
+      var s = l.source.Nome || l.source, t = l.target.Nome || l.target;
+      return s === nome || t === nome;
+    })
+    .classed('faded', function(l) {
+      var s = l.source.Nome || l.source, t = l.target.Nome || l.target;
+      return !(s === nome || t === nome);
+    });
+
+  d3.selectAll('.labels text')
+    .classed('label-visible',  function(d) { return keep[d.Nome]; })
+    .classed('label-selected', function(d) { return d.Nome === nome; });
+}
+
+function clearHighlight() {
+  d3.selectAll('.nodes circle').classed('faded', false).classed('neighbor', false);
+  d3.selectAll('.links line').classed('faded', false).classed('highlight', false);
+  d3.selectAll('.labels text').classed('label-visible', false).classed('label-selected', false);
+}
+
+/* ── Search + navigation hint ─────────────────────────────────────────────── */
+document.getElementById('node-search').addEventListener('input', function() {
+  var q = this.value.trim().toLowerCase();
+  if (!q || !nodesArray.length) return;
+  var exact = nodesArray.find(function(n) { return n.Nome.toLowerCase() === q; });
+  var m = exact || nodesArray.find(function(n) { return n.Nome.toLowerCase().indexOf(q) !== -1; });
+  if (m) selectByName(m.Nome);
+});
+
+(function() {
+  var btn = document.getElementById('hint-close');
+  if (btn) btn.addEventListener('click', function() {
+    document.getElementById('diagram-hint').style.display = 'none';
+  });
+})();
 
 function getConnections(nodeName) {
   var seen = {};
@@ -554,6 +706,7 @@ function selectByName(nome) {
   d3.selectAll('.nodes circle')
     .filter(function(d) { return d.Nome === nome; })
     .classed('selected', true);
+  highlightNeighbors(nome);
   showDetail(node);
 }
 
