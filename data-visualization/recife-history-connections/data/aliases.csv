@@ -1,0 +1,23 @@
+alias,canonical_id,canonical_name,alias_type,scope,notes
+Igreja da Várzea,LC-0168,Igreja da Várzea (Paróquia Nossa Sra. do Rosário),short_name,nodes/edges,Keeps full canonical parish name.
+Igreja da Várzea (Paróquia Nossa Srª do Rosário),LC-0168,Igreja da Várzea (Paróquia Nossa Sra. do Rosário),abbreviation,nodes/edges,Standardize Sra.
+Museu da Abolição,LC-0239,Museu da Abolição (Casarão de João Alfredo),short_name,nodes/edges,Keeps historical building qualifier.
+Sítio do Valença,LC-0334,Sítio do Valença (Sítio Sabiá),short_name,nodes/edges,Keeps alternate site name.
+Francisco do Rego Barros,PE-AUS-0081,Francisco do Rego Barros (O Conde da Boa Vista),short_name,nodes/edges,Keeps historical title.
+Luis Rego,PE-AUS-0114,Luis do Rego,short_name,nodes/edges,User confirmed Luis do Rego as canonical.
+Luís do Rego,PE-AUS-0114,Luis do Rego,accent,nodes/edges,User confirmed Luis without accent.
+Universidade Católica de Pernambuco,LC-0605,Universidade Católica de Pernambuco (Unicap),short_name,nodes/edges,Keeps acronym in canonical name.
+Rua Imperatriz,LC-0595,Rua da Imperatriz,missing_preposition,nodes/edges,Standardize street name.
+Tunel Josué de Castro,LC-0604,Túnel Josué de Castro,accent,nodes/edges,Standardize accent.
+Igreja da Misericordia,LC-0552,Igreja da Misericórdia,accent,nodes/edges,Standardize accent.
+Rua Das Calçadas,LC-0597,Rua das Calçadas,capitalization,nodes/edges,Standardize capitalization.
+Avenida Dom Helder Câmara,LC-0501,Avenida Dom Hélder Câmara,accent,nodes/edges,Standardize accent.
+Colégio Nobrega,LC-AUS-0052,Colégio Nóbrega,accent,nodes/edges,Standardize accent.
+Mario de Andrade,,Mário de Andrade,accent,nodes/edges,Standardize accent. Canonical node not found.
+Boate Metropole,LC-AUS-0034,Boate Metrópole,accent,nodes/edges,Standardize accent.
+Praço do Frevo,LC-0580,Paço do Frevo,typo,nodes/edges,Correct spelling is Paço do Frevo.
+Museu Cais do Sertão,LC-0358,Cais do Sertão,former_or_alternative_name,nodes/edges,Consolidated under Cais do Sertão.
+Lourenço da Fonseca Barbosa,PE-AUS-0041,Capiba,civil_name,nodes/edges,Civil name of Capiba.
+Basílica da Penha,LC-0422,Basílica de Nossa Senhora da Penha (Igreja da Penha),short_name,nodes/edges,Prefer full canonical religious name.
+Basílica do Carmo,LC-0425,Basílica de Nossa Senhora do Carmo,short_name,nodes/edges,Prefer full canonical religious name.
+Clube Carnavalesco Misto Vassourinhas,LC-0446,Clube Carnavalesco Misto Vassourinhas de Olinda,short_name,nodes/edges,Canonical name includes de Olinda.

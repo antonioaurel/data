@@ -18,7 +18,8 @@ Consequências: o que melhora, o que piora, o que fica pendente
 
 | ADR | Título | Status |
 |---|---|---|
-| [0001](0001-pipeline-de-dados.md) | Pipeline de dados derivados (graph.json + content.json) | Aceito |
+| [0001](0001-pipeline-de-dados.md) | Pipeline de dados derivados (graph.json + content.json) | Aceito (modelo de origem substituído pelo 0002) |
+| [0002](0002-normalized-graph-model.md) | Normalized graph model (nodes / edges / aliases) as the source | Aceito |
 
 ## Decisões ainda a registrar (planejadas)
 
@@ -26,5 +27,5 @@ Discutidas mas ainda não implementadas — viram ADR quando forem feitas:
 
 - **Extrair CSS/JS compartilhado** para `assets/` (hoje tudo é inline e duplicado por página).
 - **i18n**: unificar PT/EN numa página só com arquivo de textos, em vez de duas cópias.
-- **Modelo de dados**: trocar as 15 colunas `Interconexão` (limite de grau = 15) por uma
-  lista de arestas explícita, conforme a base cresce.
+- **Migrar `diagram.html` e `stats.html`** para consumir `graph.json`/`content.json`
+  diretamente, aposentando o wide CSV gerado (`lista-geral-do-mapeamento.csv`).
