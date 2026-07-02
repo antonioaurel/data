@@ -63,6 +63,7 @@
     var activeTypes = {};   // set of selected types (empty = all)
     var query = "";
     var matchIds = null;    // null = no active text query
+    var pairIds = null;     // null = no matrix type-pair drill-down active
 
     function hash() {
       var h = {};
@@ -75,11 +76,12 @@
       var shown = 0;
       for (var i = 0; i < cards.length; i++) {
         var c = cards[i];
-        var okType = true, okText = true;
+        var okType = true, okText = true, okPair = true;
         for (var t in activeTypes) { okType = false; break; }
         if (!okType) { okType = !!activeTypes[c.getAttribute("data-type")]; }
         if (matchIds) { okText = !!matchIds[c.getAttribute("data-id")]; }
-        var visible = okType && okText;
+        if (pairIds) { okPair = !!pairIds[c.getAttribute("data-id")]; }
+        var visible = okType && okText && okPair;
         c.hidden = !visible;
         if (visible) shown++;
       }
@@ -126,6 +128,34 @@
     if (searchInput) searchInput.addEventListener("input", debounce(runSearch, 180));
     if (sortSel) sortSel.addEventListener("change", function () { sortBy(sortSel.value); });
 
+    // matrix drill-down: #pair=place-person -> filter to nodes in that type pair
+    function loadPair(pairStr) {
+      var ctx = el("list-context");
+      var x = new XMLHttpRequest();
+      x.open("GET", dataPath() + "/pairs/" + pairStr + ".json", true);
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        var d = {}; try { d = JSON.parse(x.responseText); } catch (e) {}
+        pairIds = {};
+        (d.nodes || []).forEach(function (id) { pairIds[id] = 1; });
+        if (ctx) {
+          var la = typeMeta(d.a).label, lb = typeMeta(d.b).label, n = (d.nodes || []).length;
+          ctx.innerHTML = "<div class='ctx'>Conexões <strong>" + escapeHtml(la) +
+            " ↔ " + escapeHtml(lb) + "</strong> · " + n + " nós " +
+            "<a href='#' id='ctx-clear'>limpar</a></div>";
+          ctx.hidden = false;
+          var cl = el("ctx-clear");
+          if (cl) cl.addEventListener("click", function (e) {
+            e.preventDefault(); pairIds = null; ctx.hidden = true; ctx.innerHTML = "";
+            if (history.replaceState) history.replaceState(null, "", location.pathname);
+            apply();
+          });
+        }
+        apply();
+      };
+      x.send();
+    }
+
     // inline connection expansion (event delegation)
     listEl.addEventListener("click", function (e) {
       var btn = e.target;
@@ -143,6 +173,7 @@
     }
     if (h.sort && sortSel) { sortSel.value = h.sort; sortBy(h.sort); }
     if (h.q && searchInput) { searchInput.value = h.q; runSearch(); }
+    if (h.pair) { loadPair(h.pair); }
     apply();
   }
 

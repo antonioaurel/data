@@ -158,6 +158,34 @@ a { color: var(--accent); text-decoration: none; }
 .sources { list-style: none; margin: 0; padding: 0; text-align: left; }
 .sources li { padding: var(--s2) 0; border-bottom: 1px solid var(--border); word-break: break-word; }
 
+/* view links + drill-down context */
+.view-links { text-align: center; margin: var(--s3) 0; }
+.view-links a { display: inline-block; min-height: 44px; line-height: 44px; font-weight: 600; }
+#list-context .ctx { text-align: center; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: var(--s2) var(--s3); margin-bottom: var(--s3); font-size: 14px; }
+#list-context .ctx a { margin-left: var(--s2); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* matrix */
+.mx-intro { text-align: center; color: var(--muted); font-size: 14px; margin: 0 0 var(--s4); }
+.mx-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.matrix { border-collapse: separate; border-spacing: var(--s1); margin: 0 auto; }
+.matrix th, .matrix td { text-align: center; vertical-align: middle; }
+.matrix thead th, .matrix tbody th { position: sticky; background: var(--bg); z-index: 1; }
+.matrix thead th { top: 0; }
+.matrix tbody th { left: 0; }
+.matrix th .badge { display: inline-flex; flex-wrap: wrap; justify-content: center;
+  max-width: 76px; white-space: normal; line-height: 1.15; }
+.mx-corner { min-width: 40px; }
+.mx-cell { padding: 0; }
+.mx-cell a { display: flex; align-items: center; justify-content: center; min-width: 60px; min-height: 60px;
+  border-radius: var(--radius); color: var(--text); font-weight: 700; border: 1px solid var(--border); }
+.mx-n { font-size: 15px; }
+.mx-empty { min-width: 60px; min-height: 60px; color: var(--muted-2);
+  border: 1px dashed var(--border); border-radius: var(--radius); }
+.mx-foot { text-align: center; margin-top: var(--s4); }
+
 /* bottom nav */
 .bottom-nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
