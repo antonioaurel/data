@@ -33,15 +33,14 @@ def badge(t, with_label=True):
 
 
 def bottom_nav(active, base=""):
-    items = [(base + "index.html", "Explorar", "🧭", "explorar"),
-             ("#",                 "Favoritos", "★",  "favoritos"),
-             ("#",                 "Sobre",     "ℹ",  "sobre")]
+    items = [(base + "index.html",     "Explorar",  "🧭", "explorar"),
+             (base + "favoritos.html", "Favoritos", "★",  "favoritos"),
+             (base + "sobre.html",     "Sobre",     "ℹ",  "sobre")]
     lis = []
     for href, label, ico, key in items:
         cur = " aria-current='page'" if key == active else ""
-        dis = " aria-disabled='true'" if href == "#" else ""
-        lis.append("<li><a href='%s'%s%s><span class='ico' aria-hidden='true'>%s</span>%s</a></li>"
-                   % (href, cur, dis, ico, esc(label)))
+        lis.append("<li><a href='%s'%s><span class='ico' aria-hidden='true'>%s</span>%s</a></li>"
+                   % (href, cur, ico, esc(label)))
     return ("<nav class='bottom-nav' aria-label='Seções'><ul>%s</ul></nav>" % "".join(lis))
 
 
@@ -164,7 +163,9 @@ def render_node(d):
     p = ["<p><a class='detail-back' href='../list.html'>← Lista</a></p>",
          "<article class='detail'>",
          "<div class='detail-head'>%s<h1 class='detail-name'>%s</h1></div>"
-         % (badge(t), esc(d["name"]))]
+         % (badge(t), esc(d["name"])),
+         "<button id='fav-btn' class='fav-btn js-only' type='button' data-id='%s' "
+         "aria-pressed='false'>☆ Favoritar</button>" % esc(d["id"])]
 
     loc = " · ".join([x for x in [d.get("neighborhood"), d.get("municipality")] if x])
     if loc:
@@ -262,7 +263,48 @@ def render_matrix(matrix):
     return shell("Matriz — Conexões da História", "matrix", "../data", "explorar", body)
 
 
-def build_site(index, details, matrix, site_dir):
+def render_about(sources):
+    if sources:
+        src = "".join(
+            ("<li><a href='%s' rel='noopener' target='_blank'>%s</a></li>"
+             % (esc(s["url"], ), esc(s["title"])) if s.get("url")
+             else "<li>%s</li>" % esc(s["title"]))
+            for s in sources)
+    else:
+        src = "<li class='empty-state'>Registro de fontes em construção.</li>"
+    body = (
+        "<h1 class='section-h' style='font-size:18px'>Sobre o projeto</h1>\n"
+        "<p class='about-p'>Conexões da História mapeia as relações entre as pessoas, os lugares "
+        "e os fatos que formaram Recife e Pernambuco. A ideia é explorar como personagens, locais "
+        "e acontecimentos aparentemente distantes estão ligados ao longo do tempo.</p>\n"
+        "<h2 class='section-h'>Como usar</h2>\n"
+        "<p class='about-p'>Comece pela busca ou pelos tipos na tela Explorar, abra um nó para ver "
+        "sua descrição, fontes e conexões, e use a Matriz para ver como os tipos se conectam no "
+        "conjunto. Salve nós em Favoritos para voltar depois.</p>\n"
+        "<h2 class='section-h'>Metodologia</h2>\n"
+        "<p class='about-p'>Cada nó é uma pessoa (Personagem), um lugar (Local) ou um fato "
+        "histórico, curado a partir de fontes públicas; as conexões são relações documentadas "
+        "entre eles. A base é revisada continuamente — nós ainda sem descrição ou imagem são "
+        "exibidos com a devida marcação.</p>\n"
+        "<h2 class='section-h'>Fontes</h2>\n"
+        "<ul class='sources'>%s</ul>\n" % src
+    )
+    return shell("Sobre — Conexões da História", "about", "../data", "sobre", body)
+
+
+def render_favorites():
+    body = (
+        "<h1 class='section-h' style='font-size:18px'>Favoritos</h1>\n"
+        "<div id='fav-list'></div>\n"
+        "<p id='fav-empty' class='empty-state' hidden>Você ainda não salvou nenhum nó. "
+        "Abra um nó e toque em <strong>☆ Favoritar</strong> para guardá-lo aqui.</p>\n"
+        "<noscript><p class='empty-state'>Os favoritos precisam de JavaScript.</p></noscript>\n"
+        "<p class='view-links'><a href='list.html'>Explorar a lista →</a></p>\n"
+    )
+    return shell("Favoritos — Conexões da História", "favorites", "../data", "favoritos", body)
+
+
+def build_site(index, details, matrix, sources, site_dir):
     node_dir = os.path.join(site_dir, "node")
     os.makedirs(node_dir, exist_ok=True)
     with open(os.path.join(site_dir, "index.html"), "w", encoding="utf-8") as f:
@@ -271,6 +313,10 @@ def build_site(index, details, matrix, site_dir):
         f.write(render_list(index))
     with open(os.path.join(site_dir, "matriz.html"), "w", encoding="utf-8") as f:
         f.write(render_matrix(matrix))
+    with open(os.path.join(site_dir, "sobre.html"), "w", encoding="utf-8") as f:
+        f.write(render_about(sources))
+    with open(os.path.join(site_dir, "favoritos.html"), "w", encoding="utf-8") as f:
+        f.write(render_favorites())
     for d in details:
         with open(os.path.join(node_dir, d["id"] + ".html"), "w", encoding="utf-8") as f:
             f.write(render_node(d))

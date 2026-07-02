@@ -219,8 +219,8 @@ def main():
         write(os.path.join(pairs_dir, "%s-%s.json" % (ta, tb)),
               dumps({"a": ta, "b": tb, "nodes": sorted(ids)}))
 
-    # ---- static HTML (SSG): home + list + matrix + one detail page per node ----
-    n_pages = sitegen.build_site(index, details, matrix, SITE_DIR)
+    # ---- static HTML (SSG): home + list + matrix + about + favorites + node pages ----
+    n_pages = sitegen.build_site(index, details, matrix, source_records, SITE_DIR)
 
     # ---- report ----
     print("=== mobile build — Phase 1 (data layer) ===")
