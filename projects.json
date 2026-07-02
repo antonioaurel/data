@@ -1,25 +1,30 @@
 {
   "site": {
     "title": "Data",
-    "tagline": "Projetos de dados — visualização, qualidade e mais",
+    "tagline": "Data projects — visualization, quality, and more",
     "author": "Antonio Aureliano",
     "author_url": "https://conexoesdahistoria.com/"
   },
   "approaches": [
     {
       "id": "visualization",
-      "label": "Visualização",
-      "desc": "Formas interativas de explorar dados — grafos, mapas, diagramas."
+      "label": "Data Visualization",
+      "desc": "Interactive ways to explore data — graphs, maps, diagrams."
     },
     {
       "id": "quality",
-      "label": "Qualidade de dados",
-      "desc": "Validação, preenchimento (fill rate) e monitoramento da base."
+      "label": "Data Quality",
+      "desc": "Validation, cleaning, and monitoring of the dataset."
     },
     {
       "id": "pipeline",
       "label": "Pipeline / ETL",
-      "desc": "Coleta, transformação e sincronização das fontes de dados."
+      "desc": "Collecting, transforming, and syncing the data sources."
+    },
+    {
+      "id": "prediction",
+      "label": "Data Prediction",
+      "desc": "Models and predictions from the data (statistics and machine learning)."
     }
   ],
   "projects": [
@@ -27,10 +32,28 @@
       "title": "Conexões da História",
       "slug": "recife-history-connections",
       "path": "projects/recife-history-connections/",
-      "summary": "Grafo interativo (D3.js) mapeando as conexões históricas entre pessoas, lugares e eventos de Recife e Pernambuco, com painel de qualidade (fill rate) da base.",
+      "summary": "Interactive D3.js graph mapping the historical connections between people, places, and events in Recife and Pernambuco, with a data-quality (fill rate) panel.",
       "approaches": ["visualization", "quality", "pipeline"],
       "tech": ["D3.js", "Python", "GitHub Pages"],
       "status": "live"
+    },
+    {
+      "title": "Historical Connections — Base Cleaning",
+      "slug": "historical-base-cleaning",
+      "path": "projects/historical-base-cleaning/",
+      "summary": "Cleaning and validating the Conexões da História base: completeness (fill rate), uniqueness, integrity, and validity of nodes and connections.",
+      "approaches": ["quality"],
+      "tech": ["Python"],
+      "status": "wip"
+    },
+    {
+      "title": "Prediction of attendance in events organized through Facebook",
+      "slug": "event-attendance-prediction",
+      "path": "projects/event-attendance-prediction/",
+      "summary": "Predict how many people will actually attend events created on Facebook, from event features and RSVP signals.",
+      "approaches": ["prediction"],
+      "tech": ["Python"],
+      "status": "wip"
     }
   ]
 }
