@@ -1,240 +1,251 @@
-# Implementation prompt — Conexões da História (mobile progressive exploration)
+# Implementation prompt — Conexões da História (consolidated)
 
-> Source spec for the mobile build under [`../mobile/`](../mobile/). Build in the phases at
-> the end — don't try to do everything in one pass. Stop for review between phases.
+> Single source of truth for the build (mobile app under [`../mobile/`](../mobile/)).
+> Build in the phases at the end — don't do everything at once. Stop for review between
+> phases; skip what's already done. UI copy in Portuguese; code, identifiers, comments in
+> English.
 
-## Scope amendments (current — override the text below where they conflict)
+## 1. Role & objective
 
-1. **Map is out of scope.** The base has no coordinates, so the Map projection is dropped:
-   no `map.html`, no `neighborhoods.json`, no `has_geo` field, and the bottom nav is
-   **Explorar · Favoritos · Sobre** (3 items). Projections are **three**: List, Graph, Matrix.
-2. **Types concentrated on the three that exist in the base:** `place` (Local),
-   `person` (Personagem), `historical_fact` (Fato Histórico). The other four spec types
-   (institution, cultural_event, work, other) are not used; the Matrix is therefore **3×3**.
-3. **Mobile components are centered** (title, search, chips, section headings, cards,
-   "comece por aqui"), not left-aligned.
+Implement Conexões da História — a historical knowledge graph of Recife and Pernambuco. The
+interaction model is **progressive exploration**: start from search/discovery → list → detail
+→ only then a focused graph. The full network is never dumped on a small screen.
 
-Everything else below still applies.
+- **One responsive app, one URL, one codebase.** Larger screens expand the same code
+  (multi-panel, denser matrix, full graph). Never a separate desktop site.
+- Stack: static HTML/CSS/JS + a Python build step, deployed on GitHub Pages. No backend, no
+  runtime database — Python turns the source into static artifacts at build time (SSG).
+- Fast, lightweight, accessible on entry-level Android and flaky connections. Performance and
+  weight are requirements (see §3).
 
-## Role & objective
+## 2. Audience — why the design is what it is
 
-Implement the mobile web version of Conexões da História — a historical knowledge graph of
-Recife and Pernambuco (people, places, historical facts, institutions, cultural events,
-works). The interaction model is **progressive exploration**: the user starts from
-search/discovery, sees a list, opens a detail, and only then sees a focused graph. The full
-network is never dumped on a small screen.
-
-Stack: static HTML/CSS/JS front end + a Python build step, deployed on GitHub Pages. No
-backend server, no database at runtime — Python turns the source spreadsheet into static
-artifacts at build time. Deliver a fast, lightweight, accessible site that works on
-entry-level Android and flaky connections. Performance and weight are requirements.
-
-## Audience — why the design is what it is
-
-Primary users are lower-income and student segments in Brazil (classes C and D/E; secondary/
-high-school students). Public data (TIC Domicílios 2025) drives four hard facts:
+Primary users: lower-income and student segments in Brazil (classes C and D/E; high-school
+students). TIC Domicílios 2025 gives four hard facts:
 
 - **Mobile-only.** 67% of class C and 87% of class D/E access the internet exclusively by
-  phone (73% of high-school-level users). The phone is the product.
-- **Entry-level devices.** HD+ Android (~360 px CSS width, weak CPU, old WebView). Design
-  target is 360 px, validated up to 414 px.
+  phone (73% at high-school level). The phone is the product.
+- **Entry-level devices.** HD+ Android (~360px CSS width, weak CPU, old WebView). Design
+  target 360px, validated to 414px.
 - **Scarce, interruptible data.** Prepaid dominates; ~39% run out of data within 3 months.
-  Heavy first loads mean a large share never opens the site.
-- **Weak CPU.** Force-directed simulation stutters — the graph is a focused ego-graph,
-  lazy-loaded, and never the entry point.
+- **Weak CPU.** Force-directed simulation stutters — the graph is focused, lazy, never the
+  entry point.
 
-Design implication: **list-first, lightweight-first, graph and map on demand.**
+Design implication: **list-first, lightweight-first, graph and matrix on demand.**
 
-## Non-negotiable constraints
+## 3. Non-negotiable constraints
 
-- **Layout:** single column, base width 360 px, fluid to 414+; content max-width ~440 px
-  centered on wider screens. Assume only ~600 px reliably above the fold.
-- **Touch:** targets ≥ 48×48 px, ≥ 8 px apart. Body text ≥ 16 px.
-- **Performance budget (measure and report actual sizes):**
-  - Initial route (shell + home + list index): ≤ ~150 KB transferred (gzip), hard ceiling
-    200 KB. No render-blocking third-party.
-  - Graph engine loaded only on first graph open (lazy). Map library + tiles loaded only on
-    explicit map open (lazy).
+- **Layout:** single column on mobile, base 360px, fluid to 414+; content max-width ~440px
+  centered on wider compact screens. Assume only ~600px reliably above the fold.
+- **Touch:** targets ≥ 48×48px, ≥ 8px apart. Body text ≥ 16px.
+- **Performance budget (measure and report):**
+  - Initial compact route ≤ ~150KB gzip (currently ~7KB — stay well under). No render-blocking
+    third-party.
+  - Graph engine and Matrix dense renderer load only on demand / when their view opens.
   - Per-node detail fetched on demand as small JSON; never load the whole graph for the list.
-  - System font stack, or one self-hosted subset woff2 ≤ 30 KB with `font-display: swap`.
-  - Lighthouse mobile (Moto-G-class, "Slow 4G"): Performance ≥ 90, FCP ≤ 2.0 s, TTI ≤ 3.5 s.
-- Core content must render and be navigable **without JavaScript** (static HTML); JS is
-  progressive enhancement.
-- Ship a **service worker** caching shell + list index + visited nodes, so a user who runs
-  out of data can still browse what they've seen.
-- **Compatibility:** older Android WebView. Avoid bleeding-edge JS or transpile/polyfill; no
-  framework unless justified.
-- **Motion:** respect `prefers-reduced-motion`; minimal animation.
-- **Language:** `lang="pt-BR"`. UI copy in Portuguese; code, identifiers, comments in English.
+  - System font stack, or one self-hosted subset woff2 ≤ 30KB with `font-display: swap`.
+  - Lighthouse mobile (Moto-G-class, "Slow 4G"): Performance ≥ 90, FCP ≤ 2.0s, TTI ≤ 3.5s.
+- Core content renders and is navigable **without JavaScript**; JS enhances.
+- Ship a **service worker** caching shell + list index + visited nodes.
+- **Compatibility:** older Android WebView. Avoid bleeding-edge JS / transpile; no framework
+  unless justified.
+- **Motion:** respect `prefers-reduced-motion`. **Language:** `lang="pt-BR"`.
 
-## Architecture — one model, four projections, two transversal patterns
+## 4. Current scope (keep the prompt aligned)
 
-One data model: the historical graph — nodes (`CH-xxxx`) + edges (`CX-xxxx`).
+- **Node types: 3 only** — `place` (Local), `person` (Personagem), `historical_fact`
+  (Fato Histórico), plus a safe `other` (Outro) fallback in code. Applies to UI, build, app.js.
+- **Map is OUT of scope.** No `neighborhoods.json`, no `has_geo`, no "Mapa" nav item, no
+  map-coordinate quality metric.
+- **Projections: 3** — Lista · Grafo · Matriz.
+- **Matrix is 3×3** (6 unordered type pairs, all non-empty). Edge total must reconcile
+  (e.g. 3881). Distribution example: place 351 · person 163 · historical_fact 53.
+- **Mobile components are centered** — title, search, chips, section titles, list cards,
+  "Comece por aqui". Cards stack name + (badge · connection count), centered.
 
-Four projections (views over the same data):
+## 5. Architecture — one model, three projections, two transversal patterns
 
-- **List** — default view. Covers all nodes. Sortable, filterable, inline connection
-  expansion. The accessible spine of the app.
-- **Graph** — ego-graph of one node. Tap a neighbor to recenter. Not the entry point.
-- **Map** — only nodes with a validated neighborhood (Bairros_PE). Layer toggles by type.
-- **Matrix** — the same connections as an adjacency matrix. Answers the aggregate question the
-  ego-graph can't ("how densely do these groups connect?"). On mobile it renders aggregated by
-  node type (7×7); on wide screens the same page expands to the dense node×node matrix. See its
-  contract below.
+- **One data model:** nodes (`CH-xxxx`) + edges (`CX-xxxx`).
+- **Three projections** via an in-content **view switcher**:
+  - **Lista** — default. All nodes. Sortable, filterable, inline connection expansion. The
+    accessible spine.
+  - **Grafo** — focused graph + bottom panel (§10). Not the entry point.
+  - **Matriz** — the same connections as a 3×3 adjacency matrix by node type.
+- **Two transversal patterns:** *Entry/discovery* (search, category chips, "comece por aqui")
+  and *Detail* (a bottom sheet opened from any view).
 
-Two transversal patterns (cut across all views):
+Do not build a Map or a timeline view.
 
-- **Entry / discovery** — search (alias-aware), category chips, explore-by-neighborhood, and a
-  "start here" of highly-connected nodes for serendipity.
-- **Detail** — a bottom sheet opened from any view (list card, graph node, map pin, matrix
-  cell → list → node).
+## 6. Responsive mobile ↔ desktop transition
 
-This is **one responsive app**, not a separate mobile and desktop product. Larger screens
-enrich the same code (multi-panel, denser matrix, full graph reachable) — never a second site.
-Do **not** build a timeline view — the data is not inherently temporal (the Matrix is an
-adjacency matrix of connections, not a period×theme grid).
+Detect the **viewport & capabilities**, not the "device."
 
-## Data model & data layer (Python build)
+- Layout from the CSS viewport via media queries + `window.matchMedia`.
+- **No** User-Agent sniffing, device DB, or `screen.width/height` (physical pixels break
+  layout at DPR ~3).
+- **Breakpoints (single source, shared CSS+JS):** compact < 640px (base 360) · medium
+  640–1024px · expanded ≥ 1024px.
+- **What changes:** compact = single column, one view, bottom nav. Expanded = multi-panel
+  (List + detail + Graph), persistent switcher, full graph more reachable. Matrix stays 3×3
+  (expand spacing, not content).
+- **Reactive & state-preserving:** `matchMedia(q).addEventListener('change', …)` to react to
+  resize/rotation live; preserve current node, projection, search, filters, scroll. Re-render
+  layout, not state. Debounce with rAF. Prefer container queries with a media-query fallback.
+- **SSG-safe:** static default is mobile-first single column, works with no JS.
+- **Honest fallback:** never redirect to a desktop site / `m.` subdomain — same URL always.
+  Heavy expanded views hint "abre melhor em tela maior." Optional manual "modo
+  compacto/expandido" toggle persisted in localStorage.
+
+## 7. Navigation & menus
+
+Separate three concepts — do not merge:
+
+- **Sections (where you are)** → bottom nav, **3 items: Explorar · Favoritos · Sobre**.
+- **Projections (ways to view)** → in-content **view switcher** (segmented control):
+  **Lista · Grafo · Matriz**. Switching preserves current node/search/filters.
+- **Entry modes (ways in)** → inside Explorar, not the menu: search, category chips, "comece
+  por aqui".
+
+**Bottom nav (compact chrome):** fixed ~56px, `safe-area-inset-bottom`; icon + short label;
+tap ≥ 48×48px; `aria-current` on active. Hidden on expanded (sidebar/top nav replaces it).
+Bottom sheets and the graph render above the nav or temporarily hide it; never overlap.
+
+**Top bar (per screen):** back affordance when drilled down; centered title; one contextual
+action. Back follows the in-app history stack (matrix→list→node, graph navigation), not just
+browser back.
+
+**Screen map (mobile):**
+
+| Screen | In bottom nav? | Reached from | Notes |
+|---|---|---|---|
+| Explorar (home) | Yes | Bottom nav | Search + chips + "comece por aqui". The hub. |
+| Lista | No (projection) | Explorar / switcher | Default; also = search results. Sort + type filter + inline expansion. |
+| Detalhe do nó | No | Tap any node (card, graph node, matrix→list) | Bottom sheet: description, period, sources, connections; "Ver conexões". Also `/node/{id}.html`. |
+| Grafo | No (projection) | Detail "Ver conexões" / switcher | Focused graph + bottom panel (§10). Lazy. |
+| Matriz | No (projection) | View switcher | 3×3 type×type; cell → filtered Lista → detail. |
+| Categorias | No (entry mode) | Chip → `/categoria/{type}` | Leads into filtered Lista. |
+| Favoritos | Yes | Bottom nav | localStorage nodes; empty state explains saving. |
+| Sobre / Fontes | Yes | Bottom nav | Context, methodology, full FT registry. |
+| Grafo completo (avançado) | No | Link in Grafo/Sobre | Advanced, heavily lazy; "abre melhor em tela maior". Not primary. |
+
+**Back / history contract:** an in-app stack so back is predictable (graph navigation,
+matrix→list→node, filter states push/pop). Device/browser back and top-bar back follow the
+same stack. Deep links (`/node/{id}.html`, `/matriz.html#pair=person-place`) open directly
+with Explorar as the root.
+
+## 8. Data model & data layer (Python build)
 
 Source spreadsheet sheets → English identifiers:
 
-| Source sheet | Meaning | Key | Core fields (→ English) |
+| Source sheet | Meaning | Key | Core fields |
 |---|---|---|---|
 | Base | Canonical nodes | CH-xxxx | id, name, type, subtype, short_description, period, reference_location, municipality, notes, curation_status |
 | Interconexoes | Consolidated edges | CX-xxxx | id, origin_id, destination_id, type, subtype, strength, description, period, notes, curation_status |
-| Expansao_PE | Candidate edges | EX-xxxx | (same as edges) + evidence — **excluded from the public graph by default** |
-| Bairros_PE | Neighborhood mapping | node ref | node_id, neighborhood, reference_location, municipality, scope, curation_status |
+| Expansao_PE | Candidate edges | EX-xxxx | (same as edges) + evidence — **excluded from the public graph** |
 | Aliases | Name variants | AL-xxxx | id, node_id, canonical_name, alias, alias_type |
 | Fontes | Source registry | FT-xxxx | id, title, source_type, author, year, url, notes |
 
-Node type values: `place, person, historical_fact, institution, cultural_event, work, other`.
+Node type values: `place, person, historical_fact` (+ `other` fallback). Bairros_PE/geography
+out of scope.
 
-`build.py` reads the spreadsheet and emits deterministic static artifacts:
+`build.py` emits deterministic static artifacts:
 
-- `data/index.json` — `[{id, name, type, conn_count, has_geo}]`
-- `data/search.json` — `[{id, name, type, aliases:[…]}]` (names/aliases normalized: lowercased,
-  diacritics stripped)
+- `data/index.json` — `[{id, name, type, conn_count}]` (no `has_geo`).
+- `data/search.json` — `[{id, name, type, aliases:[…]}]`, normalized (lowercased, diacritics
+  stripped).
 - `data/node/{id}.json` — per-node detail: description, period, reference_location, sources
-  (resolved FT), aliases, direct edges `[{target_id, target_name, target_type, type, strength}]`
-- `data/neighborhoods.json` — validated-only geo: `[{node_id, name, type, lat, lng, neighborhood}]`
-- `data/sources.json` — full FT registry
-- `data/matrix.json` — aggregated type×type adjacency: for each unordered pair of node types
-  (including same-type), `{type_a, type_b, count, strength_sum}`. Tiny (≤ 28 pairs). Connections
-  undirected by default → symmetric. For the drill-down, either filter edges client-side by
-  type pair or emit `data/pairs/{type_a}-{type_b}.json` listing those edges
-  `[{origin_id, destination_id, type, strength}]` — keep it light.
+  (resolved FT), aliases, direct edges `[{target_id, target_name, target_type, type, strength}]`.
+- `data/sources.json` — full FT registry.
+- `data/matrix.json` — 3×3 adjacency: per unordered type pair (incl. same-type)
+  `{type_a, type_b, count, strength_sum}` (6 pairs). Undirected/symmetric; counts reconcile to
+  the edge total. Drill-down: filter client-side or emit `data/pairs/{type_a}-{type_b}.json`.
 
-Keep the data-quality step (fill-rate / validation report) and **fail the build (or warn
-loudly) on broken references** — an edge to a non-existent node id, or a Bairros_PE row flagged
-validated but missing coordinates.
+Keep the data-quality step (fill-rate + reference integrity); fail/warn on broken references
+(edge → unknown node id). No map/coordinate metrics.
 
-**Static site generation:** the build should also pre-render static HTML (home, list, per-node,
-per-category, per-neighborhood, about) from the JSON, so the site works without JS and loads
-instantly. JS then enhances (live search, graph, map, bottom sheet). Treat SSG as the primary
-architecture.
+**SSG:** the build also pre-renders static HTML (home, list, per-node, per-category, about) so
+the site works without JS and loads instantly. JS enhances. SSG is the primary architecture.
 
-## Information architecture — all pages
+## 9. Colors — single source of truth (mobile == desktop)
 
-Global chrome on every page: a fixed bottom nav (~56 px, safe-area insets) with
-**Explorar · Mapa · Favoritos · Sobre**, a skip link, and an offline indicator when the
-service worker serves cached content.
+Type colors identical on mobile and desktop via one definition. No duplicated hex.
 
-1. **Home / Explore (`/`)** — search bar, category chips, explore-by-neighborhood, "start
-   here" most-connected nodes.
-2. **List / Search results (`/list.html`)** — default projection. Cards (name, type,
-   connection count). Sort + type filter chips. Doubles as search results.
-3. **Node detail (`/node/{id}.html` + bottom sheet)** — description, type, period, reference
-   location, sources, main connections. Buttons: "Ver conexões" (→ graph), "Abrir no mapa"
-   (only if `has_geo`). Deep-linkable & shareable.
-4. **Connections / ego-graph (`/graph.html#node={id}`)** — center node + direct neighbors.
-   Direct/All toggle. Tap neighbor → recenter. Breadcrumb/back. Lazy-loaded.
-5. **Map (`/map.html`)** — validated-geo nodes only, pins by type, layer toggles. Tap pin →
-   mini detail. Lazy-loaded.
-6. **Matrix (`/matriz.html`)** — adjacency matrix of connections. Mobile: aggregated 7×7
-   type×type, tappable cell-by-cell. Wide screens: same page expands to dense node×node. Cell →
-   filtered List → node detail.
-7. **Categories browse (`/categorias.html`, `/categoria/{type}.html`)** — browse by type →
-   filtered List.
-8. **Neighborhoods browse (`/bairros.html`, `/bairro/{slug}.html`)** — browse by validated
-   neighborhood → List or Map.
-9. **Favorites (`/favoritos.html`)** — localStorage, no account.
-10. **About / Sources (`/sobre.html`)** — context, methodology, credibility, full FT registry.
-11. **Advanced: full graph (`/graph-completo.html`)** — optional whole-network view, clearly
-    marked advanced, heavily lazy — never a primary path.
+- Define the palette once as CSS custom properties on `:root`, using **desktop values as
+  canonical**: `--type-place`, `--type-person`, `--type-historical_fact`, `--type-other`, plus
+  readable on-color text vars `--type-*-ink` (darkest same-family stop).
+- CSS consumes the vars via one utility (e.g. `[data-type="place"]` → `var(--type-place)`),
+  applied the same in list, chips, matrix, graph legend.
+- JS **reads from the vars, never hardcodes hex**:
+  `getComputedStyle(document.documentElement).getPropertyValue('--type-'+type).trim() || …other`.
+  Prefer setting `data-type` and letting CSS color; use JS lookup only where canvas/SVG needs
+  an explicit color string.
+- **Delete the old duplicate hex set** so there is exactly one place to change a color.
+- Keep the non-color cue (icon + text label). Text on a type color uses `--type-*-ink`.
+  Contrast AA. Dark mode overrides the same vars in one place.
 
-The four projections (List, Graph, Map, Matrix) are reachable via a **view switcher** on the
-same data, not four disconnected tabs; keep the bottom nav to four items and expose projections
-through the switcher and contextual entry points.
+## 10. Component & interaction contracts
 
-System states to design everywhere: initial loading (skeletons, not spinners), empty, no
-search results, offline / data-depleted (serve cached, tell the user), node without geography
-(hide "Abrir no mapa").
+**Lista (centered on mobile):** cards stack name + (badge · connection count), centered.
+Sort: name / connections / type. Filter: type chips (multi-select). Inline connection
+expansion reveals direct neighbors without leaving the list.
 
-## Component & interaction contracts
+**Search (alias-aware):** matches names + aliases; diacritic-insensitive, case-insensitive,
+debounced; renders through the Lista card.
 
-- **List** — cards show name, type badge (color + icon + text), connection count. Sort:
-  name / connection count / type. Filter: type chips (multi-select). Inline connection
-  expansion reveals direct neighbors as a sub-list without leaving the list.
-- **Search** — matches canonical names and aliases; diacritic-insensitive, case-insensitive;
-  debounced. Renders through the List component.
-- **Node detail (bottom sheet)** — opened from any view. ARIA dialog, focus trap, dismiss on
-  backdrop/escape, safe-area aware. Always show sources. "Abrir no mapa" only when `has_geo`.
-  Each node also has a full static page for sharing/SEO/no-JS.
-- **Ego-graph (the most important behavior)** — center = selected node; direct neighbors
-  fanned around it. Toggle "Diretas (n)" vs "Todas (m)". Tap neighbor → it becomes the new
-  center, push previous onto a history stack. Breadcrumb + back restores prior centers
-  (**required** — without recenter+breadcrumb the graph is a dead end). Edge stroke width ∝
-  strength; node color = type (+ shape/icon as non-color cue). Provide a text-equivalent (the
-  detail's connections list).
-- **Map** — pins only for validated-geo nodes; color by type; layer toggles. Tap pin → mini
-  bottom sheet + link to detail. Lazy-load library and tiles; consider a static preview
-  fallback.
-- **Matrix (reuse List + detail, don't reimplement):**
-  - *What it is:* an adjacency matrix over the same nodes/edges; cell intensity from aggregated
-    strength. Undirected/symmetric by default.
-  - *Two responsive zoom levels, same URL `/matriz.html`, same app:* **mobile (primary)** =
-    aggregated type×type (7×7), fits/readable/tappable; **wide (advanced)** = same page expands
-    to dense node×node (responsive expansion, not a separate desktop site — if hinting on
-    mobile, say "abre melhor em tela maior," never "acesse a versão desktop").
-  - *Cell content (accessibility-critical):* always show the **number** (connection count);
-    color/intensity is a secondary cue only — never color alone. Empty pairs render muted and
-    non-interactive. Diagonal cells (same-type↔same-type) are valid.
-  - *Drill-down:* tap cell → List filtered to the connections between those two types → tap a
-    node → node-detail bottom sheet → "Ver conexões" opens the ego-graph. Every hop reuses
-    existing components. The cell is the interactive asset; the full grid need not be "usable
-    whole" on mobile.
-  - *Rendering:* semantic HTML `<table>` (or CSS grid), no charting library; sticky headers
-    using type badges; each cell a `<button>`/link ≥ 48×48 px with an `aria-label` like
-    "Personagem ↔ Local: 12 conexões"; full keyboard nav. On narrowest widths may collapse to a
-    triangle (symmetric). The dense node×node renderer (wide only) may need virtualization/
-    canvas — lazy-load only when that view opens and only above the breakpoint.
-  - *Direction:* if origin→destination direction is meaningful in Interconexoes (e.g.
-    "influenced", "gave rise to"), the matrix is **directed** — do not mirror it; keep both
-    triangles. **Confirm before assuming undirected.**
+**Node detail (bottom sheet):** opened from any view. ARIA dialog, focus trap, dismiss on
+backdrop/escape, safe-area aware. Shows description, type, period, reference location, sources,
+connections; "Ver conexões". Also a full static `/node/{id}.html`.
 
-## Routing & shareable URLs
+**Grafo — simplified (replaces the earlier elaborate ego-graph):**
+- Focused graph: current node centered + direct connections.
+- Tap a node → bottom sheet with summary (name, badge, short description) + "Ver detalhes" and
+  "Ver conexões". Panel doesn't cover the whole screen; graph stays visible above it.
+- Navigation through the panel, not in-graph state: "Ver conexões" recenters on the tapped node
+  (plain navigation + normal back/history).
+- **Dropped:** the "Diretas/Todas" toggle and in-graph breadcrumb stack. Back = standard.
+- **Kept:** edge stroke width ∝ strength; node color = type (shared CSS vars + icon/shape);
+  lazy-load the engine on first open. Provide a text-equivalent (the detail's connections list).
 
-Static per-node pages (`/node/{id}.html`) are canonical and shareable. Filters use hash params
-(`/list.html#type=person&sort=connections`); graph uses `/graph.html#node={id}`. Client JS may
-intercept navigation for smoother transitions but must degrade to plain page loads. GitHub
-Pages has no server rewrites — don't rely on them.
+**Matriz (3×3):** cells = connections between two types; intensity from aggregated strength;
+undirected/symmetric. **Always show the number**; color is secondary, never alone. Diagonal
+cells valid. Drill-down: tap cell → Lista filtered to that type pair → node → detail →
+"Ver conexões". Reuse components. Rendering: semantic `<table>`/grid, no charting library;
+sticky headers with type badges; each cell a `<button>`/link ≥ 48×48px with an `aria-label`
+like "Personagem ↔ Local: 12 conexões"; keyboard operable. Narrowest widths may collapse to a
+triangle. Expanded: expand spacing, content stays 3×3. **Confirm direction:** if
+origin→destination is meaningful in Interconexoes, the matrix is directed — keep both
+triangles.
 
-## Design system
+## 11. Routing & shareable URLs
 
-Tokens for spacing, radius, and a node-type color palette; every type is **color + icon +
-text label** (never color alone). Suggested type colors (adjust freely): place = teal,
-person = purple, historical_fact = amber, institution = blue, cultural_event = pink,
-work = coral, other = gray. Single column, generous touch targets, high contrast (WCAG AA),
-no heavy shadows/gradients. Bottom nav fixed; content padded to clear it.
+Static per-node pages (`/node/{id}.html`) are canonical/shareable. Filters use hash params
+(`/list.html#type=person&sort=connections`); graph `/graph.html#node={id}`; matrix
+`/matriz.html#pair=person-place`. Client JS may intercept navigation but must degrade to plain
+page loads. GitHub Pages has no server rewrites.
 
-## Accessibility
+## 12. Design system
 
-Semantic HTML; core content usable without JS. Keyboard operable; visible focus;
-skip-to-content link. Bottom sheet as a proper dialog; announce view changes. Contrast AA;
-not color-only; `prefers-reduced-motion` honored. Images: meaningful alt; explicit
-width/height to avoid layout shift; many nodes have no image — handle gracefully.
+Tokens for spacing/radius; the type color palette lives **only** in `:root` (§9). Every type =
+color + icon + text label. Mobile: single column, centered components (§4), generous touch
+targets, high contrast (WCAG AA), no heavy shadows/gradients. Bottom nav fixed; content padded
+to clear it.
 
-## Suggested repo structure
+## 13. Accessibility
+
+Semantic HTML; core content usable without JS. Keyboard operable; visible focus; skip link.
+Bottom nav as a `<nav>` landmark with `aria-current`. View switcher as a tablist/segmented
+control. Bottom sheet as a dialog. Announce screen/projection changes politely; sensible focus
+after navigation. Contrast AA; not color-only; `prefers-reduced-motion`. Images: meaningful
+alt, explicit width/height; many nodes have no image — handle gracefully.
+
+## 14. States
+
+Loading: skeletons, not spinners. Empty Favoritos: explain how to save; link to Explorar. No
+search results: offer to clear filters / browse categories. Projection N/A: greyed switcher
+item with a one-line reason. Offline/data-depleted: nav still works for cached screens;
+indicate cached mode.
+
+## 15. Suggested repo structure
 
 Project-first, kebab-case, lowercase. (Adapted here under `mobile/` inside the existing
 `recife-history-connections/` project, sharing the source CSVs.)
@@ -242,55 +253,54 @@ Project-first, kebab-case, lowercase. (Adapted here under `mobile/` inside the e
 ```
 mobile/
   README.md
-  build/
-    build.py          # CSV -> JSON + static HTML (SSG)
-    quality.py        # fill-rate / reference-integrity report
-  data/               # generated JSON (index, search, node/, neighborhoods, sources, matrix, pairs/)
-  src/
-    templates/        # page templates used by the build
-    css/
-    js/               # progressive enhancement (search, graph [lazy], map [lazy], sheet, sw)
-  site/               # generated static site = GitHub Pages output
+  build/  build.py (CSV -> JSON + static HTML) · quality.py · common.py · sitegen.py
+  data/   generated JSON (index, search, node/, sources, matrix, pairs/)
+  src/    templates / css (single :root palette) / js (search, graph [lazy], matrix, sheet, sw)
+  site/   generated static site = GitHub Pages output
 ```
 
-## Build & deploy
+## 16. Build & deploy
 
-One command builds everything: `python build/build.py` → validates data, emits `data/*.json`
-and static HTML into `site/`. GitHub Pages serves `site/` (or `docs/`). Keep the build
-reproducible; commit generated output or build it in CI. Print a build report: node/edge
-counts, fill rates, broken references, and transferred size of the initial route against the
-budget.
+One command: `python build/build.py` → validates data, emits `data/*.json` + static HTML into
+`site/`. GitHub Pages serves `site/`. Reproducible; commit generated output or build in CI.
+Print a build report: node/edge counts, type distribution, matrix reconciliation, fill rates,
+broken references, initial-route size vs budget.
 
-## Phased delivery (in order; stop for review between phases)
+## 17. Phased delivery (in order; stop for review; skip what's done)
 
-1. **Data layer** — `build.py` + `quality.py`: source → JSON, integrity checks, build report.
-2. **Shell + Home + List** — static HTML, tiny JS, alias-aware search, type filter, sort.
-   Meet the performance budget here and report actual sizes.
+1. **Data layer** — build.py + quality.py: source → JSON (3 types, matrix 3×3, no geo),
+   integrity checks, report. ✅ done
+2. **Shell + Explorar + Lista** — static HTML, tiny JS, alias-aware search, type filter, sort,
+   centered components. Report sizes. ✅ done
 3. **Node detail** — bottom sheet + static per-node pages, with sources and connections list.
-4. **Ego-graph** — lazy engine, recenter + breadcrumb + direct/all toggle + strength-weighted
-   edges.
-5. **Map** — lazy Leaflet (or lighter), validated-geo pins, layer toggles.
-5. ~~**Map**~~ — **dropped** (see Scope amendments: no coordinates in the base).
-6. **Matrix** — `data/matrix.json` in the build; **3×3** type×type on mobile with cell →
-   filtered List drill-down; dense node×node expansion on wide screens (lazy, above breakpoint).
-7. **Browse + Favorites + About** — categories, neighborhoods, localStorage favorites,
-   sources/methodology page.
-8. **States + a11y + perf pass** — service worker/offline, empty/no-result states,
-   Lighthouse run, real entry-level device test.
+   ✅ static pages done; bottom sheet pending
+4. **Grafo (simplified)** — focused graph + bottom panel; tap node → sheet → "Ver conexões"
+   recenters; edge thickness by strength; lazy.
+5. **Matriz** — `data/matrix.json` 3×3; cell → filtered Lista → node detail.
+6. **Colors unification** — single `:root` palette; JS reads vars; delete duplicate hex; verify
+   identical rendered hex on 360px and ≥1024px. ✅ done
+7. **Responsive layer** — viewport/matchMedia detection, shared breakpoints, state-preserving
+   transition, multi-panel on expanded.
+8. **Navigation** — bottom nav (Explorar·Favoritos·Sobre), view switcher (Lista·Grafo·Matriz),
+   back/history stack.
+9. **Favoritos + Sobre/Fontes** — localStorage favorites, methodology + source registry.
+10. **States + a11y + perf pass** — service worker/offline, empty/no-result states, Lighthouse,
+    real entry-level device test.
 
-## Guardrails
+## 18. Guardrails
 
-- Prefer vanilla JS + tiny libraries. Before adding any dependency > ~30 KB or any framework,
-  **stop and ask**, with the size cost stated. Justify every KB against the budget.
-- Measure and report bundle/route sizes after phases 2, 4, 5.
-- kebab-case, lowercase paths; consistent names between README and folders.
-- Keep the pipeline reproducible; don't hardcode secrets; don't commit anything private.
-- Git: propose commits with clear messages. Do not force-push, rewrite history, or delete
-  branches/files without explicit confirmation.
-- Write a short project `README.md`.
+- Prefer vanilla JS + tiny libraries. Before any dependency > ~30KB or a framework, **stop and
+  ask** with the size cost.
+- Measure and report route/bundle sizes after phases 2, 4, 5, 6.
+- One app, one URL, one codebase. No UA sniffing, no device DB, no separate desktop build.
+- Type colors: one `:root` definition only; grep for stray hex on type elements → none remain.
+- Reuse the existing Lista and detail components in every drill-down; don't reimplement.
+- kebab-case, lowercase paths; consistent names. Reproducible pipeline; no secrets/private data.
+- Git: clear commit messages. No force-push, history rewrite, or deleting branches/files without
+  explicit confirmation.
 
-## Out of scope (MVP)
+## 19. Out of scope
 
-Backend/server, authentication, a content-management/editing UI, candidate edges
-(Expansao_PE) in the public graph, and a timeline view. Note these as future work if relevant.
-```
+Map/geography, timeline, candidate edges (Expansao_PE) in the public graph, backend/server,
+authentication, a content-management/editing UI, native apps, server-side redirects, and any
+User-Agent / device-based detection.
