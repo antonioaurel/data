@@ -46,10 +46,9 @@ def badge(t, with_label=True):
 
 def bottom_nav(active, base=""):
     lis = []
-    for href, label, ico, key in NAV_ITEMS:
+    for href, label, _ico, key in NAV_ITEMS:
         cur = " aria-current='page'" if key == active else ""
-        lis.append("<li><a href='%s%s'%s><span class='ico' aria-hidden='true'>%s</span>%s</a></li>"
-                   % (base, href, cur, ico, esc(label)))
+        lis.append("<li><a href='%s%s'%s>%s</a></li>" % (base, href, cur, esc(label)))
     return ("<nav class='bottom-nav' aria-label='Seções'><ul>%s</ul></nav>" % "".join(lis))
 
 
@@ -316,26 +315,22 @@ PROJECTS = [
 
 
 def render_about():
-    projs = "".join("<li>%s</li>" % esc(p) for p in PROJECTS)
+    # compact layout (fits without scrolling): inline projects, tight spacing.
     body = (
-        "<h1 class='section-h' style='font-size:18px'>Sobre</h1>\n"
+        "<h1 class='section-h' style='font-size:18px;margin:10px 0 8px'>Sobre</h1>\n"
         "<p class='about-p'>Um mapeamento das conexões entre pessoas, locais e eventos da "
         "história de Pernambuco em pontos que influenciaram o Brasil.</p>\n"
-        "<div class='author'>\n"
         "<p class='author-name'>Antonio A. Oliveira</p>\n"
-        "<p class='author-meta'>Recife, Pernambuco — autor, curador e criador</p>\n"
-        "<p><a href='https://medium.com/@antonio-aureliano' target='_blank' rel='noopener'>Medium ↗</a></p>\n"
+        "<p class='author-meta'>Recife, Pernambuco — autor, curador e criador · "
+        "<a href='https://medium.com/@antonio-aureliano' target='_blank' rel='noopener'>Medium ↗</a></p>\n"
         "<p class='about-p'>Curadoria para estudos de data science, data quality, história e "
         "software quality.</p>\n"
-        "</div>\n"
-        "<hr class='divider'>\n"
-        "<h2 class='section-h'>Outros projetos</h2>\n"
-        "<ul class='projects'>%s</ul>\n"
-        "<hr class='divider'>\n"
+        "<h2 class='section-h' style='margin:12px 0 6px'>Outros projetos</h2>\n"
+        "<p class='projects-inline'>%s</p>\n"
         "<p class='about-p disclaimer'><strong>Uso de IA:</strong> pareamento no desenvolvimento; "
-        "revisão da qualidade da base de dados, do texto e validação das conexões; geração de "
-        "mocks; e testes de usabilidade, compatibilidade, disponibilidade e desempenho.</p>\n"
-        % projs
+        "revisão da qualidade da base, do texto e validação das conexões; geração de mocks; e "
+        "testes de usabilidade, compatibilidade, disponibilidade e desempenho.</p>\n"
+        % " · ".join(esc(p) for p in PROJECTS)
     )
     return shell("Sobre — Conexões da História", "about", "../data", "sobre", body)
 
@@ -359,9 +354,13 @@ def render_fillrate(stats):
 
 
 BOOKS = [
-    ("Trilhas do Recife", "guia turístico, histórico e cultural", "João B. M. Braga · 2007", "Amazon"),
-    ("O Recife e suas Ruas", "origem, história e nomenclatura", "IAHGP · 2010", "Estante Virtual"),
-    ("Pernambucanidade", "aspectos históricos", "Nilo Pereira · 1983 · 3 volumes", "Mercado Livre"),
+    ("Trilhas do Recife", "guia turístico, histórico e cultural", "João B. M. Braga · 2007",
+     "Amazon", "https://www.amazon.com.br/Trilhas-Recife-Braga-Batista-Meira/dp/8537302996"),
+    ("O Recife e suas Ruas", "origem, história e nomenclatura", "IAHGP · 2010",
+     "Touchê Livros", "https://www.touchelivros.com.br/o-recife-e-suas-ruas-se-essas-ruas-fossem-minhas/"),
+    ("Pernambucanidade", "aspectos históricos", "Nilo Pereira · 1983 · 3 volumes",
+     "Mercado Livre", "https://www.mercadolivre.com.br/livro-pernambucanidade-alguns-aspectos-historicos-"
+     "nilo-pereira--secretaria-de-turismo-cultura-e-esportes-3-v-1983---g8/up/MLBU3415576957"),
 ]
 
 
@@ -370,9 +369,9 @@ def render_fontes():
         "<li class='book'><div class='book-cover'>%s</div>"
         "<div class='book-body'><p class='book-title'>%s</p>"
         "<p class='book-sub'>%s</p><p class='book-meta'>%s</p>"
-        "<p><a href='#'>%s ↗</a></p></div></li>"
-        % (esc(title), esc(title), esc(sub), esc(meta), esc(store))
-        for title, sub, meta, store in BOOKS)
+        "<p><a href='%s' target='_blank' rel='noopener'>%s ↗</a></p></div></li>"
+        % (esc(title), esc(title), esc(sub), esc(meta), esc(url), esc(store))
+        for title, sub, meta, store, url in BOOKS)
     body = (
         "<h1 class='section-h' style='font-size:18px'>Fontes</h1>\n"
         "<ul class='books'>%s</ul>\n" % cards
