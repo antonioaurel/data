@@ -26,14 +26,16 @@
   }
   // EN strings for static [data-i18n] elements (PT stays in the HTML as the default/fallback).
   var EN = {
-    "nav-inicio": "Home", "nav-fillrate": "Fill rate", "nav-fontes": "Sources", "nav-sobre": "About",
+    "nav-inicio": "Home", "nav-diagrama": "Diagram", "nav-matriz": "Matrix",
+    "nav-fillrate": "Fill rate", "nav-fontes": "Sources", "nav-sobre": "About",
     "sw-list": "List", "sw-graph": "Graph", "sw-matrix": "Matrix",
     "home-tagline": "A mapping of the connections between people, places and events in the history of Pernambuco at points that influenced Brazil.",
     "home-viz": "Visualizations", "home-verlista": "See the full list →",
-    "viz-grafo-n": "Graph", "viz-grafo-d": "Explore a node's connections, one by one.",
     "viz-matriz-n": "Matrix", "viz-matriz-d": "Overview of connections by type.",
-    "viz-mapa-n": "Historical map", "viz-mapa-d": "The points on the map of Recife and region.",
-    "viz-diagrama-n": "Diagram", "viz-diagrama-d": "The full network, item by item.",
+    "viz-mapa-n": "Historical map", "viz-mapa-d": "The points on the map of Recife and region. (original project)",
+    "viz-diagrama-n": "Diagram", "viz-diagrama-d": "Explore a node's connections.",
+    "viz-fillrate-n": "Fill rate", "viz-fillrate-d": "How well the base is filled in, field by field.",
+    "viz-sobre-n": "About", "viz-sobre-d": "The project, the author and the sources.",
     "list-filtros": "Filters", "matriz-h": "Connection matrix",
     "matriz-intro": "How many connections exist between each pair of types. Tap a cell to see the nodes involved.",
     "fill-h": "Fill rate", "fill-note-a": "Fields in amber need curation.", "fill-note-link": "See the full report ↗",
@@ -44,7 +46,10 @@
     "sobre-disclaimer-b": "AI use:", "sobre-disclaimer": " pairing in development; review of the database quality, the text and validation of the connections; mock generation; and usability, compatibility, availability and performance testing.",
     "fl-Nome": "Name", "fl-Descrição": "Description", "fl-Interconexões": "Interconnections",
     "fl-Imagem": "Image", "fl-Tipo": "Type", "fl-Local": "Location",
-    "back-list": "← List", "back-inicio": "← Home"
+    "back-list": "← List", "back-inicio": "← Home", "back-verlista": "See list",
+    "w-nos": "nodes", "w-conexoes": "connections",
+    "ph-home": "Search person, place, event…", "ph-list": "Search…",
+    "btn-graph": "View connections in the graph", "h-conexoes": "Connections"
   };
   function applyI18n() {
     var lang = getLang();
@@ -449,10 +454,12 @@
       (loc ? "<p class='detail-loc'>" + escapeHtml(loc) + "</p>" : "") +
       (dsc ? "<p class='detail-desc'>" + escapeHtml(dsc) + "</p>"
            : "<p class='detail-desc muted'>" + L("Sem descrição ainda.", "No description yet.") + "</p>") +
-      "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>Abrir página</a>" +
+      "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>" +
+      L("Abrir página", "Open page") + "</a>" +
       "<a class='btn btn-primary' href='graph.html#node=" + encodeURIComponent(nd.id) +
-      "'>Ver conexões</a></div>" +
-      "<h3 class='section-h'>Conexões (" + edges.length + ")</h3><ul class='cards'>" + conns + "</ul>";
+      "'>" + L("Ver conexões", "View connections") + "</a></div>" +
+      "<h3 class='section-h'>" + L("Conexões", "Connections") + " (" + edges.length +
+      ")</h3><ul class='cards'>" + conns + "</ul>";
   }
 
   /* ================================ HOME PAGE ================================ */
@@ -565,11 +572,12 @@
         panel.innerHTML =
           "<button class='gp-close' type='button' aria-label='Fechar'>✕</button>" +
           "<div class='gp-head'><span class='badge t-" + nd.type + "'><span class='ico'>" + m.ico +
-          "</span>" + escapeHtml(m.label) + "</span> <strong class='gp-name'>" + escapeHtml(nd.name) +
+          "</span>" + escapeHtml(typeLabel(nd.type)) + "</span> <strong class='gp-name'>" + escapeHtml(nd.name) +
           "</strong></div>" + (desc ? "<p class='gp-desc'>" + escapeHtml(desc) + "</p>" : "") +
-          "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>Ver detalhes</a>" +
+          "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>" +
+          L("Ver detalhes", "View details") + "</a>" +
           "<a class='btn btn-primary' href='graph.html#node=" + encodeURIComponent(nd.id) +
-          "'>Ver conexões</a></div>";
+          "'>" + L("Ver conexões", "View connections") + "</a></div>";
         panel.hidden = false;
         var cl = panel.querySelector(".gp-close");
         if (cl) cl.addEventListener("click", function () { panel.hidden = true; });
