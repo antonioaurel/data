@@ -44,6 +44,23 @@ def bottom_nav(active, base=""):
     return ("<nav class='bottom-nav' aria-label='Seções'><ul>%s</ul></nav>" % "".join(lis))
 
 
+def view_switcher(active, base=""):
+    """Segmented control over the three projections. JS enhances it (carries the current
+    node / list filters via sessionStorage); the static default is plain navigation."""
+    tabs = [("list", "Lista", base + "list.html"),
+            ("graph", "Grafo", base + "graph.html"),
+            ("matrix", "Matriz", base + "matriz.html")]
+    items = []
+    for key, label, href in tabs:
+        on = key == active
+        items.append(
+            "<a role='tab' class='sw-tab%s' data-view='%s' href='%s' aria-selected='%s'%s>%s</a>"
+            % (" is-active" if on else "", key, href, "true" if on else "false",
+               " aria-current='page'" if on else "", esc(label)))
+    return ("<nav class='switcher' role='tablist' aria-label='Modo de visualização'>%s</nav>"
+            % "".join(items))
+
+
 def shell(title, page, datapath, active_nav, body, base=""):
     return (
         "<!doctype html>\n"
@@ -136,7 +153,7 @@ def render_list(index):
         )
 
     body = (
-        "<p class='view-links'><a href='matriz.html'>▦ Ver matriz de conexões</a></p>\n"
+        view_switcher("list") + "\n"
         "<div id='list-context' hidden></div>\n"
         "<div class='search js-only'><input id='q' type='search' placeholder='Buscar…' "
         "autocomplete='off' aria-label='Buscar na lista'></div>\n"
@@ -256,7 +273,8 @@ def render_matrix(matrix):
     table = ("<div class='mx-scroll'><table class='matrix'>"
              "<caption class='sr-only'>Conexões entre tipos de nó</caption>"
              "<thead>%s</thead><tbody>%s</tbody></table></div>" % (head, "".join(rows)))
-    body = ("<h1 class='section-h' style='font-size:18px'>Matriz de conexões</h1>\n"
+    body = (view_switcher("matrix") + "\n"
+            "<h1 class='section-h' style='font-size:18px'>Matriz de conexões</h1>\n"
             "<p class='mx-intro'>Quantas conexões existem entre cada par de tipos. "
             "Toque numa célula para ver os nós envolvidos.</p>\n"
             + table +
@@ -296,6 +314,7 @@ def render_about(sources):
 
 def render_graph():
     body = (
+        view_switcher("graph") + "\n"
         "<p><a class='detail-back' href='list.html'>← Lista</a></p>\n"
         "<h1 id='graph-title' class='section-h' style='font-size:18px'>Conexões</h1>\n"
         "<div id='graph-canvas' class='graph-canvas' role='img' aria-live='polite'></div>\n"

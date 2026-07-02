@@ -37,6 +37,8 @@
     var root = document.documentElement, cs = getComputedStyle(root);
     return (cs.getPropertyValue("--type-" + t).trim()) || cs.getPropertyValue("--type-other").trim();
   }
+  function ssGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  function ssSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
   function xhrJSON(url, cb) {
     var x = new XMLHttpRequest();
     x.open("GET", url, true);
@@ -86,6 +88,23 @@
     var query = "";
     var matchIds = null;    // null = no active text query
     var pairIds = null;     // null = no matrix type-pair drill-down active
+    var pairActive = null;  // the "a-b" pair string when a drill-down is active
+
+    function stateHash() {
+      var parts = [];
+      var ts = []; for (var t in activeTypes) { ts.push(t); }
+      if (ts.length) parts.push("type=" + ts.join(","));
+      if (sortSel && sortSel.value && sortSel.value !== "name") parts.push("sort=" + sortSel.value);
+      var q = searchInput ? searchInput.value.trim() : "";
+      if (q) parts.push("q=" + encodeURIComponent(q));
+      if (pairActive) parts.push("pair=" + pairActive);
+      return parts.length ? "#" + parts.join("&") : "";
+    }
+    function syncHash() {
+      var h = stateHash();
+      if (history.replaceState) history.replaceState(null, "", location.pathname + h);
+      ssSet("ctxList", h);
+    }
 
     function hash() {
       var h = {};
@@ -144,16 +163,17 @@
         var t = chip.getAttribute("data-type");
         if (activeTypes[t]) { delete activeTypes[t]; chip.setAttribute("aria-pressed", "false"); chip.classList.remove("is-active"); }
         else { activeTypes[t] = 1; chip.setAttribute("aria-pressed", "true"); chip.classList.add("is-active"); }
-        apply();
+        apply(); syncHash();
       });
     });
-    if (searchInput) searchInput.addEventListener("input", debounce(runSearch, 180));
-    if (sortSel) sortSel.addEventListener("change", function () { sortBy(sortSel.value); });
+    if (searchInput) searchInput.addEventListener("input", debounce(function () { runSearch(); syncHash(); }, 180));
+    if (sortSel) sortSel.addEventListener("change", function () { sortBy(sortSel.value); syncHash(); });
 
     // matrix drill-down: #pair=place-person -> filter to nodes in that type pair
     function loadPair(pairStr) {
       var ctx = el("list-context");
       var x = new XMLHttpRequest();
+      pairActive = pairStr;
       x.open("GET", dataPath() + "/pairs/" + pairStr + ".json", true);
       x.onreadystatechange = function () {
         if (x.readyState !== 4) return;
@@ -168,9 +188,8 @@
           ctx.hidden = false;
           var cl = el("ctx-clear");
           if (cl) cl.addEventListener("click", function (e) {
-            e.preventDefault(); pairIds = null; ctx.hidden = true; ctx.innerHTML = "";
-            if (history.replaceState) history.replaceState(null, "", location.pathname);
-            apply();
+            e.preventDefault(); pairIds = null; pairActive = null; ctx.hidden = true; ctx.innerHTML = "";
+            apply(); syncHash();
           });
         }
         apply();
@@ -187,16 +206,22 @@
       toggleExpand(card);
     });
 
-    // initial state from hash (#type=person&sort=connections&q=...)
+    // initial state from hash (#type=person,place&sort=connections&q=…&pair=…)
     var h = hash();
-    if (h.type && TYPES[h.type]) {
-      activeTypes[h.type] = 1;
-      chips.forEach(function (c) { if (c.getAttribute("data-type") === h.type) { c.setAttribute("aria-pressed", "true"); c.classList.add("is-active"); } });
+    if (h.type) {
+      h.type.split(",").forEach(function (tp) {
+        if (!TYPES[tp]) return;
+        activeTypes[tp] = 1;
+        chips.forEach(function (c) {
+          if (c.getAttribute("data-type") === tp) { c.setAttribute("aria-pressed", "true"); c.classList.add("is-active"); }
+        });
+      });
     }
     if (h.sort && sortSel) { sortSel.value = h.sort; sortBy(h.sort); }
     if (h.q && searchInput) { searchInput.value = h.q; runSearch(); }
     if (h.pair) { loadPair(h.pair); }
     apply();
+    ssSet("ctxList", stateHash());   // remember this list state for the switcher
   }
 
   function toggleExpand(card) {
@@ -295,6 +320,7 @@
     var btn = el("fav-btn");
     if (!btn) return;
     var id = btn.getAttribute("data-id");
+    ssSet("ctxNode", id);   // this node is now the switcher's graph context
     function paint(on) {
       btn.setAttribute("aria-pressed", on ? "true" : "false");
       btn.className = "fav-btn js-only" + (on ? " is-fav" : "");
@@ -412,6 +438,7 @@
           "<a href='list.html'>Ver a lista →</a>";
         return;
       }
+      ssSet("ctxNode", id);   // current graph center is the switcher's node context
       canvas.innerHTML = "<div class='skeleton' style='height:320px'></div>";
       xhrJSON(dataPath() + "/node/" + id + ".json", drawCenterAndNeighbors);
     }
@@ -420,9 +447,35 @@
     load();
   }
 
+  /* ============================== VIEW SWITCHER ============================== */
+  // Preserves context across the three projections: the current node (ctxNode) and
+  // the list's filter/search hash (ctxList), carried via sessionStorage.
+  function initSwitcher() {
+    var sw = document.querySelector(".switcher");
+    if (!sw) return;
+    var ctxNode = ssGet("ctxNode"), ctxList = ssGet("ctxList");
+    var gTab = sw.querySelector("[data-view='graph']");
+    var lTab = sw.querySelector("[data-view='list']");
+
+    if (gTab && gTab.getAttribute("aria-selected") !== "true") {
+      if (ctxNode) {
+        gTab.setAttribute("href", "graph.html#node=" + encodeURIComponent(ctxNode));
+      } else {
+        gTab.classList.add("is-disabled");
+        gTab.setAttribute("aria-disabled", "true");
+        gTab.setAttribute("title", "Abra um nó para ver o grafo");
+        gTab.addEventListener("click", function (e) { e.preventDefault(); });
+      }
+    }
+    if (lTab && lTab.getAttribute("aria-selected") !== "true" && ctxList) {
+      lTab.setAttribute("href", "list.html" + ctxList);
+    }
+  }
+
   /* ---- boot ---- */
   function boot() {
     var page = document.body.getAttribute("data-page");
+    initSwitcher();
     if (page === "list") initList();
     else if (page === "home") initHome();
     else if (page === "node") initNode();
