@@ -25,6 +25,28 @@
   }
   function el(id) { return document.getElementById(id); }
   function dataPath() { return document.body.getAttribute("data-datapath") || "../data"; }
+  function trunc(s, n) { s = s || ""; return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+  function parseHash() {
+    var h = {};
+    (location.hash.replace(/^#/, "").split("&")).forEach(function (kv) {
+      var p = kv.split("="); if (p[0]) h[p[0]] = decodeURIComponent(p[1] || "");
+    });
+    return h;
+  }
+  function typeColor(t) {
+    var root = document.documentElement, cs = getComputedStyle(root);
+    return (cs.getPropertyValue("--type-" + t).trim()) || cs.getPropertyValue("--type-other").trim();
+  }
+  function xhrJSON(url, cb) {
+    var x = new XMLHttpRequest();
+    x.open("GET", url, true);
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4) return;
+      var o = null; try { o = JSON.parse(x.responseText); } catch (e) {}
+      cb(o);
+    };
+    x.send();
+  }
 
   /* ---- search.json (lazy, once): id -> "normname alias1 alias2" ---- */
   var searchTerms = null, searchLoading = null;
@@ -207,7 +229,9 @@
   }
 
   function escapeHtml(s) {
-    return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // escapes quotes too: values are injected into single-quoted HTML/SVG attributes
+    return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
   /* ================================ HOME PAGE ================================ */
@@ -310,6 +334,92 @@
     x.send();
   }
 
+  /* ================================ GRAPH (ego) ============================== */
+  function initGraph() {
+    var canvas = el("graph-canvas");
+    if (!canvas) return;
+    var titleEl = el("graph-title"), hintEl = el("graph-hint"), panel = el("graph-panel");
+
+    function drawCenterAndNeighbors(d) {
+      if (!d || !d.id) { canvas.innerHTML = "<p class='empty-state'>Nó não encontrado.</p>"; return; }
+      if (titleEl) titleEl.textContent = "Conexões de " + d.name;
+      var edges = d.edges || [];
+      var MAX = 18, shown = edges.slice(0, MAX), more = edges.length - shown.length;
+      var W = 320, H = 320, cx = 160, cy = 160, R = 116, n = shown.length, i, ang, nx, ny;
+
+      var svg = "<svg viewBox='0 0 " + W + " " + H + "' width='100%' " +
+        "aria-label='Grafo de conexões de " + escapeHtml(d.name) + "'>";
+      var pts = [];
+      for (i = 0; i < n; i++) {
+        ang = (-90 + i * 360 / n) * Math.PI / 180;
+        nx = cx + R * Math.cos(ang); ny = cy + R * Math.sin(ang);
+        pts.push({ x: nx, y: ny, e: shown[i] });
+        var sw = 1 + Math.min(4, (shown[i].strength || 1));
+        svg += "<line x1='" + cx + "' y1='" + cy + "' x2='" + nx.toFixed(1) + "' y2='" + ny.toFixed(1) +
+               "' stroke='#c9c9d0' stroke-width='" + sw + "'/>";
+      }
+      for (i = 0; i < n; i++) {
+        var p = pts[i], col = typeColor(p.e.target_type);
+        svg += "<g class='gnode' data-id='" + escapeHtml(p.e.target_id) + "' tabindex='0' role='button' " +
+          "aria-label='" + escapeHtml(p.e.target_name) + "'>" +
+          "<circle cx='" + p.x.toFixed(1) + "' cy='" + p.y.toFixed(1) + "' r='13' fill='" + col + "'/>" +
+          "<text x='" + p.x.toFixed(1) + "' y='" + (p.y + 24).toFixed(1) + "' text-anchor='middle' " +
+          "class='glabel'>" + escapeHtml(trunc(p.e.target_name, 13)) + "</text></g>";
+      }
+      svg += "<circle cx='" + cx + "' cy='" + cy + "' r='20' fill='" + typeColor(d.type) +
+        "' stroke='#fff' stroke-width='2'/>";
+      svg += "<text x='" + cx + "' y='" + (cy + 38) + "' text-anchor='middle' class='glabel gcenter'>" +
+        escapeHtml(trunc(d.name, 16)) + "</text></svg>";
+      canvas.innerHTML = svg;
+
+      if (hintEl) hintEl.innerHTML = (more > 0 ? ("+" + more + " conexões não exibidas. ") : "") +
+        "<a href='node/" + d.id + ".html'>Ver como lista →</a>";
+
+      var gnodes = canvas.querySelectorAll(".gnode"), k;
+      function bind(gn) {
+        gn.addEventListener("click", function () { selectNeighbor(gn.getAttribute("data-id")); });
+        gn.addEventListener("keydown", function (ev) {
+          if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); selectNeighbor(gn.getAttribute("data-id")); }
+        });
+      }
+      for (k = 0; k < gnodes.length; k++) { bind(gnodes[k]); }
+    }
+
+    function selectNeighbor(id) {
+      xhrJSON(dataPath() + "/node/" + id + ".json", function (nd) {
+        if (!panel || !nd) return;
+        var m = typeMeta(nd.type), desc = nd.description ? trunc(nd.description, 160) : "";
+        panel.innerHTML =
+          "<button class='gp-close' type='button' aria-label='Fechar'>✕</button>" +
+          "<div class='gp-head'><span class='badge t-" + nd.type + "'><span class='ico'>" + m.ico +
+          "</span>" + escapeHtml(m.label) + "</span> <strong class='gp-name'>" + escapeHtml(nd.name) +
+          "</strong></div>" + (desc ? "<p class='gp-desc'>" + escapeHtml(desc) + "</p>" : "") +
+          "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>Ver detalhes</a>" +
+          "<a class='btn btn-primary' href='graph.html#node=" + encodeURIComponent(nd.id) +
+          "'>Ver conexões</a></div>";
+        panel.hidden = false;
+        var cl = panel.querySelector(".gp-close");
+        if (cl) cl.addEventListener("click", function () { panel.hidden = true; });
+      });
+    }
+
+    function load() {
+      var id = parseHash().node;
+      if (panel) panel.hidden = true;
+      if (!id) {
+        canvas.innerHTML = "";
+        if (hintEl) hintEl.innerHTML = "Abra um nó e toque em “Ver conexões”. " +
+          "<a href='list.html'>Ver a lista →</a>";
+        return;
+      }
+      canvas.innerHTML = "<div class='skeleton' style='height:320px'></div>";
+      xhrJSON(dataPath() + "/node/" + id + ".json", drawCenterAndNeighbors);
+    }
+
+    window.addEventListener("hashchange", load);   // "Ver conexões" recenters; back works
+    load();
+  }
+
   /* ---- boot ---- */
   function boot() {
     var page = document.body.getAttribute("data-page");
@@ -317,6 +427,7 @@
     else if (page === "home") initHome();
     else if (page === "node") initNode();
     else if (page === "favorites") initFavorites();
+    else if (page === "graph") initGraph();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
