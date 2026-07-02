@@ -395,18 +395,31 @@ function card(label, value, desc) {
     '</div>';
 }
 
-fetch('../data/lista-geral-do-mapeamento.csv')
-  .then(function(r) { return r.text(); })
-  .then(function(text) {
-    var parsed  = parseCSV(text);
-    var headers = parsed[0];
-    var rows = parsed.slice(1)
-      .filter(function(vals){ return vals.some(function(v){ return v.trim(); }); })
-      .map(function(vals){
-        var row = {};
-        headers.forEach(function(h,j){ row[h] = (vals[j]||'').trim(); });
-        return row;
-      });
+// Reads the same lightweight files as the diagram/matrix (graph.json + content.json)
+// and reconstructs the wide-row shape (6 core fields + Interconexão 1..15) locally,
+// so the stats no longer depend on the generated lista-geral CSV.
+Promise.all([
+  fetch('../data/graph.json').then(function(r) { return r.json(); }),
+  fetch('../data/content.json').then(function(r) { return r.json(); })
+]).then(function(loaded) {
+    var g = loaded[0], content = loaded[1];
+    var names = g.nodes.map(function(o) { return o.n; });
+    var adj = names.map(function() { return []; });
+    g.edges.forEach(function(e) { adj[e[0]].push(e[1]); adj[e[1]].push(e[0]); });
+
+    var headers = ['Nome', 'Tipo', 'Sub-Tipo', 'Local', 'Imagem', 'Descrição'];
+    for (var k = 1; k <= 15; k++) { headers.push('Interconexão ' + k); }
+
+    var rows = g.nodes.map(function(o, i) {
+      var c = content[o.n] || {};
+      var neigh = adj[i].map(function(j) { return names[j]; })
+                        .sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); })
+                        .slice(0, 15);
+      var row = { Nome: o.n, Tipo: o.t, 'Sub-Tipo': c.st || '',
+                  'Local': c.l || '', 'Imagem': c.img || '', 'Descrição': c.d || '' };
+      for (var m = 0; m < 15; m++) { row['Interconexão ' + (m + 1)] = neigh[m] || ''; }
+      return row;
+    });
     var N = rows.length;
 
     // Fill rates per field
