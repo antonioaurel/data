@@ -37,11 +37,6 @@ EDGES_SRC   = os.path.join(ROOT, "data", "edges.csv")
 ALIASES_SRC = os.path.join(ROOT, "data", "aliases.csv")
 GRAPH_OUT   = os.path.join(ROOT, "data", "graph.json")
 CONTENT_OUT = os.path.join(ROOT, "data", "content.json")
-# Legacy wide CSV, now a GENERATED artifact (not a source). diagram.html and stats.html
-# still read it directly; regenerating it from the model keeps every page on the same data.
-WIDE_OUT    = os.path.join(ROOT, "data", "lista-geral-do-mapeamento.csv")
-WIDE_HEADER = (["Nome", "Tipo", "Sub-Tipo", "Local", "Imagem", "Descrição"]
-               + ["Interconexão %d" % i for i in range(1, 16)])
 
 
 def read_csv(path):
@@ -153,25 +148,6 @@ def dumps(obj):
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
 
 
-def wide_csv_text(graph, content):
-    """Regenerate the legacy wide CSV (used by diagram.html / stats.html) from the model.
-    Each node lists up to 15 neighbor names (undirected, sorted), matching the old schema."""
-    import io
-    names = [n["n"] for n in graph["nodes"]]
-    adj = [set() for _ in names]
-    for a, b in graph["edges"]:
-        adj[a].add(b); adj[b].add(a)
-    buf = io.StringIO()
-    w = csv.writer(buf)  # default lineterminator is CRLF, matching the original file
-    w.writerow(WIDE_HEADER)
-    for i, nd in enumerate(graph["nodes"]):
-        c = content[nd["n"]]
-        neigh = sorted(names[j] for j in adj[i])[:15]
-        neigh += [""] * (15 - len(neigh))
-        w.writerow([nd["n"], nd["t"], c["st"], c["l"], c["img"], c["d"]] + neigh)
-    return buf.getvalue()
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true",
@@ -181,7 +157,6 @@ def main():
     nodes, edges, aliases = load()
     graph, content, stats, errors, warnings = build(nodes, edges, aliases)
     graph_txt, content_txt = dumps(graph), dumps(content)
-    wide_txt = wide_csv_text(graph, content)
 
     for w in warnings:
         print("  warning:", w)
@@ -199,7 +174,7 @@ def main():
 
     if args.check:
         ok = True
-        for path, txt in [(GRAPH_OUT, graph_txt), (CONTENT_OUT, content_txt), (WIDE_OUT, wide_txt)]:
+        for path, txt in [(GRAPH_OUT, graph_txt), (CONTENT_OUT, content_txt)]:
             cur = open(path, encoding="utf-8", newline="").read() if os.path.exists(path) else None
             if cur != txt:
                 print("OUT OF SYNC:", os.path.relpath(path, ROOT), "- run `python3 build.py` and commit.")
@@ -212,10 +187,8 @@ def main():
         f.write(graph_txt)
     with open(CONTENT_OUT, "w", encoding="utf-8") as f:
         f.write(content_txt)
-    with open(WIDE_OUT, "w", encoding="utf-8", newline="") as f:
-        f.write(wide_txt)
     print("generated:", ", ".join(os.path.relpath(p, ROOT)
-          for p in (GRAPH_OUT, CONTENT_OUT, WIDE_OUT)))
+          for p in (GRAPH_OUT, CONTENT_OUT)))
     return 0
 
 

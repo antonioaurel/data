@@ -20,6 +20,7 @@ Consequências: o que melhora, o que piora, o que fica pendente
 |---|---|---|
 | [0001](0001-pipeline-de-dados.md) | Pipeline de dados derivados (graph.json + content.json) | Aceito (modelo de origem substituído pelo 0002) |
 | [0002](0002-normalized-graph-model.md) | Normalized graph model (nodes / edges / aliases) as the source | Aceito |
+| [0003](0003-retire-wide-csv.md) | Aposentar o wide CSV (`lista-geral-do-mapeamento.csv`) | Aceito |
 
 ## Decisões ainda a registrar (planejadas)
 
@@ -27,5 +28,3 @@ Discutidas mas ainda não implementadas — viram ADR quando forem feitas:
 
 - **Extrair CSS/JS compartilhado** para `assets/` (hoje tudo é inline e duplicado por página).
 - **i18n**: unificar PT/EN numa página só com arquivo de textos, em vez de duas cópias.
-- **Migrar `diagram.html` e `stats.html`** para consumir `graph.json`/`content.json`
-  diretamente, aposentando o wide CSV gerado (`lista-geral-do-mapeamento.csv`).

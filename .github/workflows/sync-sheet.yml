@@ -31,7 +31,7 @@ jobs:
           git config user.name  "sheet-sync[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/nodes.csv data/edges.csv data/aliases.csv \
-                  data/graph.json data/content.json data/lista-geral-do-mapeamento.csv
+                  data/graph.json data/content.json
           if git diff --cached --quiet; then
             echo "No changes - repo already matches the sheet."
           else
