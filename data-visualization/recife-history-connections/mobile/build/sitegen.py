@@ -97,11 +97,19 @@ def top_nav(active, base=""):
 
 
 def shell(title, page, datapath, active_nav, body, base=""):
+    # Viewport-based routing (no button, no UA sniffing): wide screens get the rich desktop
+    # site; this mobile app is for narrow. Redirect on load and live on resize.
+    desktop_url = base + "../../pages/index.html"
+    redirect = ("<script>(function(){try{var q=window.matchMedia('(min-width:1024px)'),t='"
+                + desktop_url + "';if(q.matches){location.replace(t);return;}"
+                "var f=function(e){if(e.matches)location.replace(t);};"
+                "q.addEventListener?q.addEventListener('change',f):q.addListener(f);}catch(e){}})();</script>\n")
     return (
         "<!doctype html>\n"
         "<html lang='pt-BR' class='no-js'>\n<head>\n"
         "<meta charset='utf-8'>\n"
         "<meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>\n"
+        + redirect +
         "<title>%s</title>\n"
         "<meta name='description' content='Conexões da História — pessoas, lugares e fatos que formaram Recife e Pernambuco.'>\n"
         "<link rel='icon' href='data:,'>\n"
