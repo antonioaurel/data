@@ -452,6 +452,8 @@
       m.ico + "</span>" + escapeHtml(m.label) + "</span><h2 class='detail-name'>" +
       escapeHtml(nd.name) + "</h2></div>" +
       (loc ? "<p class='detail-loc'>" + escapeHtml(loc) + "</p>" : "") +
+      (nd.image ? "<img class='detail-img' src='" + escapeHtml(nd.image) +
+        "' alt='' loading='lazy' onerror=\"this.style.display='none'\">" : "") +
       (dsc ? "<p class='detail-desc'>" + escapeHtml(dsc) + "</p>"
            : "<p class='detail-desc muted'>" + L("Sem descrição ainda.", "No description yet.") + "</p>") +
       "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>" +
@@ -551,8 +553,10 @@
         escapeHtml(trunc(d.name, 16)) + "</text></svg>";
       canvas.innerHTML = svg;
 
-      if (hintEl) hintEl.innerHTML = (more > 0 ? ("+" + more + " conexões não exibidas. ") : "") +
-        "<a href='node/" + d.id + ".html'>Ver como lista →</a>";
+      if (hintEl) hintEl.innerHTML =
+        "<strong>" + L("Toque num nó para ver os detalhes.", "Tap a node to see its details.") + "</strong> " +
+        (more > 0 ? (L("+" + more + " conexões não exibidas. ", "+" + more + " connections not shown. ")) : "") +
+        "<a href='node/" + d.id + ".html'>" + L("Ver como lista →", "View as list →") + "</a>";
 
       var gnodes = canvas.querySelectorAll(".gnode"), k;
       function bind(gn) {
@@ -573,7 +577,10 @@
           "<button class='gp-close' type='button' aria-label='Fechar'>✕</button>" +
           "<div class='gp-head'><span class='badge t-" + nd.type + "'><span class='ico'>" + m.ico +
           "</span>" + escapeHtml(typeLabel(nd.type)) + "</span> <strong class='gp-name'>" + escapeHtml(nd.name) +
-          "</strong></div>" + (desc ? "<p class='gp-desc'>" + escapeHtml(desc) + "</p>" : "") +
+          "</strong></div>" +
+          (nd.image ? "<img class='gp-img' src='" + escapeHtml(nd.image) +
+            "' alt='' loading='lazy' onerror=\"this.style.display='none'\">" : "") +
+          (desc ? "<p class='gp-desc'>" + escapeHtml(desc) + "</p>" : "") +
           "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>" +
           L("Ver detalhes", "View details") + "</a>" +
           "<a class='btn btn-primary' href='graph.html#node=" + encodeURIComponent(nd.id) +
