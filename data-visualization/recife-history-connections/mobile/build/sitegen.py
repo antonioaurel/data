@@ -96,11 +96,23 @@ def top_nav(active, base=""):
     return "<nav class='top-nav' aria-label='Seções'>%s</nav>" % links
 
 
+# Which desktop page (under pages/, or pages/en/ in English) each mobile page maps to on wide
+# screens. Pages with no desktop counterpart (Início, list, node detail, Sobre) fall back to index.
+DESKTOP_FOR_PAGE = {
+    "matrix":   "matrix.html",
+    "graph":    "diagram.html",
+    "fillrate": "stats.html",
+    "fontes":   "sources.html",
+}
+
+
 def shell(title, page, datapath, active_nav, body, base=""):
     # Viewport-based routing (no button, no UA sniffing): wide screens get the rich desktop
     # site (in the chosen language), this mobile app is for narrow. On load and live on resize.
+    # Land on the desktop page that corresponds to this mobile page, not always the home page.
+    desktop = DESKTOP_FOR_PAGE.get(page, "index.html")
     redirect = ("<script>(function(){try{var en='en'===localStorage.getItem('lang');"
-                "var t='" + base + "../../pages/'+(en?'en/':'')+'index.html';"
+                "var t='" + base + "../../pages/'+(en?'en/':'')+'" + desktop + "';"
                 "var q=window.matchMedia('(min-width:1024px)');"
                 "if(q.matches){location.replace(t);return;}"
                 "var f=function(e){if(e.matches)location.replace(t);};"
