@@ -101,6 +101,9 @@
 
     /* search box over the canvas */
     #diagram-search { position: absolute; top: 12px; left: 12px; z-index: 6; }
+    /* bairro filter — next to the search, with a gap */
+    #bairro-filter  { position: absolute; top: 12px; left: 252px; z-index: 6; }
+    #bairro-search  { width: 190px; }
     .ds-input {
       width: 220px;
       background: rgba(15, 25, 35, 0.92);
@@ -445,6 +448,10 @@
       <input id="node-search" class="ds-input" type="text" placeholder="Buscar nó…" autocomplete="off" list="node-list">
       <datalist id="node-list"></datalist>
     </div>
+    <div id="bairro-filter">
+      <input id="bairro-search" class="ds-input" type="text" placeholder="Filtrar por bairro…" autocomplete="off" list="bairro-list">
+      <datalist id="bairro-list"></datalist>
+    </div>
     <div id="type-filter">
       <div class="tf-title">Filtros</div>
       <div class="tf-desc">selecione para ver por tipo de nó</div>
@@ -524,17 +531,24 @@ function focusNode(nome) {
 
 /* ── Type filter + selection state ────────────────────────────────────────── */
 var activeType   = null;   // null | 'Local' | 'Personagem' | 'Fato Histórico'
+var activeBairro = null;   // null | nome do bairro
 var selectedName = null;   // currently clicked / searched node
 
-// view when no node is selected: dim other types, keep them visible, hide links
+// um nó está "no escopo" dos filtros ativos (tipo E bairro compõem)
+function inScope(d) {
+  return (!activeBairro || d.Local === activeBairro) &&
+         (!activeType   || d.Tipo   === activeType);
+}
+
+// view when no node is selected: highlight the filtered nodes, dim the rest, hide links
 function applyFilterView() {
   d3.selectAll('.labels text').classed('label-visible', false).classed('label-selected', false);
   d3.selectAll('.links line').classed('faded', false).classed('highlight', false);
-  if (activeType) {
+  if (activeType || activeBairro) {
     d3.selectAll('.nodes circle')
       .classed('faded', false).classed('neighbor', false)
-      .classed('type-dim', function(d) { return d.Tipo !== activeType; })
-      .classed('type-on',  function(d) { return d.Tipo === activeType; });
+      .classed('type-dim', function(d) { return !inScope(d); })
+      .classed('type-on',  function(d) { return  inScope(d); });
     g.select('.links').classed('links-hidden', true);   // hide links until a node is clicked
   } else {
     d3.selectAll('.nodes circle')
@@ -566,6 +580,14 @@ function setFilter(type) {
   document.querySelectorAll('.type-chip').forEach(function(el) {
     el.classList.toggle('active', el.getAttribute('data-type') === activeType);
   });
+  selectedName = null;
+  d3.selectAll('.nodes circle').classed('selected', false);
+  applyFilterView();
+}
+
+// aplica/limpa o filtro de bairro (compõe com o filtro de tipo)
+function setBairro(b) {
+  activeBairro = b || null;
   selectedName = null;
   d3.selectAll('.nodes circle').classed('selected', false);
   applyFilterView();
@@ -683,6 +705,26 @@ d3.csv('../data/lista-geral-do-mapeamento.csv', function(error, graph) {
     dl.innerHTML = graph.map(function(d) {
       return '<option value="' + d.Nome.replace(/"/g, '&quot;') + '">';
     }).join('');
+  }
+
+  // populate bairro autocomplete (loads as the user types)
+  var bairroSet = {};
+  graph.forEach(function(d) { if (d.Local) bairroSet[d.Local] = true; });
+  var bl = document.getElementById('bairro-list');
+  if (bl) {
+    bl.innerHTML = Object.keys(bairroSet).sort(function(a, b) {
+      return a.localeCompare(b, 'pt-BR');
+    }).map(function(b) {
+      return '<option value="' + b.replace(/"/g, '&quot;') + '">';
+    }).join('');
+  }
+  var bairroInput = document.getElementById('bairro-search');
+  if (bairroInput) {
+    bairroInput.addEventListener('input', function() {
+      var v = this.value.trim();
+      if (v === '') { setBairro(null); }        // limpou → tira o filtro
+      else if (bairroSet[v]) { setBairro(v); }  // aplica só quando casa um bairro
+    });
   }
 
   simulation
