@@ -420,62 +420,10 @@
     }, 200));
   }
 
-  /* ================================ FAVORITES ================================ */
-  var FAV_KEY = "cdh_favs";
-  function getFavs() {
-    try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { return []; }
-  }
-  function setFavs(a) { try { localStorage.setItem(FAV_KEY, JSON.stringify(a)); } catch (e) {} }
-  function toggleFav(id) {
-    var a = getFavs(), i = a.indexOf(id);
-    if (i === -1) { a.push(id); } else { a.splice(i, 1); }
-    setFavs(a);
-    return i === -1;   // true if now favorited
-  }
-
+  /* ---- node detail page: remember it as the switcher's graph context ---- */
   function initNode() {
-    var btn = el("fav-btn");
-    if (!btn) return;
-    var id = btn.getAttribute("data-id");
-    ssSet("ctxNode", id);   // this node is now the switcher's graph context
-    function paint(on) {
-      btn.setAttribute("aria-pressed", on ? "true" : "false");
-      btn.className = "fav-btn js-only" + (on ? " is-fav" : "");
-      btn.innerHTML = on ? "★ Favoritado" : "☆ Favoritar";
-    }
-    paint(getFavs().indexOf(id) !== -1);
-    btn.addEventListener("click", function () { paint(toggleFav(id)); });
-  }
-
-  function initFavorites() {
-    var listEl = el("fav-list"), emptyEl = el("fav-empty");
-    if (!listEl) return;
-    var favs = getFavs();
-    if (!favs.length) { if (emptyEl) emptyEl.hidden = false; return; }
-    listEl.innerHTML = "<div class='skeleton'></div><div class='skeleton'></div>";
-    var x = new XMLHttpRequest();
-    x.open("GET", dataPath() + "/index.json", true);
-    x.onreadystatechange = function () {
-      if (x.readyState !== 4) return;
-      var idx = []; try { idx = JSON.parse(x.responseText); } catch (e) {}
-      var byId = {};
-      for (var i = 0; i < idx.length; i++) { byId[idx[i].id] = idx[i]; }
-      var html = "", n = 0;
-      for (var j = 0; j < favs.length; j++) {
-        var o = byId[favs[j]];
-        if (!o) continue;
-        n++;
-        var m = typeMeta(o.type);
-        html += "<li class='card t-" + o.type + "'><a class='card-main' href='node/" + o.id + ".html'>" +
-          "<span class='card-body'><span class='card-name'>" + escapeHtml(o.name) + "</span>" +
-          "<span class='card-meta'><span class='badge t-" + o.type + "'><span class='ico'>" + m.ico +
-          "</span>" + escapeHtml(m.label) + "</span><span class='conn'>" + o.conn_count +
-          " conexões</span></span></span></a></li>";
-      }
-      if (!n) { if (emptyEl) emptyEl.hidden = false; return; }
-      listEl.innerHTML = "<ul class='cards'>" + html + "</ul>";
-    };
-    x.send();
+    var art = document.querySelector(".detail[data-node-id]");
+    if (art) ssSet("ctxNode", art.getAttribute("data-node-id"));
   }
 
   /* ================================ GRAPH (ego) ============================== */
@@ -647,9 +595,8 @@
     registerSW();
     initSwitcher();
     if (page === "list") initList();
-    else if (page === "home") initHome();
+    else if (page === "inicio") initHome();
     else if (page === "node") initNode();
-    else if (page === "favorites") initFavorites();
     else if (page === "graph") initGraph();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);

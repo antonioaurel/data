@@ -58,6 +58,19 @@ Pages fetch data from `../data` (no duplication). Assets are hand-written source
 View locally (from the existing server at repo root):
 `…/recife-history-connections/mobile/site/index.html`
 
+## v3 rework (in progress)
+
+Following `../docs/implementation-prompt.md` (v3). Built against **real data**
+(567 nós · 3881 conexões · real fill rates) — the spec's 564/756/95%-images numbers are
+stale (confirmed against every source). Done so far: dark theme default + toggle; palette
+local=blue / personagem=red / evento=green (+ teal accent); type keys `local/personagem/evento`;
+all text centered; Inter (self-hosted); graph capped at 5 neighbours on mobile; bottom nav
+**Início · Fill rate · Fontes · Sobre** (Favoritos/Explorar removed); new screens Início
+(intro + real stats + type chips + Visualizações → Grafo/Matriz/Mapa/Diagrama), Fill rate
+(per-field bars, low fields in amber → stats.html), Fontes (3 books), Sobre (author/criador +
+Outros projetos + AI disclaimer). Pending: matrix PC note; i18n PT/EN; route renames
+(lista/grafo/matriz + #tipos=/#par=).
+
 ## Lighthouse (mobile, Moto-G / simulated Slow-4G)
 
 | Route | Performance | Accessibility | Best Practices | SEO | FCP | CLS |

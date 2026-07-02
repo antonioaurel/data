@@ -218,8 +218,25 @@ def main():
         write(os.path.join(pairs_dir, "%s-%s.json" % (ta, tb)),
               dumps({"a": ta, "b": tb, "nodes": sorted(ids)}))
 
-    # ---- static HTML (SSG): home + list + matrix + about + favorites + node pages ----
-    n_pages = sitegen.build_site(index, details, matrix, source_records, SITE_DIR)
+    # ---- real stats for Início + Fill rate (build against real data, never the stale spec numbers) ----
+    def pctf(col):
+        return round(100 * sum(1 for r in nodes if (r.get(col) or "").strip()) / len(nodes)) if nodes else 0
+    site_stats = {
+        "n_nodes": len(nodes),
+        "n_edges": edges_counted,
+        "top_id": max(index, key=lambda o: o["conn_count"])["id"] if index else "",
+        "fields": [
+            ("Nome", 100),
+            ("Descrição", pctf("description")),
+            ("Interconexões", round(100 * sum(1 for o in index if o["conn_count"] > 0) / len(index)) if index else 0),
+            ("Imagem", pctf("image")),
+            ("Tipo", 100),
+            ("Local", pctf("neighborhood")),
+        ],
+    }
+
+    # ---- static HTML (SSG): Início + list + matrix + graph + fillrate + fontes + sobre + node pages ----
+    n_pages = sitegen.build_site(index, details, matrix, site_stats, SITE_DIR)
 
     # ---- report ----
     print("=== mobile build — Phase 1 (data layer) ===")
