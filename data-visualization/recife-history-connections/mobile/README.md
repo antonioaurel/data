@@ -101,8 +101,11 @@ View locally (from the existing server at repo root):
   the pane), instead of navigating. Same URL, no UA sniffing; static default is mobile-first
   single column (SSG-safe). The Grafo is reached from the pane's "Ver conexões" (link), not yet
   a simultaneous third panel.
-- Remaining (optional polish): Phase 3 bottom-sheet (compact in-place detail); manual
-  compact/expanded override toggle. (Map dropped.)
+- **Phase 3 bottom-sheet:** done. On compact/medium, tapping a list card opens the detail in a
+  bottom sheet (`role=dialog`, `aria-modal`, focus trap, dismiss on ✕/Esc/backdrop, safe-area
+  padding), reusing the same `paneHTML` renderer as the expanded pane; drilling a connection
+  reloads the sheet. Hidden on expanded (the right-hand pane is used there).
+- All 10 phases complete. Optional future: manual compact/expanded override toggle. (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.

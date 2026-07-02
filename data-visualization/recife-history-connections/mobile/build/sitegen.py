@@ -156,7 +156,7 @@ def render_list(index):
         label = TYPE_META.get(t, FALLBACK_META)[0]
         cards.append(
             "<li class='card t-%s' data-id='%s' data-type='%s' data-conn='%d' data-name='%s' aria-expanded='false'>"
-            "<button class='card-main' type='button' aria-label='%s — %s, %d conexões. Toque para ver conexões.'>"
+            "<button class='card-main' type='button' aria-label='%s — %s, %d conexões. Toque para abrir o detalhe.'>"
             "<span class='card-body'><span class='card-name'>%s</span>"
             "<span class='card-meta'>%s<span class='conn'>%d conexões</span>"
             "<span class='chevron' aria-hidden='true'>›</span></span></span>"
