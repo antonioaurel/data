@@ -32,9 +32,8 @@ OUT_DIR   = os.path.normpath(os.path.join(BUILD_DIR, "..", "data"))
 NODE_DIR  = os.path.join(OUT_DIR, "node")
 SITE_DIR  = os.path.normpath(os.path.join(BUILD_DIR, "..", "site"))
 
-# Node-type order for the type×type matrix. Concentrated on the three original types
-# that actually exist in the base (Local / Personagem / Fato Histórico). The matrix is 3×3.
-CANON_TYPES = ["place", "person", "historical_fact"]
+# Node-type order for the type×type matrix (local / personagem / evento). The matrix is 3×3.
+CANON_TYPES = ["local", "personagem", "evento"]
 
 # Soft/hard ceilings for the initial-route DATA (index + search), gzip. The
 # shell HTML/CSS/JS budget is measured in Phase 2 when those files exist.
