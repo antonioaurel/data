@@ -24,7 +24,7 @@ jobs:
 
       - name: Sync (pull sheet, build, commit if changed)
         if: github.event_name == 'workflow_dispatch'
-        working-directory: data-visualization/recife-history-connections
+        working-directory: projects/recife-history-connections
         run: |
           python3 pull_sheet.py
           python3 build.py
@@ -41,7 +41,7 @@ jobs:
 
       - name: Drift check (scheduled - fails if the sheet is ahead of the repo)
         if: github.event_name == 'schedule'
-        working-directory: data-visualization/recife-history-connections
+        working-directory: projects/recife-history-connections
         run: |
           python3 pull_sheet.py --check
           python3 build.py --check

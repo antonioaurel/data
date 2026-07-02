@@ -1,0 +1,8 @@
+# Arquivos de trabalho locais (não versionados)
+/data-source/*.xlsx
+
+# Configuração local de ferramentas
+/.claude/
+
+# Locks temporários de planilha/LibreOffice/Office
+.~lock.*#

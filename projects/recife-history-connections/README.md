@@ -4,7 +4,7 @@ An interactive D3.js force-directed diagram mapping the historical connections b
 
 Discover how seemingly unrelated locations, historical figures, and events are deeply linked across time — from the Dutch-Portuguese wars to the 1930 Brazilian Revolution and beyond.
 
-🌐 **Live site:** [antonioaurel.github.io/data/data-visualization/recife-history-connections](https://antonioaurel.github.io/data/data-visualization/recife-history-connections/)  
+🌐 **Live site:** [antonioaurel.github.io/data/projects/recife-history-connections](https://antonioaurel.github.io/data/projects/recife-history-connections/)  
 🗺️ **Main project:** [conexoesdahistoria.com](https://conexoesdahistoria.com)
 
 ---
@@ -29,7 +29,7 @@ This is a static HTML project — no build step required.
 
 **Option 1 — Python (recommended):**
 ```bash
-cd data-visualization/recife-history-connections
+cd projects/recife-history-connections
 python3 -m http.server 8000
 ```
 Then open [http://localhost:8000](http://localhost:8000) in your browser.
