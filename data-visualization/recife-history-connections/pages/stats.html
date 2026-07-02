@@ -355,7 +355,7 @@ function setList(id, entries) {
         + '<span class="group-tipo-count">(' + groups[tipo].length + ')</span>'
         + '</div>';
       groups[tipo].forEach(function(nome) {
-        html += '<div class="entry-row">' + nome + '</div>';
+        html += '<div class="entry-row">' + (nome || '—') + '</div>';
       });
       html += '</div>';
     });
