@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Viewport-based routing (no button, no UA sniffing): narrow screens get the mobile app;
-       this rich desktop page is for wide. Redirect on load and live on resize. -->
+       this rich desktop page is for wide. Redirect on load and live on resize; remember PT. -->
   <script>(function(){try{var q=window.matchMedia('(max-width:1023px)'),t='../mobile/site/index.html';
-    if(q.matches){location.replace(t);return;}
-    var f=function(e){if(e.matches)location.replace(t);};
+    var go=function(){try{localStorage.setItem('lang','pt');}catch(e){}location.replace(t);};
+    if(q.matches){go();return;}
+    var f=function(e){if(e.matches)go();};
     q.addEventListener?q.addEventListener('change',f):q.addListener(f);}catch(e){}})();</script>
   <title>Conexões da Historia do Recife</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Product+Sans:wght@400;700&display=swap" rel="stylesheet">
