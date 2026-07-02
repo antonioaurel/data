@@ -242,7 +242,7 @@
         card.classList.add("is-selected");
         loadPaneDetail(card.getAttribute("data-id"));
       } else {
-        toggleExpand(card);
+        openSheet(card.getAttribute("data-id"));   // compact/medium: detail bottom sheet
       }
     });
     // drilling inside the pane loads the neighbour into the same pane (expanded)
@@ -303,6 +303,52 @@
     // escapes quotes too: values are injected into single-quoted HTML/SVG attributes
     return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
                     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  /* ---- detail bottom sheet (compact): a dialog reusing paneHTML ---- */
+  var _sheetPrevFocus = null;
+  function ensureSheet() {
+    if (el("sheet")) return;
+    var bd = document.createElement("div");
+    bd.id = "sheet-backdrop"; bd.className = "sheet-backdrop"; bd.hidden = true;
+    var sh = document.createElement("div");
+    sh.id = "sheet"; sh.className = "sheet"; sh.hidden = true;
+    sh.setAttribute("role", "dialog"); sh.setAttribute("aria-modal", "true");
+    sh.setAttribute("aria-label", "Detalhe do nó");
+    sh.innerHTML = "<button class='sheet-close' type='button' aria-label='Fechar'>✕</button>" +
+      "<div id='sheet-body'></div>";
+    document.body.appendChild(bd); document.body.appendChild(sh);
+    bd.addEventListener("click", closeSheet);
+    sh.querySelector(".sheet-close").addEventListener("click", closeSheet);
+    document.addEventListener("keydown", function (e) { if (!sh.hidden && e.key === "Escape") closeSheet(); });
+    sh.addEventListener("keydown", function (e) {          // focus trap
+      if (e.key !== "Tab") return;
+      var f = sh.querySelectorAll("button, a[href]");
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    el("sheet-body").addEventListener("click", function (e) {   // drill within the sheet
+      var a = e.target;
+      while (a && a !== this && !(a.getAttribute && a.getAttribute("data-pane-id"))) a = a.parentNode;
+      if (a && a.getAttribute && a.getAttribute("data-pane-id")) { e.preventDefault(); openSheet(a.getAttribute("data-pane-id")); }
+    });
+  }
+  function openSheet(id) {
+    ensureSheet();
+    _sheetPrevFocus = document.activeElement;
+    ssSet("ctxNode", id);
+    var body = el("sheet-body"); body.innerHTML = "<div class='skeleton'></div>";
+    el("sheet-backdrop").hidden = false; el("sheet").hidden = false;
+    document.body.style.overflow = "hidden";
+    el("sheet").querySelector(".sheet-close").focus();
+    xhrJSON(dataPath() + "/node/" + id + ".json", function (nd) { if (nd) body.innerHTML = paneHTML(nd); });
+  }
+  function closeSheet() {
+    var sh = el("sheet"); if (!sh || sh.hidden) return;
+    sh.hidden = true; el("sheet-backdrop").hidden = true; document.body.style.overflow = "";
+    if (_sheetPrevFocus && _sheetPrevFocus.focus) _sheetPrevFocus.focus();
   }
 
   // detail pane (expanded multi-panel) — renders a node's detail from its JSON
