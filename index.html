@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Data — Projetos de dados</title>
-  <meta name="description" content="Hub de projetos de dados: visualização, qualidade e pipelines.">
+  <title>Data — Projects</title>
+  <meta name="description" content="Hub of data projects: visualization, quality, and pipelines.">
   <style>
     :root {
       --bg: #f6f7f9;
@@ -60,10 +60,11 @@
     .card p { color: var(--muted); font-size: 14.5px; margin: 0 0 16px; flex: 1; }
     .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
     .badge { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+    .subtype { color: var(--accent); font-weight: 600; font-size: 13.5px; margin: 3px 0 12px; }
     .tech { display: flex; flex-wrap: wrap; gap: 6px; }
     .tech span { font-size: 12px; color: var(--muted); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; }
     .cta { margin-top: 16px; font-weight: 700; font-size: 14px; color: var(--accent); }
-    .status { margin-left: auto; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #1a9e5f; }
+    .status { margin-left: auto; flex-shrink: 0; white-space: nowrap; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
     .empty { color: var(--muted); padding: 40px 0; text-align: center; }
     footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
     footer a { color: var(--accent); text-decoration: none; }
@@ -73,14 +74,14 @@
   <div class="wrap">
     <header class="hero">
       <span class="brand"><span class="dot"></span><span id="brand">Data</span></span>
-      <h1 id="title">Projetos de dados</h1>
+      <h1 id="title">Data projects</h1>
       <p class="tagline" id="tagline"></p>
     </header>
 
-    <nav class="filters" id="filters" aria-label="Filtrar por abordagem"></nav>
+    <nav class="filters" id="filters" aria-label="Filter by approach"></nav>
 
     <main class="grid" id="grid"></main>
-    <p class="empty" id="empty" hidden>Nenhum projeto nesta categoria ainda.</p>
+    <p class="empty" id="empty" hidden>No projects in this category yet.</p>
 
     <footer>
       <span id="footer"></span>
@@ -95,8 +96,8 @@
       .then(function (data) { state.data = data; render(); })
       .catch(function (e) {
         document.getElementById("grid").innerHTML =
-          '<p class="empty">Não foi possível carregar projects.json (' + e.message + ').<br>' +
-          'Rode um servidor local: <code>python3 -m http.server</code></p>';
+          '<p class="empty">Could not load projects.json (' + e.message + ').<br>' +
+          'Run a local server: <code>python3 -m http.server</code></p>';
       });
 
     function labelFor(id) {
@@ -106,12 +107,12 @@
 
     function render() {
       var d = state.data, site = d.site || {};
-      document.title = (site.title || "Data") + " — Projetos de dados";
+      document.title = (site.title || "Data") + " — Projects";
       document.getElementById("brand").textContent = site.title || "Data";
       document.getElementById("tagline").textContent = site.tagline || "";
       if (site.author) {
         document.getElementById("footer").innerHTML =
-          "Por <a href='" + (site.author_url || "#") + "'>" + site.author + "</a>";
+          "By <a href='" + (site.author_url || "#") + "'>" + site.author + "</a>";
       }
       renderFilters();
       renderGrid();
@@ -123,7 +124,7 @@
       (state.data.projects || []).forEach(function (p) {
         (p.approaches || []).forEach(function (a) { counts[a] = (counts[a] || 0) + 1; });
       });
-      var items = [{ id: "all", label: "Todos" }].concat(
+      var items = [{ id: "all", label: "All" }].concat(
         (state.data.approaches || []).filter(function (a) { return counts[a.id]; })
       );
       nav.innerHTML = "";
@@ -152,14 +153,21 @@
           return '<span class="badge">' + labelFor(id) + "</span>";
         }).join("");
         var tech = (p.tech || []).map(function (t) { return "<span>" + t + "</span>"; }).join("");
-        var status = p.status === "live"
-          ? '<span class="status">● no ar</span>' : "";
+        var statusMap = {
+          live: { text: "● live", color: "#1a9e5f" },
+          wip:  { text: "● in progress", color: "#c98a1a" }
+        };
+        var s = statusMap[p.status];
+        var status = s ? '<span class="status" style="color:' + s.color + '">' + s.text + "</span>" : "";
+        var subtype = (p.approaches || []).length
+          ? '<div class="subtype">' + labelFor(p.approaches[0]) + "</div>" : "";
         a.innerHTML =
           '<div style="display:flex;align-items:baseline;gap:8px"><h2>' + p.title + "</h2>" + status + "</div>" +
+          subtype +
           '<p>' + (p.summary || "") + "</p>" +
           '<div class="badges">' + badges + "</div>" +
           '<div class="tech">' + tech + "</div>" +
-          '<div class="cta">Abrir projeto →</div>';
+          '<div class="cta">Open project →</div>';
         grid.appendChild(a);
       });
     }
