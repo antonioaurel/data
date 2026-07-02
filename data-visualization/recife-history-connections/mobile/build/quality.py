@@ -23,7 +23,6 @@ FILL_FIELDS = [
     ("neighborhood", "neighborhood"),
     ("image",        "image"),
     ("source",       "source"),
-    ("coordinates",  "lat"),  # lat presence stands in for geo readiness
 ]
 
 
@@ -58,11 +57,6 @@ def integrity(nodes, edges, aliases=None):
         warnings.append("%d edges reference a non-existent node (dropped): %s%s"
                         % (len(broken), sample, " …" if len(broken) > 5 else ""))
 
-    with_geo = sum(1 for r in nodes
-                   if (r.get("lat") or "").strip() and (r.get("lon") or "").strip())
-    if with_geo == 0:
-        warnings.append("0 nodes have coordinates -> Map projection has no data yet (Phase 5 blocked)")
-
     isolated = [i for i in ids if degree[i] == 0]
     if isolated:
         warnings.append("%d isolated nodes (0 connections)" % len(isolated))
@@ -71,7 +65,6 @@ def integrity(nodes, edges, aliases=None):
         "nodes":    len(nodes),
         "edges":    sum(degree.values()) // 2,
         "broken":   len(broken),
-        "with_geo": with_geo,
         "isolated": len(isolated),
     }
     return errors, warnings, stats
@@ -98,5 +91,5 @@ if __name__ == "__main__":
     nodes, edges, aliases = load_csvs(src)
     errors, _w, stats = report(nodes, edges, aliases)
     print("base: %(nodes)d nodes - %(edges)d edges "
-          "(broken: %(broken)d - with_geo: %(with_geo)d - isolated: %(isolated)d)" % stats)
+          "(broken: %(broken)d - isolated: %(isolated)d)" % stats)
     sys.exit(1 if errors else 0)

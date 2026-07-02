@@ -15,8 +15,10 @@ This subproject **shares the existing source of truth** — the CSVs in
 the Google Sheet. The mobile build only *reads* them and derives its own JSON; it never
 edits the base.
 
-Today the data has 3 node types (`Local`, `Personagem`, `Fato Histórico`), no coordinates
-and no edge weights, so the spec's richer model degrades gracefully (see the build report).
+The app is concentrated on the **three node types that exist in the base** — `Local`→`place`,
+`Personagem`→`person`, `Fato Histórico`→`historical_fact`. The **Map projection is out of
+scope** (no coordinates in the data): no `neighborhoods.json`, no `has_geo`, and the bottom nav
+is Explorar · Favoritos · Sobre.
 
 ## Build
 
@@ -30,16 +32,14 @@ Standard library only, deterministic. Outputs (into `mobile/data/`):
 
 | File | Shape | Purpose |
 |---|---|---|
-| `index.json` | `[{id,name,type,conn_count,has_geo}]` | list rendering + fast filter/sort |
+| `index.json` | `[{id,name,type,conn_count}]` | list rendering + fast filter/sort |
 | `search.json` | `[{id,name,type,norm,aliases:[…]}]` | alias-aware, diacritic-insensitive search |
 | `sources.json` | `[{id,title,source_type,author,year,url,notes}]` | source (FT) registry |
-| `neighborhoods.json` | `[{node_id,name,type,lat,lng,neighborhood}]` | validated-geo pins (empty until coords exist) |
-| `matrix.json` | `[{type_a,type_b,count,strength_sum}]` | type×type adjacency (symmetric), ≤ 28 rows |
+| `matrix.json` | `[{type_a,type_b,count,strength_sum}]` | type×type adjacency (symmetric), **3×3 = 6 rows** |
 | `node/{id}.json` | detail + resolved edges/sources/aliases | fetched on demand per node |
 
 `type` maps `Local→place`, `Personagem→person`, `Fato Histórico→historical_fact`
-(see `common.TYPE_MAP`); `strength` defaults to `1`; `has_geo` is `false` everywhere until
-coordinates are added.
+(see `common.TYPE_MAP`); `strength` defaults to `1`.
 
 ## Site (Phase 2)
 
@@ -64,7 +64,7 @@ View locally (from the existing server at repo root):
 - **Phase 2 — Shell + Home + List:** done (SSG + search/filter/sort/inline-expand).
 - Next: Phase 3 node detail (bottom sheet + `node/{id}.html` static pages). Card/name/connection
   links already target `node/{id}.html` — they resolve once Phase 3 builds those pages.
-- Phases 4–8: ego-graph, map, **matrix**, browse/favorites/about, states/a11y/perf.
+- Phases 4–8: ego-graph, **matrix** (3×3), browse/favorites/about, states/a11y/perf. (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.

@@ -4,15 +4,14 @@
 (function () {
   "use strict";
 
+  // Concentrated on the three original types in the base.
   var TYPES = {
-    place:           { label: "Local",          ico: "📍" }, // 📍
-    person:          { label: "Personagem",     ico: "👤" }, // 👤
-    historical_fact: { label: "Fato Histórico", ico: "📜" }, // 📜
-    institution:     { label: "Instituição",    ico: "🏛" }, // 🏛
-    cultural_event:  { label: "Evento Cultural",ico: "🎭" }, // 🎭
-    work:            { label: "Obra",           ico: "🎨" }, // 🎨
-    other:           { label: "Outro",          ico: "●" }        // ●
+    place:           { label: "Local",          ico: "📍" },
+    person:          { label: "Personagem",     ico: "👤" },
+    historical_fact: { label: "Fato Histórico", ico: "📜" }
   };
+  var FALLBACK = { label: "Outro", ico: "●" };
+  function typeMeta(t) { return TYPES[t] || FALLBACK; }
 
   function stripAccents(s) {
     s = (s || "").toLowerCase();
@@ -166,7 +165,7 @@
       if (!edges.length) { holder.innerHTML = "<li class='empty'>sem conexões</li>"; return; }
       var html = "";
       for (var i = 0; i < edges.length; i++) {
-        var ed = edges[i], m = TYPES[ed.target_type] || TYPES.other;
+        var ed = edges[i], m = typeMeta(ed.target_type);
         html += "<li><a href='node/" + ed.target_id + ".html'>" +
                 "<span class='badge t-" + ed.target_type + "'><span class='ico'>" + m.ico + "</span></span>" +
                 escapeHtml(ed.target_name) + "</a></li>";
@@ -208,7 +207,7 @@
             var o = arr[i];
             var hay = o.norm + " " + (o.aliases ? o.aliases.join(" ") : "");
             if (hay.indexOf(q) !== -1) {
-              var m = TYPES[o.type] || TYPES.other;
+              var m = typeMeta(o.type);
               out.push("<li class='card t-" + o.type + "'><a class='card-main' href='node/" + o.id + ".html'>" +
                 "<span class='badge t-" + o.type + "'><span class='ico'>" + m.ico + "</span>" + m.label + "</span>" +
                 "<span class='card-body'><span class='card-name'>" + escapeHtml(o.name) + "</span></span></a></li>");

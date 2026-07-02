@@ -10,18 +10,15 @@ import os
 
 from common import normalize
 
-# type -> (Portuguese label, icon). Icon + text label always accompany color.
+# type -> (Portuguese label, icon). Concentrated on the three original types in the base.
+# The .get() fallback keeps rendering safe if an unexpected type ever appears.
 TYPE_META = {
     "place":           ("Local",           "📍"),
     "person":          ("Personagem",      "👤"),
     "historical_fact": ("Fato Histórico",  "📜"),
-    "institution":     ("Instituição",     "🏛"),
-    "cultural_event":  ("Evento Cultural", "🎭"),
-    "work":            ("Obra",            "🎨"),
-    "other":           ("Outro",           "●"),
 }
-CATEGORY_ORDER = ["place", "person", "historical_fact",
-                  "institution", "cultural_event", "work", "other"]
+FALLBACK_META = ("Outro", "●")
+CATEGORY_ORDER = ["place", "person", "historical_fact"]
 
 
 def esc(s):
@@ -29,14 +26,13 @@ def esc(s):
 
 
 def badge(t, with_label=True):
-    label, ico = TYPE_META.get(t, TYPE_META["other"])
+    label, ico = TYPE_META.get(t, FALLBACK_META)
     inner = "<span class='ico'>%s</span>%s" % (ico, esc(label) if with_label else "")
     return "<span class='badge t-%s'>%s</span>" % (t, inner)
 
 
 def bottom_nav(active):
     items = [("index.html", "Explorar", "🧭", "explorar"),
-             ("#",          "Mapa",      "🗺", "mapa"),
              ("#",          "Favoritos", "★",  "favoritos"),
              ("#",          "Sobre",     "ℹ",  "sobre")]
     lis = []
@@ -124,16 +120,17 @@ def render_list(index):
     cards = []
     for o in sorted(index, key=lambda o: o["name"]):
         t = o["type"]
-        label = TYPE_META.get(t, TYPE_META["other"])[0]
+        label = TYPE_META.get(t, FALLBACK_META)[0]
         cards.append(
             "<li class='card t-%s' data-id='%s' data-type='%s' data-conn='%d' data-name='%s' aria-expanded='false'>"
             "<button class='card-main' type='button' aria-label='%s — %s, %d conexões. Toque para ver conexões.'>"
-            "%s<span class='card-body'><span class='card-name'>%s</span></span>"
-            "<span class='card-expand'><span class='conn'>%d</span><span class='chevron' aria-hidden='true'>›</span></span>"
+            "<span class='card-body'><span class='card-name'>%s</span>"
+            "<span class='card-meta'>%s<span class='conn'>%d conexões</span>"
+            "<span class='chevron' aria-hidden='true'>›</span></span></span>"
             "</button></li>"
             % (t, esc(o["id"]), t, o["conn_count"], esc(normalize(o["name"])),
                esc(o["name"]), esc(label), o["conn_count"],
-               badge(t, with_label=False), esc(o["name"]), o["conn_count"])
+               esc(o["name"]), badge(t), o["conn_count"])
         )
 
     body = (
