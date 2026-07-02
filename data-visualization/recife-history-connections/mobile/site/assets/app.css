@@ -1,0 +1,173 @@
+/* Conexões da História — mobile. Design tokens + shell + home + list.
+   Target 360px, fluid to 414+, content max-width 440px. System fonts, high contrast (AA). */
+
+:root {
+  /* spacing */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --radius: 10px; --radius-lg: 16px;
+  --maxw: 440px;
+  --nav-h: 56px;
+
+  /* surfaces / text */
+  --bg: #f7f7f8; --surface: #ffffff; --border: #e2e2e6;
+  --text: #1a1a1e; --muted: #5c5c66; --muted-2: #8a8a94;
+  --accent: #0f766e; --accent-ink: #ffffff;
+  --focus: #1d4ed8;
+
+  /* node-type palette: color + light bg (icon + text label always accompany color) */
+  --t-place: #0f766e;          --t-place-bg: #ccfbf1;
+  --t-person: #6d28d9;         --t-person-bg: #ede9fe;
+  --t-historical_fact: #b45309;--t-historical_fact-bg: #fef3c7;
+  --t-institution: #1d4ed8;    --t-institution-bg: #dbeafe;
+  --t-cultural_event: #be185d; --t-cultural_event-bg: #fce7f3;
+  --t-work: #c2410c;           --t-work-bg: #ffedd5;
+  --t-other: #374151;          --t-other-bg: #e5e7eb;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px; line-height: 1.5;
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+}
+a { color: var(--accent); text-decoration: none; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+
+.skip-link {
+  position: absolute; left: -999px; top: 0; background: var(--accent); color: #fff;
+  padding: var(--s2) var(--s4); z-index: 100;
+}
+.skip-link:focus { left: 0; }
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--s4); }
+
+/* header */
+.app-header {
+  position: sticky; top: 0; z-index: 20; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
+}
+.app-header .wrap { display: flex; align-items: center; min-height: 52px; gap: var(--s3); }
+.app-title { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.app-title a { color: var(--text); }
+
+/* search */
+.search {
+  display: flex; gap: var(--s2); margin: var(--s4) 0;
+}
+.search input[type="search"] {
+  flex: 1; min-height: 48px; font-size: 16px; padding: 0 var(--s4);
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+  color: var(--text);
+}
+.search input::placeholder { color: var(--muted-2); }
+
+/* section headings */
+.section-h { font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--muted); margin: var(--s5) 0 var(--s3); }
+
+/* chips (type filter / categories) */
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.chip {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  min-height: 40px; padding: 0 var(--s3); border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.chip .ico { font-size: 15px; line-height: 1; }
+.chip[aria-pressed="true"], .chip.is-active {
+  border-color: currentColor;
+}
+/* colored per type via .t-<type> */
+.chip.t-place.is-active { background: var(--t-place-bg); color: var(--t-place); }
+.chip.t-person.is-active { background: var(--t-person-bg); color: var(--t-person); }
+.chip.t-historical_fact.is-active { background: var(--t-historical_fact-bg); color: var(--t-historical_fact); }
+.chip.t-institution.is-active { background: var(--t-institution-bg); color: var(--t-institution); }
+.chip.t-cultural_event.is-active { background: var(--t-cultural_event-bg); color: var(--t-cultural_event); }
+.chip.t-work.is-active { background: var(--t-work-bg); color: var(--t-work); }
+.chip.t-other.is-active { background: var(--t-other-bg); color: var(--t-other); }
+
+/* toolbar (sort + count) */
+.toolbar { display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s3); margin: var(--s4) 0 var(--s3); }
+.toolbar label { font-size: 13px; color: var(--muted); }
+.toolbar select { min-height: 40px; font-size: 15px; padding: 0 var(--s2);
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); }
+.count { font-size: 13px; color: var(--muted); }
+
+/* cards / list */
+.cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-main {
+  display: flex; align-items: center; gap: var(--s3); width: 100%;
+  padding: var(--s3) var(--s4); min-height: 56px; text-align: left;
+  background: none; border: 0; color: var(--text); cursor: pointer; font: inherit;
+}
+.card-body { flex: 1; min-width: 0; }
+.card-name { font-size: 16px; font-weight: 600; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-meta { display: flex; align-items: center; gap: var(--s2); margin-top: 2px; }
+.conn { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+/* type badge (color + icon + text) */
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.badge .ico { font-size: 12px; }
+.t-place .badge, .badge.t-place { background: var(--t-place-bg); color: var(--t-place); }
+.t-person .badge, .badge.t-person { background: var(--t-person-bg); color: var(--t-person); }
+.t-historical_fact .badge, .badge.t-historical_fact { background: var(--t-historical_fact-bg); color: var(--t-historical_fact); }
+.t-institution .badge, .badge.t-institution { background: var(--t-institution-bg); color: var(--t-institution); }
+.t-cultural_event .badge, .badge.t-cultural_event { background: var(--t-cultural_event-bg); color: var(--t-cultural_event); }
+.t-work .badge, .badge.t-work { background: var(--t-work-bg); color: var(--t-work); }
+.t-other .badge, .badge.t-other { background: var(--t-other-bg); color: var(--t-other); }
+
+/* expand toggle + inline connections */
+.card-expand { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0;
+  color: var(--muted); font-size: 12px; }
+.chevron { transition: transform .15s ease; }
+.card[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+.subconns { list-style: none; margin: 0; padding: 0 var(--s4) var(--s3) var(--s6);
+  border-top: 1px dashed var(--border); }
+.subconns li { padding: var(--s1) 0; }
+.subconns a { display: inline-flex; align-items: center; gap: var(--s2); min-height: 32px; }
+.subconns .empty { color: var(--muted); font-size: 14px; padding: var(--s2) 0; }
+
+/* "start here" grid */
+.starts { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.start-item { display: flex; align-items: center; gap: var(--s3); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: var(--s3) var(--s4); min-height: 56px; }
+.start-item .rank { font-size: 13px; font-weight: 700; color: var(--muted-2); width: 20px; flex-shrink: 0; }
+
+/* states */
+.empty-state { text-align: center; color: var(--muted); padding: var(--s6) var(--s4); }
+.skeleton { background: linear-gradient(90deg, #eee, #f5f5f5, #eee); border-radius: var(--radius);
+  height: 56px; margin-bottom: var(--s2); }
+[hidden] { display: none !important; }
+.js-only { display: none; }
+.has-js .js-only { display: initial; }
+.has-js .no-js-only { display: none; }
+
+/* bottom nav */
+.bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav ul { max-width: var(--maxw); margin: 0 auto; padding: 0; list-style: none;
+  display: grid; grid-template-columns: repeat(4, 1fr); }
+.bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; min-height: var(--nav-h); font-size: 11px; color: var(--muted); }
+.bottom-nav a .ico { font-size: 20px; }
+.bottom-nav a[aria-current="page"] { color: var(--accent); font-weight: 700; }
+
+/* offline indicator */
+.offline-bar { background: #78350f; color: #fff; font-size: 13px; text-align: center;
+  padding: var(--s2); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
