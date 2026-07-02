@@ -81,6 +81,7 @@ def shell(title, page, datapath, active_nav, body, base=""):
         "<meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>\n"
         "<title>%s</title>\n"
         "<meta name='description' content='Conexões da História — pessoas, lugares e fatos que formaram Recife e Pernambuco.'>\n"
+        "<link rel='icon' href='data:,'>\n"
         "<link rel='stylesheet' href='%sassets/app.css'>\n"
         "<script>document.documentElement.className='has-js';</script>\n"
         "</head>\n"
@@ -153,16 +154,14 @@ def render_list(index):
     cards = []
     for o in sorted(index, key=lambda o: o["name"]):
         t = o["type"]
-        label = TYPE_META.get(t, FALLBACK_META)[0]
         cards.append(
-            "<li class='card t-%s' data-id='%s' data-type='%s' data-conn='%d' data-name='%s' aria-expanded='false'>"
-            "<button class='card-main' type='button' aria-label='%s — %s, %d conexões. Toque para abrir o detalhe.'>"
+            "<li class='card t-%s' data-id='%s' data-type='%s' data-conn='%d' data-name='%s'>"
+            "<button class='card-main' type='button'>"
             "<span class='card-body'><span class='card-name'>%s</span>"
             "<span class='card-meta'>%s<span class='conn'>%d conexões</span>"
             "<span class='chevron' aria-hidden='true'>›</span></span></span>"
             "</button></li>"
             % (t, esc(o["id"]), t, o["conn_count"], esc(normalize(o["name"])),
-               esc(o["name"]), esc(label), o["conn_count"],
                esc(o["name"]), badge(t), o["conn_count"])
         )
 
