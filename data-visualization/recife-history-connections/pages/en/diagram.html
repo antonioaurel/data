@@ -580,9 +580,12 @@ function setFilter(type) {
   document.querySelectorAll('.type-chip').forEach(function(el) {
     el.classList.toggle('active', el.getAttribute('data-type') === activeType);
   });
-  selectedName = null;
-  d3.selectAll('.nodes circle').classed('selected', false);
-  applyFilterView();
+  if (selectedName) {
+    // a node is selected: keep it selected, just re-scope its neighbours to the active type
+    showNodeSelection(selectedName);
+  } else {
+    applyFilterView();
+  }
 }
 
 // apply/clear the neighborhood filter (composes with the type filter)
@@ -601,28 +604,33 @@ svg.on('click', function() {
 var linksArray = [];
 var nodesArray = [];
 
-d3.csv('../../data/lista-geral-do-mapeamento.csv', function(error, graph) {
-  if (error) throw error;
+// load the normalized graph (structure) + content (detail / neighborhood)
+Promise.all([
+  fetch('../../data/graph.json').then(function(r) { return r.json(); }),
+  fetch('../../data/content.json').then(function(r) { return r.json(); })
+]).then(function(loaded) {
+  var gjson = loaded[0], content = loaded[1];
+
+  // node objects keep the same field names the rest of the code expects
+  var graph = gjson.nodes.map(function(o) {
+    var c = content[o.n] || {};
+    return {
+      Nome: o.n, Tipo: o.t,
+      'Sub-Tipo': c.st || '', Local: c.l || '',
+      Imagem: c.img || '', 'Descrição': c.d || ''
+    };
+  });
   nodesArray = graph;
 
   var connCount = {};
-  graph.forEach(function(row) {
-    connCount[row.Nome] = 0;
-  });
+  graph.forEach(function(row) { connCount[row.Nome] = 0; });
 
-  var nodeNameSet = {};
-  graph.forEach(function(row) { nodeNameSet[row.Nome] = true; });
-
-  graph.forEach(function(row) {
-    for (var i = 1; i <= 15; i++) {
-      var target = row['Interconexão ' + i];
-      if (target && target.trim() && nodeNameSet[target.trim()]) {
-        var key = [row.Nome, target.trim()].sort().join('||');
-        linksArray.push({ source: row.Nome, target: target.trim() });
-        connCount[row.Nome] = (connCount[row.Nome] || 0) + 1;
-        connCount[target.trim()] = (connCount[target.trim()] || 0) + 1;
-      }
-    }
+  // edges from the edge list (undirected); degree = full connection count
+  gjson.edges.forEach(function(e) {
+    var a = gjson.nodes[e[0]].n, b = gjson.nodes[e[1]].n;
+    linksArray.push({ source: a, target: b });
+    connCount[a] = (connCount[a] || 0) + 1;
+    connCount[b] = (connCount[b] || 0) + 1;
   });
 
   var link = g.append('g').attr('class', 'links')
@@ -728,8 +736,12 @@ d3.csv('../../data/lista-geral-do-mapeamento.csv', function(error, graph) {
 
 function highlightNeighbors(nome) {
   var keep = {};
-  keep[nome] = true;
-  getConnections(nome).forEach(function(t) { keep[t.Nome || t] = true; });
+  keep[nome] = true;   // the selected node is always kept
+  getConnections(nome).forEach(function(t) {
+    var name = t.Nome || t, nd = getNode(name);
+    // with a type filter active, keep only neighbours of that type
+    if (!activeType || (nd && nd.Tipo === activeType)) keep[name] = true;
+  });
 
   d3.selectAll('.nodes circle')
     .classed('faded', function(d) { return !keep[d.Nome]; })
@@ -738,11 +750,11 @@ function highlightNeighbors(nome) {
   d3.selectAll('.links line')
     .classed('highlight', function(l) {
       var s = l.source.Nome || l.source, t = l.target.Nome || l.target;
-      return s === nome || t === nome;
+      return (s === nome && keep[t]) || (t === nome && keep[s]);
     })
     .classed('faded', function(l) {
       var s = l.source.Nome || l.source, t = l.target.Nome || l.target;
-      return !(s === nome || t === nome);
+      return !((s === nome && keep[t]) || (t === nome && keep[s]));
     });
 
   d3.selectAll('.labels text')

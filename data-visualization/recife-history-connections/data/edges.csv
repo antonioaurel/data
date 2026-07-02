@@ -5260,5 +5260,15 @@ LC-0501,Avenida Dom Hélder Câmara,PE-9002,Dom Hélder Câmara,manual,manual_or
 LC-0590,Rua Demócrito de Souza Filho,PE-AUS-0057,Demócrito de Souza Filho,manual,manual_orphan_link,validated,ligação de nó isolado
 LC-0551,Hospital Pelópidas Silveira,PE-AUS-0153,Pelópidas Silveira,manual,manual_orphan_link,validated,ligação de nó isolado
 FH-0535,Criação da TV no Brasil,PE-AUS-0020,Assis Chateaubriand,manual,manual_orphan_link,validated,ligação de nó isolado
-FH-0586,Proclamação da República do Brasil,PE-AUS-0100,João Alfredo,manual,manual_orphan_link,validated,ligação de nó isolado
-FH-0586,Proclamação da República do Brasil,PE-AUS-0028,Barbosa Lima Sobrinho,manual,manual_orphan_link,validated,ligação de nó isolado
+FH-0299,Proclamação da República,LC-0284,Praça da República,manual,manual,validated,
+PE-9003,Antônio Maria,FH-0535,Criação da TV no Brasil,manual,manual,validated,
+PE-9003,Antônio Maria,LC-0317,Rua do Bom Jesus,manual,manual,validated,
+PE-9003,Antônio Maria,PE-AUS-0020,Assis Chateaubriand,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,LC-0507,Bloco da Saudade,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,LC-0388,Maracatu Cruzeiro do Forte,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,LC-0213,Maracatu Encanto do Pina,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,LC-0214,Maracatu Porto Rico,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,LC-0603,Troça Carnavalesca Ceroula de Olinda,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,LC-0443,Troça Carnavalesca Mista Cariri Olindense,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,LC-0444,Troça Carnavalesca Mista Pitombeira dos Quatro Cantos,manual,manual,validated,
+FH-0516,Carnaval de Pernambuco,FH-0493,O Frevo,manual,manual,validated,
