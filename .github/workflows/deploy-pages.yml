@@ -1,10 +1,13 @@
-name: Deploy Recife History Connections to GitHub Pages
+name: Deploy site to GitHub Pages
 
 on:
   push:
     branches: [main]
     paths:
-      - 'data-visualization/recife-history-connections/**'
+      - 'index.html'
+      - 'projects.json'
+      - 'assets/**'
+      - 'projects/recife-history-connections/**'
   workflow_dispatch:
 
 permissions:
@@ -27,8 +30,11 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Prepare site structure
         run: |
-          mkdir -p _site/data-visualization/recife-history-connections
-          cp -r data-visualization/recife-history-connections/. _site/data-visualization/recife-history-connections/
+          # Publish the whole repo (landing page at root + every project folder),
+          # excluding version control and CI metadata.
+          mkdir -p _site
+          rsync -a --exclude='.git' --exclude='.github' --exclude='_site' \
+                   --exclude='_archive' --exclude='data-source' --exclude='.claude' ./ _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
