@@ -276,7 +276,7 @@ html.has-js .no-js-only { display: none !important; }
   padding-bottom: env(safe-area-inset-bottom);
 }
 .bottom-nav ul { max-width: var(--maxw); margin: 0 auto; padding: 0; list-style: none;
-  display: grid; grid-template-columns: repeat(3, 1fr); }
+  display: grid; grid-template-columns: repeat(4, 1fr); }
 .bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 2px; min-height: var(--nav-h); font-size: 11px; color: var(--muted); }
 .bottom-nav a .ico { font-size: 20px; }
@@ -293,6 +293,42 @@ html.has-js .no-js-only { display: none !important; }
 
 /* detail pane (multi-panel on expanded only) */
 .detail-pane { display: none; }
+
+/* Início */
+.home-intro { color: var(--muted); max-width: 42ch; margin: var(--s4) auto 0; }
+.home-stats { font-size: 15px; margin: var(--s2) 0 var(--s4); }
+.viz-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.viz-link { display: block; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: var(--s3) var(--s4); min-height: 56px; }
+.viz-name { display: block; font-weight: 700; }
+.viz-desc { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+
+/* Fill rate */
+.fr { display: grid; gap: var(--s3); margin: var(--s4) auto; max-width: 420px; }
+.fr-row { display: grid; gap: 4px; }
+.fr-label { font-size: 14px; font-weight: 600; }
+.fr-bar { height: 10px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.fr-fill { display: block; height: 100%; background: var(--accent); }
+.fr-pct { font-size: 13px; color: var(--muted); }
+.fr-low .fr-fill { background: #f59e0b; }
+.fr-low .fr-label::after { content: " ⚠"; color: #f59e0b; }
+
+/* Fontes (books) */
+.books { list-style: none; margin: var(--s4) 0; padding: 0; display: grid; gap: var(--s4); }
+.book { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.book-cover { padding: var(--s5) var(--s4); font-weight: 800; font-size: 18px; line-height: 1.2;
+  background: var(--accent); color: var(--accent-ink); }
+.book-title { font-weight: 700; margin: var(--s3) 0 0; }
+.book-sub { color: var(--muted); font-size: 14px; margin: 2px 0; }
+.book-meta { font-size: 13px; color: var(--muted-2); margin: 2px 0 var(--s3); }
+
+/* Sobre */
+.author { margin: var(--s4) 0; }
+.author-name { font-weight: 700; font-size: 17px; margin: 0; }
+.author-meta { color: var(--muted); margin: 2px 0; }
+.divider { border: 0; border-top: 1px solid var(--border); margin: var(--s5) auto; max-width: 200px; }
+.projects { list-style: none; margin: 0 auto; padding: 0; display: grid; gap: var(--s2); max-width: 440px; }
+.disclaimer { color: var(--muted); font-size: 14px; max-width: 48ch; margin: var(--s3) auto; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }

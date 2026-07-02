@@ -21,6 +21,18 @@ TYPE_META = {
 FALLBACK_META = ("Outro", "●")
 CATEGORY_ORDER = ["local", "personagem", "evento"]
 
+# Links out to the existing desktop pages / external map (from mobile/site/ → ../../pages/).
+DESKTOP_DIAGRAM = "../../pages/diagram.html"
+DESKTOP_STATS = "../../pages/stats.html"
+MAP_URL = ("https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj"
+           "&ll=-8.06055276702706%2C-34.882075024350215&z=15")
+
+# Bottom/top nav sections (§7): Início · Fill rate · Fontes · Sobre.
+NAV_ITEMS = [("index.html", "Início", "🏠", "inicio"),
+             ("fillrate.html", "Fill rate", "📊", "fillrate"),
+             ("fontes.html", "Fontes", "📚", "fontes"),
+             ("sobre.html", "Sobre", "ℹ", "sobre")]
+
 
 def esc(s):
     return html.escape(s or "", quote=True)
@@ -33,14 +45,11 @@ def badge(t, with_label=True):
 
 
 def bottom_nav(active, base=""):
-    items = [(base + "index.html",     "Explorar",  "🧭", "explorar"),
-             (base + "favoritos.html", "Favoritos", "★",  "favoritos"),
-             (base + "sobre.html",     "Sobre",     "ℹ",  "sobre")]
     lis = []
-    for href, label, ico, key in items:
+    for href, label, ico, key in NAV_ITEMS:
         cur = " aria-current='page'" if key == active else ""
-        lis.append("<li><a href='%s'%s><span class='ico' aria-hidden='true'>%s</span>%s</a></li>"
-                   % (href, cur, ico, esc(label)))
+        lis.append("<li><a href='%s%s'%s><span class='ico' aria-hidden='true'>%s</span>%s</a></li>"
+                   % (base, href, cur, ico, esc(label)))
     return ("<nav class='bottom-nav' aria-label='Seções'><ul>%s</ul></nav>" % "".join(lis))
 
 
@@ -63,13 +72,11 @@ def view_switcher(active, base=""):
 
 def top_nav(active, base=""):
     """Horizontal nav shown in the header on expanded screens (≥1024px); the bottom nav is
-    hidden there. Same three sections."""
-    items = [("index.html", "Explorar", "explorar"),
-             ("favoritos.html", "Favoritos", "favoritos"),
-             ("sobre.html", "Sobre", "sobre")]
-    links = "".join("<a href='%s%s'%s>%s</a>"
-                    % (base, href, " aria-current='page'" if key == active else "", esc(label))
-                    for href, label, key in items)
+    hidden there."""
+    links = "".join(
+        "<a href='%s%s'%s>%s</a>"
+        % (base, href, " aria-current='page'" if key == active else "", esc(label))
+        for href, label, _ico, key in NAV_ITEMS)
     return "<nav class='top-nav' aria-label='Seções'>%s</nav>" % links
 
 
@@ -110,40 +117,45 @@ def present_types(index):
     return [(t, counts[t]) for t in CATEGORY_ORDER if counts.get(t)]
 
 
-def render_home(index):
+def viz_row(href, name, desc, external=False):
+    ext = " target='_blank' rel='noopener'" if external else ""
+    arrow = " ↗" if external else ""
+    return ("<li class='viz-item'><a class='viz-link' href='%s'%s>"
+            "<span class='viz-name'>%s%s</span>"
+            "<span class='viz-desc'>%s</span></a></li>" % (href, ext, esc(name), arrow, esc(desc)))
+
+
+def render_home(index, stats):
     types = present_types(index)
     chips = "".join(
         "<a class='chip t-%s is-active' href='list.html#type=%s'>"
-        "<span class='ico' aria-hidden='true'>%s</span>%s "
-        "<span class='conn'>(%d)</span></a>"
-        % (t, t, TYPE_META[t][1], esc(TYPE_META[t][0]), c)
-        for t, c in types)
+        "<span class='ico' aria-hidden='true'>%s</span>%s</a>"
+        % (t, t, TYPE_META[t][1], esc(TYPE_META[t][0]))
+        for t, _c in types)
 
-    top = sorted(index, key=lambda o: (-o["conn_count"], o["name"]))[:8]
-    starts = "".join(
-        "<li class='start-item t-%s'><span class='rank'>%d</span>%s"
-        "<span class='card-body'><span class='card-name'>%s</span>"
-        "<span class='card-meta'><span class='conn'>%d conexões</span></span></span></li>"
-        % (o["type"], i + 1, badge(o["type"], with_label=False), esc(o["name"]), o["conn_count"])
-        for i, o in enumerate(top))
+    top = stats.get("top_id", "")
+    viz = ("<ul class='viz-list'>"
+           + viz_row("graph.html#node=" + top, "Grafo", "Explore as conexões de um nó, uma a uma.")
+           + viz_row("matriz.html", "Matriz", "Panorama das conexões por tipo.")
+           + viz_row(MAP_URL, "Mapa histórico", "Os pontos no mapa do Recife e região.", external=True)
+           + viz_row(DESKTOP_DIAGRAM, "Diagrama", "A rede completa, item a item.", external=True)
+           + "</ul>")
 
     body = (
+        "<p class='home-intro'>Um mapeamento das conexões entre pessoas, locais e eventos da "
+        "história de Pernambuco em pontos que influenciaram o Brasil.</p>\n"
+        "<p class='home-stats'><strong>%d</strong> nós · <strong>%d</strong> conexões</p>\n"
         "<form id='home-search' class='search js-only' role='search' action='list.html'>"
-        "<input id='home-q' type='search' name='q' placeholder='Buscar pessoa, lugar, fato…' "
-        "autocomplete='off' aria-label='Buscar'>"
-        "</form>\n"
+        "<input id='home-q' type='search' name='q' placeholder='Buscar pessoa, lugar, evento…' "
+        "autocomplete='off' aria-label='Buscar'></form>\n"
         "<ul id='home-results' class='cards' hidden></ul>\n"
-        "<h2 class='section-h'>Explorar por tipo</h2>\n"
         "<div class='chips'>%s</div>\n"
-        "<h2 class='section-h'>Comece por aqui</h2>\n"
-        "<p class='no-js-only'><a href='list.html'>Ver todos os nós →</a></p>\n"
-        "<ul class='starts'>%s</ul>\n"
-        "<h2 class='section-h'>Panorama</h2>\n"
-        "<p class='view-links'><a href='matriz.html'>▦ Matriz de conexões por tipo</a></p>\n"
-        "<p style='margin-top:16px'><a href='list.html'>Ver a lista completa →</a></p>\n"
-        % (chips, starts)
+        "<p class='no-js-only' style='margin-top:12px'><a href='list.html'>Ver a lista completa →</a></p>\n"
+        "<h2 class='section-h'>Visualizações</h2>\n"
+        "%s\n"
+        % (stats.get("n_nodes", 0), stats.get("n_edges", 0), chips, viz)
     )
-    return shell("Conexões da História", "home", "../data", "explorar", body)
+    return shell("Conexões da História", "inicio", "../data", "inicio", body)
 
 
 def render_list(index):
@@ -190,7 +202,7 @@ def render_list(index):
         "</div>\n"
         % (chips, len(index), "".join(cards))
     )
-    return shell("Lista — Conexões da História", "list", "../data", "explorar", body)
+    return shell("Lista — Conexões da História", "list", "../data", "inicio", body)
 
 
 def render_node(d):
@@ -198,11 +210,9 @@ def render_node(d):
     so assets are ../ and data is ../../data; sibling node links are '{id}.html'."""
     t = d["type"]
     p = ["<p><a class='detail-back' href='../list.html'>← Lista</a></p>",
-         "<article class='detail'>",
+         "<article class='detail' data-node-id='%s'>" % esc(d["id"]),
          "<div class='detail-head'>%s<h1 class='detail-name'>%s</h1></div>"
          % (badge(t), esc(d["name"])),
-         "<button id='fav-btn' class='fav-btn js-only' type='button' data-id='%s' "
-         "aria-pressed='false'>☆ Favoritar</button>" % esc(d["id"]),
          "<p><a class='btn btn-primary' href='../graph.html#node=%s'>Ver conexões no grafo</a></p>"
          % esc(d["id"])]
 
@@ -253,7 +263,7 @@ def render_node(d):
 
     p.append("</article>")
     return shell(d["name"] + " — Conexões da História", "node", "../../data",
-                 "explorar", "\n".join(p), base="../")
+                 "inicio", "\n".join(p), base="../")
 
 
 def render_matrix(matrix):
@@ -299,36 +309,82 @@ def render_matrix(matrix):
             + table +
             "\n<p class='mx-foot'><a href='index.html'>← Explorar</a> · "
             "<a href='list.html'>Ver lista</a></p>")
-    return shell("Matriz — Conexões da História", "matrix", "../data", "explorar", body)
+    return shell("Matriz — Conexões da História", "matrix", "../data", "inicio", body)
 
 
-def render_about(sources):
-    if sources:
-        src = "".join(
-            ("<li><a href='%s' rel='noopener' target='_blank'>%s</a></li>"
-             % (esc(s["url"], ), esc(s["title"])) if s.get("url")
-             else "<li>%s</li>" % esc(s["title"]))
-            for s in sources)
-    else:
-        src = "<li class='empty-state'>Registro de fontes em construção.</li>"
+PROJECTS = [
+    "Troça Carnavalesca Segura o Tonho, Charlie Brown",
+    "Data Quality review using IA to Conexões da História",
+    "Hundred Days of Playwright", "Hundred Days of Python",
+    "Mapa do Frevo", "Maracatu Quebra Baque",
+    "Prediction of attendance in events organized through Facebook",
+    "Quem Representa Você",
+]
+
+
+def render_about():
+    projs = "".join("<li>%s</li>" % esc(p) for p in PROJECTS)
     body = (
-        "<h1 class='section-h' style='font-size:18px'>Sobre o projeto</h1>\n"
-        "<p class='about-p'>Conexões da História mapeia as relações entre as pessoas, os lugares "
-        "e os fatos que formaram Recife e Pernambuco. A ideia é explorar como personagens, locais "
-        "e acontecimentos aparentemente distantes estão ligados ao longo do tempo.</p>\n"
-        "<h2 class='section-h'>Como usar</h2>\n"
-        "<p class='about-p'>Comece pela busca ou pelos tipos na tela Explorar, abra um nó para ver "
-        "sua descrição, fontes e conexões, e use a Matriz para ver como os tipos se conectam no "
-        "conjunto. Salve nós em Favoritos para voltar depois.</p>\n"
-        "<h2 class='section-h'>Metodologia</h2>\n"
-        "<p class='about-p'>Cada nó é uma pessoa (Personagem), um lugar (Local) ou um fato "
-        "histórico, curado a partir de fontes públicas; as conexões são relações documentadas "
-        "entre eles. A base é revisada continuamente — nós ainda sem descrição ou imagem são "
-        "exibidos com a devida marcação.</p>\n"
-        "<h2 class='section-h'>Fontes</h2>\n"
-        "<ul class='sources'>%s</ul>\n" % src
+        "<h1 class='section-h' style='font-size:18px'>Sobre</h1>\n"
+        "<p class='about-p'>Um mapeamento das conexões entre pessoas, locais e eventos da "
+        "história de Pernambuco em pontos que influenciaram o Brasil.</p>\n"
+        "<div class='author'>\n"
+        "<p class='author-name'>Antonio A. Oliveira</p>\n"
+        "<p class='author-meta'>Recife, Pernambuco — autor, curador e criador</p>\n"
+        "<p><a href='https://medium.com/@antonio-aureliano' target='_blank' rel='noopener'>Medium ↗</a></p>\n"
+        "<p class='about-p'>Curadoria para estudos de data science, data quality, história e "
+        "software quality.</p>\n"
+        "</div>\n"
+        "<hr class='divider'>\n"
+        "<h2 class='section-h'>Outros projetos</h2>\n"
+        "<ul class='projects'>%s</ul>\n"
+        "<hr class='divider'>\n"
+        "<p class='about-p disclaimer'><strong>Uso de IA:</strong> pareamento no desenvolvimento; "
+        "revisão da qualidade da base de dados, do texto e validação das conexões; geração de "
+        "mocks; e testes de usabilidade, compatibilidade, disponibilidade e desempenho.</p>\n"
+        % projs
     )
     return shell("Sobre — Conexões da História", "about", "../data", "sobre", body)
+
+
+def render_fillrate(stats):
+    rows = "".join(
+        "<div class='fr-row%s'><span class='fr-label'>%s</span>"
+        "<span class='fr-bar'><span class='fr-fill' style='width:%d%%'></span></span>"
+        "<span class='fr-pct'>%d%%</span></div>"
+        % (" fr-low" if pct < 60 else "", esc(name), pct, pct)
+        for name, pct in stats.get("fields", []))
+    body = (
+        "<h1 class='section-h' style='font-size:18px'>Fill rate</h1>\n"
+        "<p class='home-stats'><strong>%d</strong> nós · <strong>%d</strong> conexões</p>\n"
+        "<div class='fr'>%s</div>\n"
+        "<p class='mx-intro'>Campos em âmbar precisam de curadoria. "
+        "<a href='%s' target='_blank' rel='noopener'>Ver o relatório completo ↗</a></p>\n"
+        % (stats.get("n_nodes", 0), stats.get("n_edges", 0), rows, DESKTOP_STATS)
+    )
+    return shell("Fill rate — Conexões da História", "fillrate", "../data", "fillrate", body)
+
+
+BOOKS = [
+    ("Trilhas do Recife", "guia turístico, histórico e cultural", "João B. M. Braga · 2007", "Amazon"),
+    ("O Recife e suas Ruas", "origem, história e nomenclatura", "IAHGP · 2010", "Estante Virtual"),
+    ("Pernambucanidade", "aspectos históricos", "Nilo Pereira · 1983 · 3 volumes", "Mercado Livre"),
+]
+
+
+def render_fontes():
+    cards = "".join(
+        "<li class='book'><div class='book-cover'>%s</div>"
+        "<div class='book-body'><p class='book-title'>%s</p>"
+        "<p class='book-sub'>%s</p><p class='book-meta'>%s</p>"
+        "<p><a href='#'>%s ↗</a></p></div></li>"
+        % (esc(title), esc(title), esc(sub), esc(meta), esc(store))
+        for title, sub, meta, store in BOOKS)
+    body = (
+        "<h1 class='section-h' style='font-size:18px'>Fontes</h1>\n"
+        "<ul class='books'>%s</ul>\n" % cards
+    )
+    return shell("Fontes — Conexões da História", "fontes", "../data", "fontes", body)
 
 
 def render_graph():
@@ -342,36 +398,24 @@ def render_graph():
         "<noscript><p class='empty-state'>O grafo precisa de JavaScript. "
         "<a href='list.html'>Ver a lista</a>.</p></noscript>\n"
     )
-    return shell("Grafo — Conexões da História", "graph", "../data", "explorar", body)
+    return shell("Grafo — Conexões da História", "graph", "../data", "inicio", body)
 
 
-def render_favorites():
-    body = (
-        "<h1 class='section-h' style='font-size:18px'>Favoritos</h1>\n"
-        "<div id='fav-list'></div>\n"
-        "<p id='fav-empty' class='empty-state' hidden>Você ainda não salvou nenhum nó. "
-        "Abra um nó e toque em <strong>☆ Favoritar</strong> para guardá-lo aqui.</p>\n"
-        "<noscript><p class='empty-state'>Os favoritos precisam de JavaScript.</p></noscript>\n"
-        "<p class='view-links'><a href='list.html'>Explorar a lista →</a></p>\n"
-    )
-    return shell("Favoritos — Conexões da História", "favorites", "../data", "favoritos", body)
-
-
-def build_site(index, details, matrix, sources, site_dir):
+def build_site(index, details, matrix, stats, site_dir):
     node_dir = os.path.join(site_dir, "node")
     os.makedirs(node_dir, exist_ok=True)
-    with open(os.path.join(site_dir, "index.html"), "w", encoding="utf-8") as f:
-        f.write(render_home(index))
-    with open(os.path.join(site_dir, "list.html"), "w", encoding="utf-8") as f:
-        f.write(render_list(index))
-    with open(os.path.join(site_dir, "matriz.html"), "w", encoding="utf-8") as f:
-        f.write(render_matrix(matrix))
-    with open(os.path.join(site_dir, "sobre.html"), "w", encoding="utf-8") as f:
-        f.write(render_about(sources))
-    with open(os.path.join(site_dir, "favoritos.html"), "w", encoding="utf-8") as f:
-        f.write(render_favorites())
-    with open(os.path.join(site_dir, "graph.html"), "w", encoding="utf-8") as f:
-        f.write(render_graph())
+    pages = {
+        "index.html":    render_home(index, stats),
+        "list.html":     render_list(index),
+        "matriz.html":   render_matrix(matrix),
+        "graph.html":    render_graph(),
+        "fillrate.html": render_fillrate(stats),
+        "fontes.html":   render_fontes(),
+        "sobre.html":    render_about(),
+    }
+    for name, content in pages.items():
+        with open(os.path.join(site_dir, name), "w", encoding="utf-8") as f:
+            f.write(content)
     for d in details:
         with open(os.path.join(node_dir, d["id"] + ".html"), "w", encoding="utf-8") as f:
             f.write(render_node(d))
