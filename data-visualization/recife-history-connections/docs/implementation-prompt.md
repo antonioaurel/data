@@ -3,6 +3,19 @@
 > Source spec for the mobile build under [`../mobile/`](../mobile/). Build in the phases at
 > the end — don't try to do everything in one pass. Stop for review between phases.
 
+## Scope amendments (current — override the text below where they conflict)
+
+1. **Map is out of scope.** The base has no coordinates, so the Map projection is dropped:
+   no `map.html`, no `neighborhoods.json`, no `has_geo` field, and the bottom nav is
+   **Explorar · Favoritos · Sobre** (3 items). Projections are **three**: List, Graph, Matrix.
+2. **Types concentrated on the three that exist in the base:** `place` (Local),
+   `person` (Personagem), `historical_fact` (Fato Histórico). The other four spec types
+   (institution, cultural_event, work, other) are not used; the Matrix is therefore **3×3**.
+3. **Mobile components are centered** (title, search, chips, section headings, cards,
+   "comece por aqui"), not left-aligned.
+
+Everything else below still applies.
+
 ## Role & objective
 
 Implement the mobile web version of Conexões da História — a historical knowledge graph of
@@ -257,11 +270,12 @@ budget.
 4. **Ego-graph** — lazy engine, recenter + breadcrumb + direct/all toggle + strength-weighted
    edges.
 5. **Map** — lazy Leaflet (or lighter), validated-geo pins, layer toggles.
-6. **Matrix** — `data/matrix.json` in the build; 7×7 type×type on mobile with cell → filtered
-   List drill-down; dense node×node expansion on wide screens (lazy, above breakpoint).
+5. ~~**Map**~~ — **dropped** (see Scope amendments: no coordinates in the base).
+6. **Matrix** — `data/matrix.json` in the build; **3×3** type×type on mobile with cell →
+   filtered List drill-down; dense node×node expansion on wide screens (lazy, above breakpoint).
 7. **Browse + Favorites + About** — categories, neighborhoods, localStorage favorites,
    sources/methodology page.
-8. **States + a11y + perf pass** — service worker/offline, empty/no-result/no-geo states,
+8. **States + a11y + perf pass** — service worker/offline, empty/no-result states,
    Lighthouse run, real entry-level device test.
 
 ## Guardrails

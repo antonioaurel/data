@@ -6,11 +6,10 @@ Reads the shared source CSVs (recife-history-connections/data/{nodes,edges,alias
 and emits the static JSON the mobile site consumes, plus a build/quality report.
 
 Outputs (into mobile/data/):
-    index.json          [{id,name,type,conn_count,has_geo}]                 list + fast filter
+    index.json          [{id,name,type,conn_count}]                         list + fast filter
     search.json         [{id,name,type,norm,aliases:[normalized]}]          alias-aware search
     sources.json        [{id,title,source_type,author,year,url,notes}]      FT registry
-    neighborhoods.json  [{node_id,name,type,lat,lng,neighborhood}]          validated geo only
-    matrix.json         [{type_a,type_b,count,strength_sum}]                 type×type adjacency (symmetric)
+    matrix.json         [{type_a,type_b,count,strength_sum}]                 type×type adjacency (3×3, symmetric)
     node/{id}.json      per-node detail incl. resolved edges + sources + aliases
 
 Static HTML (SSG) is Phase 2+; this phase produces data only.
@@ -33,10 +32,9 @@ OUT_DIR   = os.path.normpath(os.path.join(BUILD_DIR, "..", "data"))
 NODE_DIR  = os.path.join(OUT_DIR, "node")
 SITE_DIR  = os.path.normpath(os.path.join(BUILD_DIR, "..", "site"))
 
-# Canonical node-type order for the type×type matrix (spec palette). Only the first
-# three exist in the data today; the rest render as empty rows/cols until the base grows.
-CANON_TYPES = ["place", "person", "historical_fact",
-               "institution", "cultural_event", "work", "other"]
+# Node-type order for the type×type matrix. Concentrated on the three original types
+# that actually exist in the base (Local / Personagem / Fato Histórico). The matrix is 3×3.
+CANON_TYPES = ["place", "person", "historical_fact"]
 
 # Soft/hard ceilings for the initial-route DATA (index + search), gzip. The
 # shell HTML/CSS/JS budget is measured in Phase 2 when those files exist.
@@ -114,6 +112,8 @@ def build_matrix(nodes, edge_idx):
                 continue
             seen.add(key)
             ta, tb = type_of[a], type_of[b]
+            if ta not in rank or tb not in rank:
+                continue  # outside the three concentrated types (shouldn't happen)
             pk = (ta, tb) if rank[ta] <= rank[tb] else (tb, ta)
             count[pk] = count.get(pk, 0) + 1
             strength[pk] = strength.get(pk, 0) + meta["strength"]
@@ -155,28 +155,21 @@ def main():
     src_by_id = {s["id"]: s for s in source_records}
     edge_idx = build_edge_index(nodes, edges, aliases)
 
-    index, search, neighborhoods = [], [], []
+    index, search = [], []
     os.makedirs(NODE_DIR, exist_ok=True)
 
     for r in nodes:
         nid = (r.get("id") or "").strip()
         name = (r.get("name") or "").strip()
         typ = map_type(r.get("type"))
-        lat = (r.get("lat") or "").strip()
-        lon = (r.get("lon") or "").strip()
-        has_geo = bool(lat and lon)
         nbhd = (r.get("neighborhood") or "").strip()
 
         index.append({"id": nid, "name": name, "type": typ,
-                      "conn_count": len(edge_idx.get(nid, {})), "has_geo": has_geo})
+                      "conn_count": len(edge_idx.get(nid, {}))})
 
         search.append({"id": nid, "name": name, "type": typ,
                        "norm": normalize(name),
                        "aliases": [normalize(a) for a in alias_map.get(nid, [])]})
-
-        if has_geo:
-            neighborhoods.append({"node_id": nid, "name": name, "type": typ,
-                                  "lat": float(lat), "lng": float(lon), "neighborhood": nbhd})
 
         edges_out = []
         for tid, meta in sorted(edge_idx.get(nid, {}).items(),
@@ -198,7 +191,6 @@ def main():
             "municipality": (r.get("city") or "").strip(),
             "neighborhood": nbhd,
             "image": (r.get("image") or "").strip(),
-            "has_geo": has_geo,
             "aliases": alias_map.get(nid, []),
             "sources": [src_by_id[i] for i in node_source_ids(r, url_to_id)],
             "edges": edges_out,
@@ -213,7 +205,6 @@ def main():
     write(os.path.join(OUT_DIR, "index.json"), index_txt)
     write(os.path.join(OUT_DIR, "search.json"), search_txt)
     write(os.path.join(OUT_DIR, "sources.json"), dumps(source_records))
-    write(os.path.join(OUT_DIR, "neighborhoods.json"), dumps(neighborhoods))
 
     matrix, edges_counted = build_matrix(nodes, edge_idx)
     write(os.path.join(OUT_DIR, "matrix.json"), dumps(matrix))
@@ -252,15 +243,15 @@ def main():
     nonzero = sum(1 for m in matrix if m["count"])
     print("  matrix.json: %d type-pair rows (%d non-empty), %d undirected edges aggregated"
           % (len(matrix), nonzero, edges_counted))
-    print("  index.json %.1f KB  search.json %.1f KB  neighborhoods.json %d entries"
-          % (kb(index_txt), kb(search_txt), len(neighborhoods)))
+    print("  index.json %.1f KB  search.json %.1f KB"
+          % (kb(index_txt), kb(search_txt)))
     print("base: %(nodes)d nodes - %(edges)d edges "
-          "(broken: %(broken)d - with_geo: %(with_geo)d - isolated: %(isolated)d)" % stats)
+          "(broken: %(broken)d - isolated: %(isolated)d)" % stats)
 
     if errors:
         print("FAILED: fix the errors above.")
         return 1
-    print("generated: mobile/data/{index,search,sources,neighborhoods,matrix}.json + node/*.json")
+    print("generated: mobile/data/{index,search,sources,matrix}.json + node/*.json + site/*.html")
     return 0
 
 
