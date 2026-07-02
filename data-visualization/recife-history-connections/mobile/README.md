@@ -41,11 +41,30 @@ Standard library only, deterministic. Outputs (into `mobile/data/`):
 (see `common.TYPE_MAP`); `strength` defaults to `1`; `has_geo` is `false` everywhere until
 coordinates are added.
 
+## Site (Phase 2)
+
+`build.py` also pre-renders static HTML into `mobile/site/` (SSG) — the pages work with no
+JavaScript; `site/assets/app.js` then enhances them:
+
+| Page | Static (no-JS) | Enhanced (JS) |
+|---|---|---|
+| `site/index.html` (Home) | title, type chips, "comece por aqui" top-connected | live alias-aware search box |
+| `site/list.html` (List) | all 567 cards (name, type badge, connections) | search, type filter chips, sort, inline connection expansion |
+
+Pages fetch data from `../data` (no duplication). Assets are hand-written source under
+`site/assets/`. **Initial route (Home) ≈ 7 KB gzip** — well under the 150 KB budget;
+`list.html` ≈ 20 KB gzip; `search.json` (~11 KB gzip) loads only on first search.
+
+View locally (from the existing server at repo root):
+`…/recife-history-connections/mobile/site/index.html`
+
 ## Status
 
-- **Phase 1 — data layer:** done (this build), including `matrix.json`.
-- Phase 2+ (shell/home/list, detail, ego-graph, map, **matrix**, browse/favorites/about,
-  states/a11y/perf) add `src/` templates/css/js and generated static HTML under `site/`.
+- **Phase 1 — data layer:** done, including `matrix.json`.
+- **Phase 2 — Shell + Home + List:** done (SSG + search/filter/sort/inline-expand).
+- Next: Phase 3 node detail (bottom sheet + `node/{id}.html` static pages). Card/name/connection
+  links already target `node/{id}.html` — they resolve once Phase 3 builds those pages.
+- Phases 4–8: ego-graph, map, **matrix**, browse/favorites/about, states/a11y/perf.
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
-  files are deferred to the Matrix phase (edges can be filtered client-side meanwhile).
+  files are deferred to the Matrix phase.

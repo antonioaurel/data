@@ -1,0 +1,164 @@
+"""
+sitegen.py — static HTML generation (SSG) for the mobile site, Phase 2.
+
+Pre-renders Home (index.html) and List (list.html) from the index so the site is
+navigable with no JavaScript; assets/app.js then enhances (search/filter/sort/expand).
+Called by build.py after the JSON artifacts are written. Standard library only.
+"""
+import html
+import os
+
+from common import normalize
+
+# type -> (Portuguese label, icon). Icon + text label always accompany color.
+TYPE_META = {
+    "place":           ("Local",           "📍"),
+    "person":          ("Personagem",      "👤"),
+    "historical_fact": ("Fato Histórico",  "📜"),
+    "institution":     ("Instituição",     "🏛"),
+    "cultural_event":  ("Evento Cultural", "🎭"),
+    "work":            ("Obra",            "🎨"),
+    "other":           ("Outro",           "●"),
+}
+CATEGORY_ORDER = ["place", "person", "historical_fact",
+                  "institution", "cultural_event", "work", "other"]
+
+
+def esc(s):
+    return html.escape(s or "", quote=True)
+
+
+def badge(t, with_label=True):
+    label, ico = TYPE_META.get(t, TYPE_META["other"])
+    inner = "<span class='ico'>%s</span>%s" % (ico, esc(label) if with_label else "")
+    return "<span class='badge t-%s'>%s</span>" % (t, inner)
+
+
+def bottom_nav(active):
+    items = [("index.html", "Explorar", "🧭", "explorar"),
+             ("#",          "Mapa",      "🗺", "mapa"),
+             ("#",          "Favoritos", "★",  "favoritos"),
+             ("#",          "Sobre",     "ℹ",  "sobre")]
+    lis = []
+    for href, label, ico, key in items:
+        cur = " aria-current='page'" if key == active else ""
+        dis = " aria-disabled='true'" if href == "#" else ""
+        lis.append("<li><a href='%s'%s%s><span class='ico' aria-hidden='true'>%s</span>%s</a></li>"
+                   % (href, cur, dis, ico, esc(label)))
+    return ("<nav class='bottom-nav' aria-label='Seções'><ul>%s</ul></nav>" % "".join(lis))
+
+
+def shell(title, page, datapath, active_nav, body):
+    return (
+        "<!doctype html>\n"
+        "<html lang='pt-BR' class='no-js'>\n<head>\n"
+        "<meta charset='utf-8'>\n"
+        "<meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>\n"
+        "<title>%s</title>\n"
+        "<meta name='description' content='Conexões da História — pessoas, lugares e fatos que formaram Recife e Pernambuco.'>\n"
+        "<link rel='stylesheet' href='assets/app.css'>\n"
+        "<script>document.documentElement.className='has-js';</script>\n"
+        "</head>\n"
+        "<body data-page='%s' data-datapath='%s'>\n"
+        "<a class='skip-link' href='#main'>Pular para o conteúdo</a>\n"
+        "<header class='app-header'><div class='wrap'>"
+        "<h1 class='app-title'><a href='index.html'>Conexões da História</a></h1>"
+        "</div></header>\n"
+        "<main id='main' class='wrap'>\n%s\n</main>\n"
+        "%s\n"
+        "<script src='assets/app.js' defer></script>\n"
+        "</body>\n</html>\n"
+        % (esc(title), page, esc(datapath), body, bottom_nav(active_nav))
+    )
+
+
+def present_types(index):
+    counts = {}
+    for o in index:
+        counts[o["type"]] = counts.get(o["type"], 0) + 1
+    return [(t, counts[t]) for t in CATEGORY_ORDER if counts.get(t)]
+
+
+def render_home(index):
+    types = present_types(index)
+    chips = "".join(
+        "<a class='chip t-%s is-active' href='list.html#type=%s'>"
+        "<span class='ico' aria-hidden='true'>%s</span>%s "
+        "<span class='conn'>(%d)</span></a>"
+        % (t, t, TYPE_META[t][1], esc(TYPE_META[t][0]), c)
+        for t, c in types)
+
+    top = sorted(index, key=lambda o: (-o["conn_count"], o["name"]))[:8]
+    starts = "".join(
+        "<li class='start-item t-%s'><span class='rank'>%d</span>%s"
+        "<span class='card-body'><span class='card-name'>%s</span>"
+        "<span class='card-meta'><span class='conn'>%d conexões</span></span></span></li>"
+        % (o["type"], i + 1, badge(o["type"], with_label=False), esc(o["name"]), o["conn_count"])
+        for i, o in enumerate(top))
+
+    body = (
+        "<form id='home-search' class='search js-only' role='search' action='list.html'>"
+        "<input id='home-q' type='search' name='q' placeholder='Buscar pessoa, lugar, fato…' "
+        "autocomplete='off' aria-label='Buscar'>"
+        "</form>\n"
+        "<ul id='home-results' class='cards' hidden></ul>\n"
+        "<h2 class='section-h'>Explorar por tipo</h2>\n"
+        "<div class='chips'>%s</div>\n"
+        "<h2 class='section-h'>Comece por aqui</h2>\n"
+        "<p class='no-js-only'><a href='list.html'>Ver todos os nós →</a></p>\n"
+        "<ul class='starts'>%s</ul>\n"
+        "<p style='margin-top:24px'><a href='list.html'>Ver a lista completa →</a></p>\n"
+        % (chips, starts)
+    )
+    return shell("Conexões da História", "home", "../data", "explorar", body)
+
+
+def render_list(index):
+    types = present_types(index)
+    chips = "".join(
+        "<button type='button' class='chip t-%s' data-type='%s' aria-pressed='false'>"
+        "<span class='ico' aria-hidden='true'>%s</span>%s</button>"
+        % (t, t, TYPE_META[t][1], esc(TYPE_META[t][0]))
+        for t, _c in types)
+
+    cards = []
+    for o in sorted(index, key=lambda o: o["name"]):
+        t = o["type"]
+        label = TYPE_META.get(t, TYPE_META["other"])[0]
+        cards.append(
+            "<li class='card t-%s' data-id='%s' data-type='%s' data-conn='%d' data-name='%s' aria-expanded='false'>"
+            "<button class='card-main' type='button' aria-label='%s — %s, %d conexões. Toque para ver conexões.'>"
+            "%s<span class='card-body'><span class='card-name'>%s</span></span>"
+            "<span class='card-expand'><span class='conn'>%d</span><span class='chevron' aria-hidden='true'>›</span></span>"
+            "</button></li>"
+            % (t, esc(o["id"]), t, o["conn_count"], esc(normalize(o["name"])),
+               esc(o["name"]), esc(label), o["conn_count"],
+               badge(t, with_label=False), esc(o["name"]), o["conn_count"])
+        )
+
+    body = (
+        "<div class='search js-only'><input id='q' type='search' placeholder='Buscar…' "
+        "autocomplete='off' aria-label='Buscar na lista'></div>\n"
+        "<div class='js-only'><h2 class='section-h'>Filtros</h2>"
+        "<div class='chips'>%s</div></div>\n"
+        "<div class='toolbar js-only'>"
+        "<span><label for='sort'>Ordenar:</label> "
+        "<select id='sort'><option value='name'>Nome</option>"
+        "<option value='connections'>Conexões</option>"
+        "<option value='type'>Tipo</option></select></span>"
+        "<span id='count' class='count'>%d nós</span>"
+        "</div>\n"
+        "<p id='empty' class='empty-state' hidden>Nenhum resultado.</p>\n"
+        "<ul id='list' class='cards'>%s</ul>\n"
+        % (chips, len(index), "".join(cards))
+    )
+    return shell("Lista — Conexões da História", "list", "../data", "explorar", body)
+
+
+def build_site(index, site_dir):
+    os.makedirs(site_dir, exist_ok=True)
+    with open(os.path.join(site_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(render_home(index))
+    with open(os.path.join(site_dir, "list.html"), "w", encoding="utf-8") as f:
+        f.write(render_list(index))
+    return ["index.html", "list.html"]

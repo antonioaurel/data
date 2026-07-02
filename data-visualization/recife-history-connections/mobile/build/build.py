@@ -25,11 +25,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import (load_csvs, source_data_dir, normalize, map_type,  # noqa: E402
                     alias_index, resolve_endpoint)
 import quality  # noqa: E402
+import sitegen  # noqa: E402
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR   = source_data_dir(BUILD_DIR)
 OUT_DIR   = os.path.normpath(os.path.join(BUILD_DIR, "..", "data"))
 NODE_DIR  = os.path.join(OUT_DIR, "node")
+SITE_DIR  = os.path.normpath(os.path.join(BUILD_DIR, "..", "site"))
 
 # Canonical node-type order for the type×type matrix (spec palette). Only the first
 # three exist in the data today; the rest render as empty rows/cols until the base grows.
@@ -216,18 +218,37 @@ def main():
     matrix, edges_counted = build_matrix(nodes, edge_idx)
     write(os.path.join(OUT_DIR, "matrix.json"), dumps(matrix))
 
+    # ---- static HTML (SSG) ----
+    sitegen.build_site(index, SITE_DIR)
+
     # ---- report ----
     print("=== mobile build — Phase 1 (data layer) ===")
     errors, _warnings, stats = quality.report(nodes, edges, aliases)
     print("  sources registry: %d distinct entries" % len(source_records))
     print("  per-node detail:  %d files in mobile/data/node/" % len(nodes))
 
-    route_raw = kb(index_txt) + kb(search_txt)
-    route_gz = gz_kb(index_txt) + gz_kb(search_txt)
+    # initial route = the Home landing: index.html + app.css + app.js (no eager JSON;
+    # search.json/node files load lazily on interaction).
+    def read(p):
+        try:
+            with open(p, encoding="utf-8") as fh:
+                return fh.read()
+        except OSError:
+            return ""
+    home_html = read(os.path.join(SITE_DIR, "index.html"))
+    list_html = read(os.path.join(SITE_DIR, "list.html"))
+    css = read(os.path.join(SITE_DIR, "assets", "app.css"))
+    js = read(os.path.join(SITE_DIR, "assets", "app.js"))
+
+    route_gz = gz_kb(home_html) + gz_kb(css) + gz_kb(js)
     ceiling = "OK" if route_gz <= BUDGET_SOFT_KB else ("OVER SOFT" if route_gz <= BUDGET_HARD_KB else "OVER HARD")
-    print("  initial-route DATA (index+search): %.1f KB raw / %.1f KB gzip  [budget %d/%d KB gzip -> %s]"
-          % (route_raw, route_gz, BUDGET_SOFT_KB, BUDGET_HARD_KB, ceiling))
-    print("    (shell HTML/CSS/JS not yet built — full initial-route budget measured in Phase 2)")
+    print("  INITIAL ROUTE (index.html + app.css + app.js), gzip: %.1f KB  [budget %d/%d -> %s]"
+          % (route_gz, BUDGET_SOFT_KB, BUDGET_HARD_KB, ceiling))
+    print("    index.html %.1f/%.1f  list.html %.1f/%.1f  app.css %.1f/%.1f  app.js %.1f/%.1f  (raw/gzip KB)"
+          % (kb(home_html), gz_kb(home_html), kb(list_html), gz_kb(list_html),
+             kb(css), gz_kb(css), kb(js), gz_kb(js)))
+    print("    lazy on interaction: search.json %.1f KB gzip (first search); node/{id}.json on expand"
+          % gz_kb(search_txt))
     nonzero = sum(1 for m in matrix if m["count"])
     print("  matrix.json: %d type-pair rows (%d non-empty), %d undirected edges aggregated"
           % (len(matrix), nonzero, edges_counted))
