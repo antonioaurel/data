@@ -83,8 +83,13 @@ View locally (from the existing server at repo root):
   zero dependencies). Node color = type (JS reads the `:root` vars); edge width ∝ strength. Tap
   a neighbor → bottom panel (badge, name, short description) with "Ver detalhes" / "Ver
   conexões"; the latter recenters via `#node=` (hashchange, normal back). Node pages link to it.
-- Next: Phase 3 bottom-sheet, Phase 7 responsive, Phase 8 nav (view switcher Lista·Grafo·Matriz
-  + history), Phase 10 states/a11y/perf (service worker/offline). (Map dropped.)
+- **Phase 8 — View switcher:** done. A segmented control (`role=tablist`) **Lista · Grafo ·
+  Matriz** on the three projection pages, current tab `aria-selected`. Context is preserved via
+  `sessionStorage`: `ctxNode` (set on graph/detail) drives the Grafo tab from anywhere (greyed
+  with a reason when absent), and `ctxList` (the list's filter/search hash, kept in sync) makes
+  the Lista tab return to your filtered list. Static default = plain navigation (no-JS safe).
+- Next: Phase 3 bottom-sheet, Phase 7 responsive (multi-panel ≥1024px), Phase 10
+  states/a11y/perf (service worker/offline). (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.
