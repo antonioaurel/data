@@ -152,6 +152,13 @@ def main():
         if cid and al:
             alias_map.setdefault(cid, []).append(al)
 
+    # EN translations of node descriptions (generated once, committed). Optional.
+    trans = {}
+    tr_path = os.path.join(BUILD_DIR, "..", "data-source", "descriptions_en.json")
+    if os.path.exists(tr_path):
+        with open(tr_path, encoding="utf-8") as tf:
+            trans = json.load(tf)
+
     source_records, url_to_id = build_sources(nodes)
     src_by_id = {s["id"]: s for s in source_records}
     edge_idx = build_edge_index(nodes, edges, aliases)
@@ -187,6 +194,7 @@ def main():
             "id": nid, "name": name, "type": typ,
             "subtype": (r.get("sub_type") or "").strip(),
             "description": (r.get("description") or "").strip(),
+            "de": trans.get(nid, ""),           # English description (optional)
             "period": "",                       # not in the data yet
             "reference_location": nbhd,
             "municipality": (r.get("city") or "").strip(),

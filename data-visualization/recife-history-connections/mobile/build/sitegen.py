@@ -25,6 +25,7 @@ CATEGORY_ORDER = ["local", "personagem", "evento"]
 DESKTOP_DIAGRAM = "../../pages/diagram.html"
 DESKTOP_STATS = "../../pages/stats.html"
 DESKTOP_MATRIX = "../../pages/matrix.html"
+MARCO_ZERO = "LC-0215"   # symbolic entry point for the graph from Início
 MAP_URL = ("https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj"
            "&ll=-8.06055276702706%2C-34.882075024350215&z=15")
 
@@ -98,6 +99,8 @@ def shell(title, page, datapath, active_nav, body, base=""):
         "<header class='app-header'><div class='wrap'>"
         "<h1 class='app-title'><a href='%sindex.html'>Conexões da História</a></h1>"
         "%s"
+        "<button id='lang-toggle' class='theme-toggle js-only' type='button' "
+        "aria-label='Português / English'>EN</button>"
         "<button id='theme-toggle' class='theme-toggle js-only' type='button' "
         "aria-label='Alternar tema claro/escuro'>☀</button>"
         "</div></header>\n"
@@ -137,7 +140,7 @@ def render_home(index, stats):
            + viz_row("graph.html#node=" + top, "Grafo", "Explore as conexões de um nó, uma a uma.")
            + viz_row("matriz.html", "Matriz", "Panorama das conexões por tipo.")
            + viz_row(MAP_URL, "Mapa histórico", "Os pontos no mapa do Recife e região.", external=True)
-           + viz_row(DESKTOP_DIAGRAM, "Diagrama", "A rede completa, item a item.", external=True)
+           + viz_row("graph.html#node=" + MARCO_ZERO, "Diagrama", "O Marco Zero e suas conexões no grafo.")
            + "</ul>")
 
     body = (
@@ -202,7 +205,7 @@ def render_node(d):
     so assets are ../ and data is ../../data; sibling node links are '{id}.html'."""
     t = d["type"]
     p = ["<p><a class='detail-back' href='../list.html'>← Lista</a></p>",
-         "<article class='detail' data-node-id='%s'>" % esc(d["id"]),
+         "<article class='detail' data-node-id='%s' data-de='%s'>" % (esc(d["id"]), esc(d.get("de", ""))),
          "<div class='detail-head'>%s<h1 class='detail-name'>%s</h1></div>"
          % (badge(t), esc(d["name"])),
          "<p><a class='btn btn-primary' href='../graph.html#node=%s'>Ver conexões no grafo</a></p>"
@@ -244,16 +247,7 @@ def render_node(d):
     else:
         p.append("<p class='empty-state'>Sem conexões.</p>")
 
-    if d.get("sources"):
-        p.append("<h2 class='section-h'>Fontes</h2><ul class='sources'>")
-        for s in d["sources"]:
-            if s.get("url"):
-                p.append("<li><a href='%s' rel='noopener' target='_blank'>%s</a></li>"
-                         % (esc(s["url"]), esc(s["title"])))
-            else:
-                p.append("<li>%s</li>" % esc(s["title"]))
-        p.append("</ul>")
-
+    # Source references live only on the Fontes page — not on the node detail.
     p.append("</article>")
     return shell(d["name"] + " — Conexões da História", "node", "../../data",
                  "inicio", "\n".join(p), base="../")
@@ -327,13 +321,16 @@ def render_about():
         "<h1 class='section-h' style='font-size:18px;margin:10px 0 8px'>Sobre</h1>\n"
         "<p class='about-p'>Um mapeamento das conexões entre pessoas, locais e eventos da "
         "história de Pernambuco em pontos que influenciaram o Brasil.</p>\n"
+        "<hr class='divider'>\n"
         "<p class='author-name'>Antonio A. Oliveira</p>\n"
         "<p class='author-meta'>Recife, Pernambuco — autor, curador e criador · "
         "<a href='https://medium.com/@antonio-aureliano' target='_blank' rel='noopener'>Medium ↗</a></p>\n"
         "<p class='about-p'>Curadoria para estudos de data science, data quality, história e "
         "software quality.</p>\n"
+        "<hr class='divider'>\n"
         "<h2 class='section-h' style='margin:12px 0 6px'>Outros projetos</h2>\n"
         "<ul class='projects'>%s</ul>\n"
+        "<hr class='divider'>\n"
         "<p class='about-p disclaimer'><strong>Uso de IA:</strong> pareamento no desenvolvimento; "
         "revisão da qualidade da base, do texto e validação das conexões; geração de mocks; e "
         "testes de usabilidade, compatibilidade, disponibilidade e desempenho.</p>\n"
@@ -393,6 +390,10 @@ def render_graph():
         "<h1 id='graph-title' class='section-h' style='font-size:18px'>Conexões</h1>\n"
         "<div id='graph-canvas' class='graph-canvas' role='img' aria-live='polite'></div>\n"
         "<p id='graph-hint' class='mx-intro'></p>\n"
+        "<p class='mx-note'>Visualização condensada — no celular o grafo mostra até 5 conexões por "
+        "vez. A rede completa, item a item, abre melhor no computador. "
+        "<a href='" + DESKTOP_DIAGRAM + "' target='_blank' rel='noopener'>Abrir o diagrama completo "
+        "no computador ↗</a></p>\n"
         "<div id='graph-panel' class='graph-panel' hidden></div>\n"
         "<noscript><p class='empty-state'>O grafo precisa de JavaScript. "
         "<a href='list.html'>Ver a lista</a>.</p></noscript>\n"
