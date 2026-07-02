@@ -34,7 +34,7 @@ python3 -m http.server 8000
 ```
 Then open [http://localhost:8000](http://localhost:8000) in your browser.
 
-> A local server is required because the diagram loads `lista-geral-do-mapeamento.csv` via `d3.csv()`, which browsers block when opening files directly (`file://`).
+> A local server is required because the pages load `graph.json` / `content.json` via `fetch()`, which browsers block when opening files directly (`file://`).
 
 **Option 2 — Node.js:**
 ```bash
@@ -58,30 +58,27 @@ Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ri
 
 ## Data
 
-**Source of truth:** `data/lista-geral-do-mapeamento.csv` (a Google Sheets export). Columns:
+**Source of truth:** a Google Sheet exported as three normalized tabs (see [ADR-0002](docs/adr/0002-normalized-graph-model.md)):
 
-| Column | Description |
+| File | Key columns |
 |---|---|
-| ID | Stable record id (`CH-XXXX`) |
-| Name | Name of the entry |
-| Type | Category (Location / Historical Figure / Historical Event) |
-| Sub-Type | Subcategory |
-| Location | Neighbourhood or area in Recife |
-| Image | Image URL |
-| Description | Historical description |
-| Connection 1–15 | Names of connected entries |
-| Dados consolidados / Fonte | Denormalised export fields — **not used by the site** |
+| `data/nodes.csv` | `id, name, type, sub_type, neighborhood, image, description, …` |
+| `data/edges.csv` | `origin_id, target_id, relationship_type, …` (one row per connection) |
+| `data/aliases.csv` | `alias, canonical_id` (alternate names → canonical node) |
 
 ### Derived files (generated — do not edit by hand)
 
-The pages do **not** load the big CSV. They load two lightweight files produced by `build.py`:
+The pages never load the CSVs. They load two lightweight files produced by `build.py`:
 
 | File | Size | Loaded | Purpose |
 |---|---|---|---|
-| `data/graph.json` | ~32 KB | immediately | nodes (name + type) + edges — enough to draw the whole graph/matrix |
-| `data/content.json` | ~344 KB | on demand | description / location / image per node, for the detail panel |
+| `data/graph.json` | ~60 KB | immediately | nodes (name + type) + edges — enough to draw the whole graph/matrix |
+| `data/content.json` | ~290 KB | on demand | description / location / image per node, for the detail panel |
 
-This keeps first paint tiny (~32 KB instead of ~800 KB) and the heavy text loads in the background.
+This keeps first paint tiny (~60 KB) and the heavy text loads only when a node is inspected.
+
+> The old wide CSV (`lista-geral-do-mapeamento.csv`) was **retired** once the diagram,
+> matrix and stats pages all moved to the JSON files — see [ADR-0003](docs/adr/0003-retire-wide-csv.md).
 
 ### Rebuilding after editing the base
 

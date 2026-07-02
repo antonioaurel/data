@@ -9,7 +9,6 @@ on:
       - 'data-visualization/recife-history-connections/data/aliases.csv'
       - 'data-visualization/recife-history-connections/data/graph.json'
       - 'data-visualization/recife-history-connections/data/content.json'
-      - 'data-visualization/recife-history-connections/data/lista-geral-do-mapeamento.csv'
       - 'data-visualization/recife-history-connections/build.py'
   pull_request:
     paths:
@@ -18,7 +17,6 @@ on:
       - 'data-visualization/recife-history-connections/data/aliases.csv'
       - 'data-visualization/recife-history-connections/data/graph.json'
       - 'data-visualization/recife-history-connections/data/content.json'
-      - 'data-visualization/recife-history-connections/data/lista-geral-do-mapeamento.csv'
       - 'data-visualization/recife-history-connections/build.py'
   workflow_dispatch:
 
