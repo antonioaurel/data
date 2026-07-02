@@ -88,8 +88,12 @@ View locally (from the existing server at repo root):
   `sessionStorage`: `ctxNode` (set on graph/detail) drives the Grafo tab from anywhere (greyed
   with a reason when absent), and `ctxList` (the list's filter/search hash, kept in sync) makes
   the Lista tab return to your filtered list. Static default = plain navigation (no-JS safe).
-- Next: Phase 3 bottom-sheet, Phase 7 responsive (multi-panel ≥1024px), Phase 10
-  states/a11y/perf (service worker/offline). (Map dropped.)
+- **Phase 10 — Offline + states/a11y:** done. `mobile/sw.js` (scope `mobile/` so it covers
+  both `site/` and `data/`) precaches the shell + `index/search/matrix.json` and
+  stale-while-revalidates everything else, so visited nodes stay browsable offline. `app.js`
+  registers it (path computed per page depth) and shows an offline banner (`role=status`) on
+  `offline`. Loading skeletons on graph/favorites; empty/no-result states throughout.
+- Next: Phase 3 bottom-sheet, Phase 7 responsive (multi-panel ≥1024px). (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.

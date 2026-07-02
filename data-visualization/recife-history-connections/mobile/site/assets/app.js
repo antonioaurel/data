@@ -335,6 +335,7 @@
     if (!listEl) return;
     var favs = getFavs();
     if (!favs.length) { if (emptyEl) emptyEl.hidden = false; return; }
+    listEl.innerHTML = "<div class='skeleton'></div><div class='skeleton'></div>";
     var x = new XMLHttpRequest();
     x.open("GET", dataPath() + "/index.json", true);
     x.onreadystatechange = function () {
@@ -472,9 +473,42 @@
     }
   }
 
+  /* ========================= OFFLINE + SERVICE WORKER ======================= */
+  function initOffline() {
+    function update() {
+      var bar = el("offline-bar");
+      if (!navigator.onLine) {
+        if (!bar) {
+          bar = document.createElement("div");
+          bar.id = "offline-bar"; bar.className = "offline-bar";
+          bar.setAttribute("role", "status");
+          bar.textContent = "Sem conexão — mostrando o conteúdo já salvo.";
+          document.body.insertBefore(bar, document.body.firstChild);
+        }
+      } else if (bar && bar.parentNode) {
+        bar.parentNode.removeChild(bar);
+      }
+    }
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    update();
+  }
+
+  function registerSW() {
+    if (!("serviceWorker" in navigator) || location.protocol === "file:") return;
+    // data lives at <root>/data; the SW sits one level up at <root>/sw.js so its
+    // scope covers both site/ and data/. Compute <root> from the page's data path.
+    var root = dataPath().replace(/data\/?$/, "");
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register(root + "sw.js", { scope: root })["catch"](function () {});
+    });
+  }
+
   /* ---- boot ---- */
   function boot() {
     var page = document.body.getAttribute("data-page");
+    initOffline();
+    registerSW();
     initSwitcher();
     if (page === "list") initList();
     else if (page === "home") initHome();
