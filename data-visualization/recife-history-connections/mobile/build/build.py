@@ -98,12 +98,13 @@ def build_edge_index(nodes, edges, aliases):
 
 def build_matrix(nodes, edge_idx):
     """Aggregated type×type adjacency over the deduped undirected edge set.
-    Returns (matrix_rows, edges_counted). Symmetric → one row per unordered
-    canonical type pair (including the diagonal), 28 rows for 7 types."""
+    Returns (matrix_rows, edges_counted, pair_nodes). Symmetric → one row per
+    unordered canonical type pair (incl. the diagonal). pair_nodes maps each pair
+    to the set of node ids that participate in ≥1 edge of that pair (drill-down)."""
     type_of = {(n.get("id") or "").strip(): map_type(n.get("type")) for n in nodes}
     rank = {t: i for i, t in enumerate(CANON_TYPES)}
 
-    count, strength = {}, {}
+    count, strength, pair_nodes = {}, {}, {}
     seen = set()
     for a, nbrs in edge_idx.items():
         for b, meta in nbrs.items():
@@ -117,6 +118,7 @@ def build_matrix(nodes, edge_idx):
             pk = (ta, tb) if rank[ta] <= rank[tb] else (tb, ta)
             count[pk] = count.get(pk, 0) + 1
             strength[pk] = strength.get(pk, 0) + meta["strength"]
+            pair_nodes.setdefault(pk, set()).update((a, b))
 
     rows = []
     for i, ta in enumerate(CANON_TYPES):
@@ -124,7 +126,7 @@ def build_matrix(nodes, edge_idx):
             rows.append({"type_a": ta, "type_b": tb,
                          "count": count.get((ta, tb), 0),
                          "strength_sum": strength.get((ta, tb), 0)})
-    return rows, len(seen)
+    return rows, len(seen), pair_nodes
 
 
 def write(path, text):
@@ -207,11 +209,18 @@ def main():
     write(os.path.join(OUT_DIR, "search.json"), search_txt)
     write(os.path.join(OUT_DIR, "sources.json"), dumps(source_records))
 
-    matrix, edges_counted = build_matrix(nodes, edge_idx)
+    matrix, edges_counted, pair_nodes = build_matrix(nodes, edge_idx)
     write(os.path.join(OUT_DIR, "matrix.json"), dumps(matrix))
 
-    # ---- static HTML (SSG): home + list + one detail page per node ----
-    n_pages = sitegen.build_site(index, details, SITE_DIR)
+    # per-pair node sets for the matrix drill-down (lazy-loaded on cell tap)
+    pairs_dir = os.path.join(OUT_DIR, "pairs")
+    os.makedirs(pairs_dir, exist_ok=True)
+    for (ta, tb), ids in pair_nodes.items():
+        write(os.path.join(pairs_dir, "%s-%s.json" % (ta, tb)),
+              dumps({"a": ta, "b": tb, "nodes": sorted(ids)}))
+
+    # ---- static HTML (SSG): home + list + matrix + one detail page per node ----
+    n_pages = sitegen.build_site(index, details, matrix, SITE_DIR)
 
     # ---- report ----
     print("=== mobile build — Phase 1 (data layer) ===")
@@ -242,8 +251,8 @@ def main():
     print("    lazy on interaction: search.json %.1f KB gzip (first search); node/{id}.json on expand"
           % gz_kb(search_txt))
     nonzero = sum(1 for m in matrix if m["count"])
-    print("  matrix.json: %d type-pair rows (%d non-empty), %d undirected edges aggregated"
-          % (len(matrix), nonzero, edges_counted))
+    print("  matrix.json: %d type-pair rows (%d non-empty), %d undirected edges aggregated; %d pairs/*.json"
+          % (len(matrix), nonzero, edges_counted, len(pair_nodes)))
     print("  index.json %.1f KB  search.json %.1f KB"
           % (kb(index_txt), kb(search_txt)))
     print("base: %(nodes)d nodes - %(edges)d edges "

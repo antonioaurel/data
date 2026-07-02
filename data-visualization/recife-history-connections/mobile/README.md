@@ -63,13 +63,18 @@ View locally (from the existing server at repo root):
 - **Phase 1 — data layer:** done, including `matrix.json`.
 - **Phase 2 — Shell + Home + List:** done (SSG + search/filter/sort/inline-expand).
 - **Phase 3 — Node detail (static pages):** done. `site/node/{id}.html` for every node
-  (description, location, aliases, sources, connections grouped by type). Connection links now
+  (description, location, aliases, sources, connections grouped by type). Connection links
   resolve. Bottom-sheet (in-place detail) still to add.
-- **Type colors unified with desktop:** single source of truth in `app.css :root`
-  (`--type-*` = the desktop hues #4a90d9 / #e8833a / #5cb85c, + `--type-other` #9b59b6, each
-  with a `-bg` tint and AA `-ink`). No type hex outside `:root`; `app.js` reads none.
-- Next: Phase 4 ego-graph, Phase 6 **matrix** (3×3), browse/favorites/about, states/a11y/perf.
-  Nav model (view switcher + history stack) lands as those projections arrive. (Map dropped.)
+- **Phase 5 — Matriz (3×3):** done. `site/matriz.html` renders the type×type table (semantic
+  `<table>`, number always shown, neutral sqrt-scaled intensity, cells ≥ 60px with aria-labels).
+  Each cell links to `list.html#pair=<a>-<b>`; `app.js` lazy-loads `data/pairs/{a}-{b}.json`
+  (distinct nodes in that pair) and filters the list, with a "limpar" clear. Reachable from
+  Home and List.
+- **Phase 6 — Type colors unified with desktop:** done. Single source of truth in
+  `app.css :root` (`--type-*` = desktop hues #4a90d9 / #e8833a / #5cb85c, + `--type-other`
+  #9b59b6, each with `-bg` tint and AA `-ink`). No type hex outside `:root`; `app.js` reads none.
+- Next: Phase 3 bottom-sheet, Phase 4 Grafo (simplified), Phase 7 responsive, Phase 8 nav,
+  Phase 9 favorites/about, Phase 10 states/a11y/perf. (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.

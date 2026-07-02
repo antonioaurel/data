@@ -6,6 +6,7 @@ navigable with no JavaScript; assets/app.js then enhances (search/filter/sort/ex
 Called by build.py after the JSON artifacts are written. Standard library only.
 """
 import html
+import math
 import os
 
 from common import normalize
@@ -103,7 +104,9 @@ def render_home(index):
         "<h2 class='section-h'>Comece por aqui</h2>\n"
         "<p class='no-js-only'><a href='list.html'>Ver todos os nós →</a></p>\n"
         "<ul class='starts'>%s</ul>\n"
-        "<p style='margin-top:24px'><a href='list.html'>Ver a lista completa →</a></p>\n"
+        "<h2 class='section-h'>Panorama</h2>\n"
+        "<p class='view-links'><a href='matriz.html'>▦ Matriz de conexões por tipo</a></p>\n"
+        "<p style='margin-top:16px'><a href='list.html'>Ver a lista completa →</a></p>\n"
         % (chips, starts)
     )
     return shell("Conexões da História", "home", "../data", "explorar", body)
@@ -134,6 +137,8 @@ def render_list(index):
         )
 
     body = (
+        "<p class='view-links'><a href='matriz.html'>▦ Ver matriz de conexões</a></p>\n"
+        "<div id='list-context' hidden></div>\n"
         "<div class='search js-only'><input id='q' type='search' placeholder='Buscar…' "
         "autocomplete='off' aria-label='Buscar na lista'></div>\n"
         "<div class='js-only'><h2 class='section-h'>Filtros</h2>"
@@ -211,13 +216,61 @@ def render_node(d):
                  "explorar", "\n".join(p), base="../")
 
 
-def build_site(index, details, site_dir):
+def render_matrix(matrix):
+    """3×3 type×type adjacency as a semantic table. Each non-empty cell is a link to
+    the List filtered to that type pair. The number is always shown; background
+    intensity (neutral slate, sqrt-scaled) is a secondary cue only."""
+    by, mx = {}, 1
+    for m in matrix:
+        by[(m["type_a"], m["type_b"])] = m["count"]
+        by[(m["type_b"], m["type_a"])] = m["count"]
+        mx = max(mx, m["count"])
+    types = CATEGORY_ORDER
+    rank = {t: i for i, t in enumerate(types)}
+
+    head = ("<tr><td class='mx-corner' aria-hidden='true'></td>"
+            + "".join("<th scope='col'>%s</th>" % badge(t) for t in types) + "</tr>")
+    rows = []
+    for ta in types:
+        cells = ["<th scope='row'>%s</th>" % badge(ta)]
+        for tb in types:
+            cnt = by.get((ta, tb), 0)
+            la = TYPE_META.get(ta, FALLBACK_META)[0]
+            lb = TYPE_META.get(tb, FALLBACK_META)[0]
+            if cnt:
+                alpha = round(0.10 + 0.42 * math.sqrt(cnt / mx), 3)
+                ca, cb = (ta, tb) if rank[ta] <= rank[tb] else (tb, ta)
+                cells.append(
+                    "<td class='mx-cell'><a href='list.html#pair=%s-%s' "
+                    "style='background:rgba(30,41,59,%s)' "
+                    "aria-label='%s ↔ %s: %d conexões'><span class='mx-n'>%d</span></a></td>"
+                    % (ca, cb, alpha, esc(la), esc(lb), cnt, cnt))
+            else:
+                cells.append("<td class='mx-cell mx-empty' aria-label='%s ↔ %s: 0 conexões'>0</td>"
+                             % (esc(la), esc(lb)))
+        rows.append("<tr>" + "".join(cells) + "</tr>")
+
+    table = ("<div class='mx-scroll'><table class='matrix'>"
+             "<caption class='sr-only'>Conexões entre tipos de nó</caption>"
+             "<thead>%s</thead><tbody>%s</tbody></table></div>" % (head, "".join(rows)))
+    body = ("<h1 class='section-h' style='font-size:18px'>Matriz de conexões</h1>\n"
+            "<p class='mx-intro'>Quantas conexões existem entre cada par de tipos. "
+            "Toque numa célula para ver os nós envolvidos.</p>\n"
+            + table +
+            "\n<p class='mx-foot'><a href='index.html'>← Explorar</a> · "
+            "<a href='list.html'>Ver lista</a></p>")
+    return shell("Matriz — Conexões da História", "matrix", "../data", "explorar", body)
+
+
+def build_site(index, details, matrix, site_dir):
     node_dir = os.path.join(site_dir, "node")
     os.makedirs(node_dir, exist_ok=True)
     with open(os.path.join(site_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(render_home(index))
     with open(os.path.join(site_dir, "list.html"), "w", encoding="utf-8") as f:
         f.write(render_list(index))
+    with open(os.path.join(site_dir, "matriz.html"), "w", encoding="utf-8") as f:
+        f.write(render_matrix(matrix))
     for d in details:
         with open(os.path.join(node_dir, d["id"] + ".html"), "w", encoding="utf-8") as f:
             f.write(render_node(d))
