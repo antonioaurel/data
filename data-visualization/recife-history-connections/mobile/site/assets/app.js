@@ -6,9 +6,9 @@
 
   // Type keys match the routes (#tipos=local,…). "Fato Histórico" shows as "Evento".
   var TYPES = {
-    local:      { label: "Local",      ico: "📍" },
-    personagem: { label: "Personagem", ico: "👤" },
-    evento:     { label: "Evento",     ico: "📅" }
+    local:      { label: "Local",                  ico: "📍" },
+    personagem: { label: "Personagens Históricos", ico: "👤" },
+    evento:     { label: "Fatos Históricos",       ico: "📅" }
   };
   var FALLBACK = { label: "Outro", ico: "●" };
   function typeMeta(t) { return TYPES[t] || FALLBACK; }
