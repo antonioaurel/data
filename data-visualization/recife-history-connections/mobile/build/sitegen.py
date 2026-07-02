@@ -98,10 +98,11 @@ def top_nav(active, base=""):
 
 def shell(title, page, datapath, active_nav, body, base=""):
     # Viewport-based routing (no button, no UA sniffing): wide screens get the rich desktop
-    # site; this mobile app is for narrow. Redirect on load and live on resize.
-    desktop_url = base + "../../pages/index.html"
-    redirect = ("<script>(function(){try{var q=window.matchMedia('(min-width:1024px)'),t='"
-                + desktop_url + "';if(q.matches){location.replace(t);return;}"
+    # site (in the chosen language), this mobile app is for narrow. On load and live on resize.
+    redirect = ("<script>(function(){try{var en='en'===localStorage.getItem('lang');"
+                "var t='" + base + "../../pages/'+(en?'en/':'')+'index.html';"
+                "var q=window.matchMedia('(min-width:1024px)');"
+                "if(q.matches){location.replace(t);return;}"
                 "var f=function(e){if(e.matches)location.replace(t);};"
                 "q.addEventListener?q.addEventListener('change',f):q.addListener(f);}catch(e){}})();</script>\n")
     return (
@@ -394,6 +395,12 @@ def render_fillrate(stats):
         "<div class='fr'>%s</div>\n"
         "<p class='mx-intro'><span data-i18n='fill-note-a'>Campos em âmbar precisam de curadoria.</span> "
         "<a href='%s' target='_blank' rel='noopener' data-i18n='fill-note-link'>Ver o relatório completo ↗</a></p>\n"
+        "<h2 class='section-h' data-i18n='fill-method-h'>Método de trabalho</h2>\n"
+        "<p class='about-p' data-i18n='fill-method-1'>Leitura de fontes, identificação dos locais "
+        "associados em um mapa e criação de uma matriz de-para — considerando interação direta, "
+        "área, período e consequência.</p>\n"
+        "<p class='about-p' data-i18n='fill-method-2'>Limpeza de dados, validação de qualidade e "
+        "publicação com correção constante.</p>\n"
         % (stats.get("n_nodes", 0), stats.get("n_edges", 0), rows, DESKTOP_STATS)
     )
     return shell("Fill rate — Conexões da História", "fillrate", "../data", "fillrate", body)

@@ -3,6 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Viewport-based routing: narrow screens get the mobile app (in English). Live on resize. -->
+  <script>(function(){try{var q=window.matchMedia('(max-width:1023px)'),t='../../mobile/site/index.html';
+    var go=function(){try{localStorage.setItem('lang','en');}catch(e){}location.replace(t);};
+    if(q.matches){go();return;}
+    var f=function(e){if(e.matches)go();};
+    q.addEventListener?q.addEventListener('change',f):q.addListener(f);}catch(e){}})();</script>
   <title>Connections of Recife's History</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Product+Sans:wght@400;700&display=swap" rel="stylesheet">
   <style>

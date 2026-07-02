@@ -49,7 +49,10 @@
     "back-list": "← List", "back-inicio": "← Home", "back-verlista": "See list",
     "w-nos": "nodes", "w-conexoes": "connections",
     "ph-home": "Search person, place, event…", "ph-list": "Search…",
-    "btn-graph": "View connections in the graph", "h-conexoes": "Connections"
+    "btn-graph": "View connections in the graph", "h-conexoes": "Connections",
+    "fill-method-h": "Working method",
+    "fill-method-1": "Reading of sources, identification of the associated places on a map, and creation of a cross-reference matrix — considering direct interaction, area, period and consequence.",
+    "fill-method-2": "Data cleaning, quality validation and publishing with constant correction."
   };
   function applyI18n() {
     var lang = getLang();
@@ -519,6 +522,7 @@
     var canvas = el("graph-canvas");
     if (!canvas) return;
     var titleEl = el("graph-title"), hintEl = el("graph-hint"), panel = el("graph-panel");
+    var _wantPanel = false;   // set when a neighbour tap should open the panel after recentering
 
     function drawCenterAndNeighbors(d) {
       if (!d || !d.id) { canvas.innerHTML = "<p class='empty-state'>Nó não encontrado.</p>"; return; }
@@ -568,27 +572,31 @@
       for (k = 0; k < gnodes.length; k++) { bind(gnodes[k]); }
     }
 
+    function showPanel(nd) {
+      if (!panel || !nd) return;
+      var src = (getLang() === "en" && nd.de) ? nd.de : nd.description;
+      var m = typeMeta(nd.type), desc = src ? trunc(src, 160) : "";
+      panel.innerHTML =
+        "<button class='gp-close' type='button' aria-label='Fechar'>✕</button>" +
+        "<div class='gp-head'><span class='badge t-" + nd.type + "'><span class='ico'>" + m.ico +
+        "</span>" + escapeHtml(typeLabel(nd.type)) + "</span> <strong class='gp-name'>" + escapeHtml(nd.name) +
+        "</strong></div>" +
+        (nd.image ? "<img class='gp-img' src='" + escapeHtml(nd.image) +
+          "' alt='' loading='lazy' onerror=\"this.style.display='none'\">" : "") +
+        (desc ? "<p class='gp-desc'>" + escapeHtml(desc) + "</p>" : "") +
+        "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>" +
+        L("Ver detalhes", "View details") + "</a>" +
+        "<a class='btn btn-primary' href='node/" + nd.id + ".html'>" +
+        L("Abrir página", "Open page") + "</a></div>";
+      panel.hidden = false;
+      var cl = panel.querySelector(".gp-close");
+      if (cl) cl.addEventListener("click", function () { panel.hidden = true; });
+    }
+
+    // selecting an adjacent node recenters the graph on it (and opens its panel)
     function selectNeighbor(id) {
-      xhrJSON(dataPath() + "/node/" + id + ".json", function (nd) {
-        if (!panel || !nd) return;
-        var src = (getLang() === "en" && nd.de) ? nd.de : nd.description;
-        var m = typeMeta(nd.type), desc = src ? trunc(src, 160) : "";
-        panel.innerHTML =
-          "<button class='gp-close' type='button' aria-label='Fechar'>✕</button>" +
-          "<div class='gp-head'><span class='badge t-" + nd.type + "'><span class='ico'>" + m.ico +
-          "</span>" + escapeHtml(typeLabel(nd.type)) + "</span> <strong class='gp-name'>" + escapeHtml(nd.name) +
-          "</strong></div>" +
-          (nd.image ? "<img class='gp-img' src='" + escapeHtml(nd.image) +
-            "' alt='' loading='lazy' onerror=\"this.style.display='none'\">" : "") +
-          (desc ? "<p class='gp-desc'>" + escapeHtml(desc) + "</p>" : "") +
-          "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>" +
-          L("Ver detalhes", "View details") + "</a>" +
-          "<a class='btn btn-primary' href='graph.html#node=" + encodeURIComponent(nd.id) +
-          "'>" + L("Ver conexões", "View connections") + "</a></div>";
-        panel.hidden = false;
-        var cl = panel.querySelector(".gp-close");
-        if (cl) cl.addEventListener("click", function () { panel.hidden = true; });
-      });
+      _wantPanel = true;
+      location.hash = "node=" + encodeURIComponent(id);
     }
 
     function load() {
@@ -602,7 +610,10 @@
       }
       ssSet("ctxNode", id);   // current graph center is the switcher's node context
       canvas.innerHTML = "<div class='skeleton' style='height:320px'></div>";
-      xhrJSON(dataPath() + "/node/" + id + ".json", drawCenterAndNeighbors);
+      xhrJSON(dataPath() + "/node/" + id + ".json", function (d) {
+        drawCenterAndNeighbors(d);
+        if (_wantPanel) { showPanel(d); _wantPanel = false; }   // opened via neighbour tap
+      });
     }
 
     window.addEventListener("hashchange", load);   // "Ver conexões" recenters; back works
