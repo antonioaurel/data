@@ -6,10 +6,19 @@ navigable with no JavaScript; assets/app.js then enhances (search/filter/sort/ex
 Called by build.py after the JSON artifacts are written. Standard library only.
 """
 import html
+import json
 import math
 import os
 
 from common import normalize
+
+# SVG menu thumbnails extracted from the desktop index (same visuals as the PC version).
+_THUMBS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "thumbs.json")
+try:
+    with open(_THUMBS_PATH, encoding="utf-8") as _tf:
+        THUMBS = json.load(_tf)
+except (OSError, ValueError):
+    THUMBS = {}
 
 # type -> (Portuguese label, icon). Keys match the routes (#tipos=local,…).
 # The .get() fallback keeps rendering safe if an unexpected type ever appears.
@@ -133,10 +142,16 @@ def present_types(index):
 def viz_row(href, key, name, desc, external=False):
     ext = " target='_blank' rel='noopener'" if external else ""
     arrow = " ↗" if external else ""
-    return ("<li class='viz-item'><a class='viz-link' href='%s'%s>"
-            "<span class='viz-name'><span data-i18n='viz-%s-n'>%s</span>%s</span>"
-            "<span class='viz-desc' data-i18n='viz-%s-d'>%s</span></a></li>"
-            % (href, ext, key, esc(name), arrow, key, esc(desc)))
+    thumb = THUMBS.get(key, "")
+    thumb_html = ("<span class='viz-thumb'>" + thumb + "</span>") if thumb else ""
+    # concatenation (not %-format) so the SVG's own % chars don't break formatting
+    return ("<li class='viz-item'><a class='viz-link' href='" + href + "'" + ext + ">"
+            + thumb_html
+            + "<span class='viz-text'>"
+            + "<span class='viz-name'><span data-i18n='viz-" + key + "-n'>" + esc(name)
+            + "</span>" + arrow + "</span>"
+            + "<span class='viz-desc' data-i18n='viz-" + key + "-d'>" + esc(desc) + "</span>"
+            + "</span></a></li>")
 
 
 def render_home(index, stats):
