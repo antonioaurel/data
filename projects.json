@@ -1,0 +1,36 @@
+{
+  "site": {
+    "title": "Data",
+    "tagline": "Projetos de dados — visualização, qualidade e mais",
+    "author": "Antonio Aureliano",
+    "author_url": "https://conexoesdahistoria.com/"
+  },
+  "approaches": [
+    {
+      "id": "visualization",
+      "label": "Visualização",
+      "desc": "Formas interativas de explorar dados — grafos, mapas, diagramas."
+    },
+    {
+      "id": "quality",
+      "label": "Qualidade de dados",
+      "desc": "Validação, preenchimento (fill rate) e monitoramento da base."
+    },
+    {
+      "id": "pipeline",
+      "label": "Pipeline / ETL",
+      "desc": "Coleta, transformação e sincronização das fontes de dados."
+    }
+  ],
+  "projects": [
+    {
+      "title": "Conexões da História",
+      "slug": "recife-history-connections",
+      "path": "projects/recife-history-connections/",
+      "summary": "Grafo interativo (D3.js) mapeando as conexões históricas entre pessoas, lugares e eventos de Recife e Pernambuco, com painel de qualidade (fill rate) da base.",
+      "approaches": ["visualization", "quality", "pipeline"],
+      "tech": ["D3.js", "Python", "GitHub Pages"],
+      "status": "live"
+    }
+  ]
+}
