@@ -58,6 +58,17 @@ Pages fetch data from `../data` (no duplication). Assets are hand-written source
 View locally (from the existing server at repo root):
 `…/recife-history-connections/mobile/site/index.html`
 
+## Lighthouse (mobile, Moto-G / simulated Slow-4G)
+
+| Route | Performance | Accessibility | Best Practices | SEO | FCP | CLS |
+|---|---|---|---|---|---|---|
+| Home (`index.html`) | **100** | **100** | **100** | **100** | 0.9 s | 0 |
+| List (`list.html`, 567 cards) | **95** | **100** | **100** | **100** | 2.8 s | 0 |
+
+Targets (Perf ≥90, FCP ≤2.0 s on the initial route, TTI ≤3.5 s) are met — Home TTI ≈1.2 s. The
+List route is heavier (full static list for no-JS) but still ≥90. Contrast, favicon and
+label-in-name issues surfaced by the audit were fixed.
+
 ## Status
 
 - **Phase 1 — data layer:** done, including `matrix.json`.

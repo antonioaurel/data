@@ -18,8 +18,8 @@
      Every type gets: solid hue (dots/graph/matrix), light tint (badge bg), ink (AA text).
      Never color by hue alone — icon + text label always accompany it. */
   --type-place: #4a90d9;             --type-place-bg: rgba(74,144,217,.16);   --type-place-ink: #1c5aa0;
-  --type-person: #e8833a;            --type-person-bg: rgba(232,131,58,.16);  --type-person-ink: #a2551a;
-  --type-historical_fact: #5cb85c;   --type-historical_fact-bg: rgba(92,184,92,.16); --type-historical_fact-ink: #2e7d32;
+  --type-person: #e8833a;            --type-person-bg: rgba(232,131,58,.16);  --type-person-ink: #8a4713;
+  --type-historical_fact: #5cb85c;   --type-historical_fact-bg: rgba(92,184,92,.16); --type-historical_fact-ink: #206b25;
   --type-other: #9b59b6;             --type-other-bg: rgba(155,89,182,.16);   --type-other-ink: #6a3d84;
 }
 
