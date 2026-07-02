@@ -31,7 +31,7 @@ MAP_URL = ("https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h
 
 # Bottom/top nav sections.
 NAV_ITEMS = [("index.html", "Início", "🏠", "inicio"),
-             ("graph.html", "Diagrama", "🕸", "diagrama"),
+             ("graph.html#node=" + MARCO_ZERO, "Diagram", "🕸", "diagrama"),
              ("matriz.html", "Matriz", "▦", "matriz"),
              ("fillrate.html", "Fill rate", "📊", "fillrate"),
              ("fontes.html", "Fontes", "📚", "fontes"),
