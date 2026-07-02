@@ -246,6 +246,40 @@ html.has-js .no-js-only { display: none !important; }
 .offline-bar { background: #78350f; color: #fff; font-size: 13px; text-align: center;
   padding: var(--s2); }
 
+/* top nav (header) — only shown on expanded; bottom nav replaces it on compact */
+.top-nav { display: none; margin-left: auto; gap: var(--s4); }
+.top-nav a { color: var(--muted); font-weight: 600; padding: var(--s2); }
+.top-nav a[aria-current="page"] { color: var(--accent); }
+
+/* detail pane (multi-panel on expanded only) */
+.detail-pane { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* ===== responsive: breakpoints are the SINGLE SOURCE here; JS reads them via ::after ===== */
+body::after { content: "compact"; display: none; }   /* compact < 640px */
+
+@media (min-width: 640px) {                            /* medium 640–1023px */
+  :root { --maxw: 760px; }
+  body::after { content: "medium"; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2); align-items: start; }
+  .starts { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {                           /* expanded ≥ 1024px */
+  :root { --maxw: 1080px; }
+  body::after { content: "expanded"; }
+  body { padding-bottom: var(--s5); }
+  .top-nav { display: flex; }
+  .bottom-nav { display: none; }
+  .list-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--s5); align-items: start; }
+  .list-layout .cards { grid-template-columns: 1fr; }           /* left column: one card per row */
+  .detail-pane { display: block; position: sticky; top: var(--s4); align-self: start;
+    max-height: calc(100vh - 96px); overflow: auto; text-align: left;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: var(--s5); }
+  .card.is-selected { outline: 2px solid var(--accent); outline-offset: -2px; }
 }

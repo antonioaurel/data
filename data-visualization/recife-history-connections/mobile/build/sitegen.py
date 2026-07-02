@@ -61,6 +61,18 @@ def view_switcher(active, base=""):
             % "".join(items))
 
 
+def top_nav(active, base=""):
+    """Horizontal nav shown in the header on expanded screens (≥1024px); the bottom nav is
+    hidden there. Same three sections."""
+    items = [("index.html", "Explorar", "explorar"),
+             ("favoritos.html", "Favoritos", "favoritos"),
+             ("sobre.html", "Sobre", "sobre")]
+    links = "".join("<a href='%s%s'%s>%s</a>"
+                    % (base, href, " aria-current='page'" if key == active else "", esc(label))
+                    for href, label, key in items)
+    return "<nav class='top-nav' aria-label='Seções'>%s</nav>" % links
+
+
 def shell(title, page, datapath, active_nav, body, base=""):
     return (
         "<!doctype html>\n"
@@ -76,12 +88,14 @@ def shell(title, page, datapath, active_nav, body, base=""):
         "<a class='skip-link' href='#main'>Pular para o conteúdo</a>\n"
         "<header class='app-header'><div class='wrap'>"
         "<h1 class='app-title'><a href='%sindex.html'>Conexões da História</a></h1>"
+        "%s"
         "</div></header>\n"
         "<main id='main' class='wrap'>\n%s\n</main>\n"
         "%s\n"
         "<script src='%sassets/app.js' defer></script>\n"
         "</body>\n</html>\n"
-        % (esc(title), base, page, esc(datapath), base, body, bottom_nav(active_nav, base), base)
+        % (esc(title), base, page, esc(datapath), base, top_nav(active_nav, base),
+           body, bottom_nav(active_nav, base), base)
     )
 
 
@@ -167,7 +181,11 @@ def render_list(index):
         "<span id='count' class='count'>%d nós</span>"
         "</div>\n"
         "<p id='empty' class='empty-state' hidden>Nenhum resultado.</p>\n"
+        "<div class='list-layout'>\n"
         "<ul id='list' class='cards'>%s</ul>\n"
+        "<aside id='detail-pane' class='detail-pane' aria-live='polite'>"
+        "<p class='empty-state'>Selecione um nó para ver os detalhes.</p></aside>\n"
+        "</div>\n"
         % (chips, len(index), "".join(cards))
     )
     return shell("Lista — Conexões da História", "list", "../data", "explorar", body)

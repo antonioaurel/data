@@ -37,6 +37,33 @@
     var root = document.documentElement, cs = getComputedStyle(root);
     return (cs.getPropertyValue("--type-" + t).trim()) || cs.getPropertyValue("--type-other").trim();
   }
+  // Breakpoints are defined once in CSS; JS reads the active mode from body::after.
+  function getMode() {
+    try {
+      var c = (getComputedStyle(document.body, "::after").content || "").replace(/["']/g, "");
+      if (c === "compact" || c === "medium" || c === "expanded") return c;
+    } catch (e) {}
+    var w = window.innerWidth || 360;
+    return w >= 1024 ? "expanded" : (w >= 640 ? "medium" : "compact");
+  }
+  function initResponsive() {
+    var raf = null;
+    function apply() { document.documentElement.setAttribute("data-mode", getMode()); }
+    function onChange() {
+      if (window.cancelAnimationFrame && raf) cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame ? requestAnimationFrame(apply) : (apply(), null);
+    }
+    if (window.matchMedia) {
+      ["(min-width:640px)", "(min-width:1024px)"].forEach(function (q) {
+        var mq = window.matchMedia(q);
+        if (mq.addEventListener) mq.addEventListener("change", onChange);
+        else if (mq.addListener) mq.addListener(onChange);   // old WebView
+      });
+    }
+    window.addEventListener("resize", onChange);
+    apply();
+  }
+
   function ssGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
   function ssSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
   function xhrJSON(url, cb) {
@@ -197,13 +224,32 @@
       x.send();
     }
 
-    // inline connection expansion (event delegation)
+    // card tap: expanded → load the detail pane; compact/medium → inline connection expansion
+    var pane = el("detail-pane");
+    function loadPaneDetail(id) {
+      if (!pane) return;
+      ssSet("ctxNode", id);
+      pane.innerHTML = "<div class='skeleton'></div>";
+      xhrJSON(dataPath() + "/node/" + id + ".json", function (nd) { if (nd) pane.innerHTML = paneHTML(nd); });
+    }
     listEl.addEventListener("click", function (e) {
       var btn = e.target;
       while (btn && btn !== listEl && !btn.classList.contains("card-main")) btn = btn.parentNode;
       if (!btn || btn === listEl) return;
       var card = btn.parentNode;
-      toggleExpand(card);
+      if (getMode() === "expanded") {
+        for (var i = 0; i < cards.length; i++) cards[i].classList.remove("is-selected");
+        card.classList.add("is-selected");
+        loadPaneDetail(card.getAttribute("data-id"));
+      } else {
+        toggleExpand(card);
+      }
+    });
+    // drilling inside the pane loads the neighbour into the same pane (expanded)
+    if (pane) pane.addEventListener("click", function (e) {
+      var a = e.target;
+      while (a && a !== pane && !a.getAttribute("data-pane-id")) a = a.parentNode;
+      if (a && a !== pane && getMode() === "expanded") { e.preventDefault(); loadPaneDetail(a.getAttribute("data-pane-id")); }
     });
 
     // initial state from hash (#type=person,place&sort=connections&q=…&pair=…)
@@ -257,6 +303,31 @@
     // escapes quotes too: values are injected into single-quoted HTML/SVG attributes
     return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
                     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  // detail pane (expanded multi-panel) — renders a node's detail from its JSON
+  function paneHTML(nd) {
+    var m = typeMeta(nd.type), edges = nd.edges || [];
+    var loc = [nd.neighborhood, nd.municipality].filter(function (x) { return x; }).join(" · ");
+    var conns = "";
+    for (var i = 0; i < edges.length && i < 60; i++) {
+      var e = edges[i], em = typeMeta(e.target_type);
+      conns += "<li class='card t-" + e.target_type + "'><a class='card-main' href='node/" +
+        e.target_id + ".html' data-pane-id='" + escapeHtml(e.target_id) + "'>" +
+        "<span class='card-body'><span class='card-name'>" + escapeHtml(e.target_name) + "</span>" +
+        "<span class='card-meta'><span class='badge t-" + e.target_type + "'><span class='ico'>" +
+        em.ico + "</span>" + escapeHtml(em.label) + "</span></span></span></a></li>";
+    }
+    return "<div class='detail-head'><span class='badge t-" + nd.type + "'><span class='ico'>" +
+      m.ico + "</span>" + escapeHtml(m.label) + "</span><h2 class='detail-name'>" +
+      escapeHtml(nd.name) + "</h2></div>" +
+      (loc ? "<p class='detail-loc'>" + escapeHtml(loc) + "</p>" : "") +
+      (nd.description ? "<p class='detail-desc'>" + escapeHtml(nd.description) + "</p>"
+                      : "<p class='detail-desc muted'>Sem descrição ainda.</p>") +
+      "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>Abrir página</a>" +
+      "<a class='btn btn-primary' href='graph.html#node=" + encodeURIComponent(nd.id) +
+      "'>Ver conexões</a></div>" +
+      "<h3 class='section-h'>Conexões (" + edges.length + ")</h3><ul class='cards'>" + conns + "</ul>";
   }
 
   /* ================================ HOME PAGE ================================ */
@@ -507,6 +578,7 @@
   /* ---- boot ---- */
   function boot() {
     var page = document.body.getAttribute("data-page");
+    initResponsive();
     initOffline();
     registerSW();
     initSwitcher();

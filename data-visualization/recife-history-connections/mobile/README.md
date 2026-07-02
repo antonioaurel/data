@@ -93,7 +93,16 @@ View locally (from the existing server at repo root):
   stale-while-revalidates everything else, so visited nodes stay browsable offline. `app.js`
   registers it (path computed per page depth) and shows an offline banner (`role=status`) on
   `offline`. Loading skeletons on graph/favorites; empty/no-result states throughout.
-- Next: Phase 3 bottom-sheet, Phase 7 responsive (multi-panel ≥1024px). (Map dropped.)
+- **Phase 7 — Responsive layer:** done. Breakpoints are a **single source in CSS**
+  (compact <640 · medium 640–1023 · expanded ≥1024), exposed via `body::after` content that
+  `app.js` reads (`getMode`) with a `matchMedia` reactive hook (rAF-debounced). Medium → 2-col
+  card grid. Expanded → header top-nav (bottom nav hidden), and the **List becomes multi-panel**:
+  a card opens its detail in a right-hand pane (reusing the card/detail components, drill within
+  the pane), instead of navigating. Same URL, no UA sniffing; static default is mobile-first
+  single column (SSG-safe). The Grafo is reached from the pane's "Ver conexões" (link), not yet
+  a simultaneous third panel.
+- Remaining (optional polish): Phase 3 bottom-sheet (compact in-place detail); manual
+  compact/expanded override toggle. (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.
