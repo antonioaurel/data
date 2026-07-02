@@ -4,11 +4,11 @@
 (function () {
   "use strict";
 
-  // Concentrated on the three original types in the base.
+  // Type keys match the routes (#tipos=local,…). "Fato Histórico" shows as "Evento".
   var TYPES = {
-    place:           { label: "Local",          ico: "📍" },
-    person:          { label: "Personagem",     ico: "👤" },
-    historical_fact: { label: "Fato Histórico", ico: "📜" }
+    local:      { label: "Local",      ico: "📍" },
+    personagem: { label: "Personagem", ico: "👤" },
+    evento:     { label: "Evento",     ico: "📅" }
   };
   var FALLBACK = { label: "Outro", ico: "●" };
   function typeMeta(t) { return TYPES[t] || FALLBACK; }
@@ -621,9 +621,26 @@
     });
   }
 
+  /* ================================ THEME ================================== */
+  // Dark is the default (set in CSS); a manual toggle persists the choice.
+  function initTheme() {
+    var btn = el("theme-toggle");
+    function current() { return document.documentElement.getAttribute("data-theme") || "dark"; }
+    function paint() { if (btn) btn.textContent = current() === "dark" ? "☀" : "🌙"; }
+    paint();
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var next = current() === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try { localStorage.setItem("theme", next); } catch (e) {}
+      paint();
+    });
+  }
+
   /* ---- boot ---- */
   function boot() {
     var page = document.body.getAttribute("data-page");
+    initTheme();
     initResponsive();
     initOffline();
     registerSW();

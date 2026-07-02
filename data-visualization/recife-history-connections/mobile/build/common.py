@@ -9,14 +9,13 @@ import csv
 import os
 import unicodedata
 
-# nodes.csv carries Portuguese type labels; the mobile spec uses an English enum.
-# Only three types exist in the data today — the remaining spec types
-# (institution, cultural_event, work) stay empty until the base grows. Extend
-# this map (or refine via sub_type) when that data arrives.
+# nodes.csv carries Portuguese type labels; the mobile app uses three keys
+# (local / personagem / evento) that also appear in routes (#tipos=local,evento).
+# "Fato Histórico" is surfaced as "Evento" in the mobile UI.
 TYPE_MAP = {
-    "Local":          "place",
-    "Personagem":     "person",
-    "Fato Histórico": "historical_fact",
+    "Local":          "local",
+    "Personagem":     "personagem",
+    "Fato Histórico": "evento",
 }
 DEFAULT_TYPE = "other"
 

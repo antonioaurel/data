@@ -11,15 +11,15 @@ import os
 
 from common import normalize
 
-# type -> (Portuguese label, icon). Concentrated on the three original types in the base.
+# type -> (Portuguese label, icon). Keys match the routes (#tipos=local,…).
 # The .get() fallback keeps rendering safe if an unexpected type ever appears.
 TYPE_META = {
-    "place":           ("Local",           "📍"),
-    "person":          ("Personagem",      "👤"),
-    "historical_fact": ("Fato Histórico",  "📜"),
+    "local":      ("Local",      "📍"),
+    "personagem": ("Personagem", "👤"),
+    "evento":     ("Evento",     "📅"),
 }
 FALLBACK_META = ("Outro", "●")
-CATEGORY_ORDER = ["place", "person", "historical_fact"]
+CATEGORY_ORDER = ["local", "personagem", "evento"]
 
 
 def esc(s):
@@ -83,13 +83,16 @@ def shell(title, page, datapath, active_nav, body, base=""):
         "<meta name='description' content='Conexões da História — pessoas, lugares e fatos que formaram Recife e Pernambuco.'>\n"
         "<link rel='icon' href='data:,'>\n"
         "<link rel='stylesheet' href='%sassets/app.css'>\n"
-        "<script>document.documentElement.className='has-js';</script>\n"
+        "<script>document.documentElement.className='has-js';"
+        "try{var _t=localStorage.getItem('theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>\n"
         "</head>\n"
         "<body data-page='%s' data-datapath='%s'>\n"
         "<a class='skip-link' href='#main'>Pular para o conteúdo</a>\n"
         "<header class='app-header'><div class='wrap'>"
         "<h1 class='app-title'><a href='%sindex.html'>Conexões da História</a></h1>"
         "%s"
+        "<button id='theme-toggle' class='theme-toggle js-only' type='button' "
+        "aria-label='Alternar tema claro/escuro'>☀</button>"
         "</div></header>\n"
         "<main id='main' class='wrap'>\n%s\n</main>\n"
         "%s\n"
@@ -278,8 +281,7 @@ def render_matrix(matrix):
                 alpha = round(0.10 + 0.42 * math.sqrt(cnt / mx), 3)
                 ca, cb = (ta, tb) if rank[ta] <= rank[tb] else (tb, ta)
                 cells.append(
-                    "<td class='mx-cell'><a href='list.html#pair=%s-%s' "
-                    "style='background:rgba(30,41,59,%s)' "
+                    "<td class='mx-cell'><a href='list.html#pair=%s-%s' style='--a:%s' "
                     "aria-label='%s ↔ %s: %d conexões'><span class='mx-n'>%d</span></a></td>"
                     % (ca, cb, alpha, esc(la), esc(lb), cnt, cnt))
             else:
