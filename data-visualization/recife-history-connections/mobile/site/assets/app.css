@@ -14,14 +14,13 @@
   --accent: #0f766e; --accent-ink: #ffffff;
   --focus: #1d4ed8;
 
-  /* node-type palette: color + light bg (icon + text label always accompany color) */
-  --t-place: #0f766e;          --t-place-bg: #ccfbf1;
-  --t-person: #6d28d9;         --t-person-bg: #ede9fe;
-  --t-historical_fact: #b45309;--t-historical_fact-bg: #fef3c7;
-  --t-institution: #1d4ed8;    --t-institution-bg: #dbeafe;
-  --t-cultural_event: #be185d; --t-cultural_event-bg: #fce7f3;
-  --t-work: #c2410c;           --t-work-bg: #ffedd5;
-  --t-other: #374151;          --t-other-bg: #e5e7eb;
+  /* NODE-TYPE PALETTE — SINGLE SOURCE OF TRUTH. Canonical hues = desktop diagram values.
+     Every type gets: solid hue (dots/graph/matrix), light tint (badge bg), ink (AA text).
+     Never color by hue alone — icon + text label always accompany it. */
+  --type-place: #4a90d9;             --type-place-bg: rgba(74,144,217,.16);   --type-place-ink: #1c5aa0;
+  --type-person: #e8833a;            --type-person-bg: rgba(232,131,58,.16);  --type-person-ink: #a2551a;
+  --type-historical_fact: #5cb85c;   --type-historical_fact-bg: rgba(92,184,92,.16); --type-historical_fact-ink: #2e7d32;
+  --type-other: #9b59b6;             --type-other-bg: rgba(155,89,182,.16);   --type-other-ink: #6a3d84;
 }
 
 * { box-sizing: border-box; }
@@ -77,17 +76,12 @@ a { color: var(--accent); text-decoration: none; }
   font-size: 14px; font-weight: 600; cursor: pointer;
 }
 .chip .ico { font-size: 15px; line-height: 1; }
-.chip[aria-pressed="true"], .chip.is-active {
-  border-color: currentColor;
-}
-/* colored per type via .t-<type> */
-.chip.t-place.is-active { background: var(--t-place-bg); color: var(--t-place); }
-.chip.t-person.is-active { background: var(--t-person-bg); color: var(--t-person); }
-.chip.t-historical_fact.is-active { background: var(--t-historical_fact-bg); color: var(--t-historical_fact); }
-.chip.t-institution.is-active { background: var(--t-institution-bg); color: var(--t-institution); }
-.chip.t-cultural_event.is-active { background: var(--t-cultural_event-bg); color: var(--t-cultural_event); }
-.chip.t-work.is-active { background: var(--t-work-bg); color: var(--t-work); }
-.chip.t-other.is-active { background: var(--t-other-bg); color: var(--t-other); }
+.chip[aria-pressed="true"], .chip.is-active { border-color: currentColor; }
+/* colored per type — all hues come from the :root palette (single source) */
+.chip.t-place.is-active { background: var(--type-place-bg); color: var(--type-place-ink); }
+.chip.t-person.is-active { background: var(--type-person-bg); color: var(--type-person-ink); }
+.chip.t-historical_fact.is-active { background: var(--type-historical_fact-bg); color: var(--type-historical_fact-ink); }
+.chip.t-other.is-active { background: var(--type-other-bg); color: var(--type-other-ink); }
 
 /* toolbar (sort + count) */
 .toolbar { display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
@@ -117,13 +111,10 @@ a { color: var(--accent); text-decoration: none; }
 .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
   padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
 .badge .ico { font-size: 12px; }
-.t-place .badge, .badge.t-place { background: var(--t-place-bg); color: var(--t-place); }
-.t-person .badge, .badge.t-person { background: var(--t-person-bg); color: var(--t-person); }
-.t-historical_fact .badge, .badge.t-historical_fact { background: var(--t-historical_fact-bg); color: var(--t-historical_fact); }
-.t-institution .badge, .badge.t-institution { background: var(--t-institution-bg); color: var(--t-institution); }
-.t-cultural_event .badge, .badge.t-cultural_event { background: var(--t-cultural_event-bg); color: var(--t-cultural_event); }
-.t-work .badge, .badge.t-work { background: var(--t-work-bg); color: var(--t-work); }
-.t-other .badge, .badge.t-other { background: var(--t-other-bg); color: var(--t-other); }
+.badge.t-place { background: var(--type-place-bg); color: var(--type-place-ink); }
+.badge.t-person { background: var(--type-person-bg); color: var(--type-person-ink); }
+.badge.t-historical_fact { background: var(--type-historical_fact-bg); color: var(--type-historical_fact-ink); }
+.badge.t-other { background: var(--type-other-bg); color: var(--type-other-ink); }
 
 /* expand toggle + inline connections */
 .card-expand { display: flex; align-items: center; gap: var(--s1); flex-shrink: 0;
@@ -151,6 +142,21 @@ a { color: var(--accent); text-decoration: none; }
 .js-only { display: none; }
 .has-js .js-only { display: initial; }
 .has-js .no-js-only { display: none; }
+
+/* node detail page */
+.detail-back { display: inline-flex; min-height: 40px; align-items: center; margin: var(--s3) 0; }
+.detail { text-align: center; }
+.detail-head { display: flex; flex-direction: column; align-items: center; gap: var(--s2); margin-top: var(--s2); }
+.detail-name { font-size: 22px; font-weight: 700; margin: 0; line-height: 1.25; }
+.detail-loc { color: var(--muted); margin: var(--s1) 0; font-size: 14px; }
+.detail-aliases { color: var(--muted); font-size: 14px; font-style: italic; }
+.detail-img { display: block; max-width: 100%; height: auto; border-radius: var(--radius);
+  margin: var(--s4) auto; border: 1px solid var(--border); }
+.detail-desc { text-align: left; margin: var(--s4) 0; }
+.detail-desc.muted { color: var(--muted); text-align: center; }
+.conn-group { font-size: 14px; font-weight: 700; margin: var(--s4) 0 var(--s2); }
+.sources { list-style: none; margin: 0; padding: 0; text-align: left; }
+.sources li { padding: var(--s2) 0; border-bottom: 1px solid var(--border); word-break: break-word; }
 
 /* bottom nav */
 .bottom-nav {

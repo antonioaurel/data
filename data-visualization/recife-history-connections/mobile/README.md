@@ -62,9 +62,14 @@ View locally (from the existing server at repo root):
 
 - **Phase 1 — data layer:** done, including `matrix.json`.
 - **Phase 2 — Shell + Home + List:** done (SSG + search/filter/sort/inline-expand).
-- Next: Phase 3 node detail (bottom sheet + `node/{id}.html` static pages). Card/name/connection
-  links already target `node/{id}.html` — they resolve once Phase 3 builds those pages.
-- Phases 4–8: ego-graph, **matrix** (3×3), browse/favorites/about, states/a11y/perf. (Map dropped.)
+- **Phase 3 — Node detail (static pages):** done. `site/node/{id}.html` for every node
+  (description, location, aliases, sources, connections grouped by type). Connection links now
+  resolve. Bottom-sheet (in-place detail) still to add.
+- **Type colors unified with desktop:** single source of truth in `app.css :root`
+  (`--type-*` = the desktop hues #4a90d9 / #e8833a / #5cb85c, + `--type-other` #9b59b6, each
+  with a `-bg` tint and AA `-ink`). No type hex outside `:root`; `app.js` reads none.
+- Next: Phase 4 ego-graph, Phase 6 **matrix** (3×3), browse/favorites/about, states/a11y/perf.
+  Nav model (view switcher + history stack) lands as those projections arrive. (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.

@@ -31,10 +31,10 @@ def badge(t, with_label=True):
     return "<span class='badge t-%s'>%s</span>" % (t, inner)
 
 
-def bottom_nav(active):
-    items = [("index.html", "Explorar", "🧭", "explorar"),
-             ("#",          "Favoritos", "★",  "favoritos"),
-             ("#",          "Sobre",     "ℹ",  "sobre")]
+def bottom_nav(active, base=""):
+    items = [(base + "index.html", "Explorar", "🧭", "explorar"),
+             ("#",                 "Favoritos", "★",  "favoritos"),
+             ("#",                 "Sobre",     "ℹ",  "sobre")]
     lis = []
     for href, label, ico, key in items:
         cur = " aria-current='page'" if key == active else ""
@@ -44,7 +44,7 @@ def bottom_nav(active):
     return ("<nav class='bottom-nav' aria-label='Seções'><ul>%s</ul></nav>" % "".join(lis))
 
 
-def shell(title, page, datapath, active_nav, body):
+def shell(title, page, datapath, active_nav, body, base=""):
     return (
         "<!doctype html>\n"
         "<html lang='pt-BR' class='no-js'>\n<head>\n"
@@ -52,19 +52,19 @@ def shell(title, page, datapath, active_nav, body):
         "<meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>\n"
         "<title>%s</title>\n"
         "<meta name='description' content='Conexões da História — pessoas, lugares e fatos que formaram Recife e Pernambuco.'>\n"
-        "<link rel='stylesheet' href='assets/app.css'>\n"
+        "<link rel='stylesheet' href='%sassets/app.css'>\n"
         "<script>document.documentElement.className='has-js';</script>\n"
         "</head>\n"
         "<body data-page='%s' data-datapath='%s'>\n"
         "<a class='skip-link' href='#main'>Pular para o conteúdo</a>\n"
         "<header class='app-header'><div class='wrap'>"
-        "<h1 class='app-title'><a href='index.html'>Conexões da História</a></h1>"
+        "<h1 class='app-title'><a href='%sindex.html'>Conexões da História</a></h1>"
         "</div></header>\n"
         "<main id='main' class='wrap'>\n%s\n</main>\n"
         "%s\n"
-        "<script src='assets/app.js' defer></script>\n"
+        "<script src='%sassets/app.js' defer></script>\n"
         "</body>\n</html>\n"
-        % (esc(title), page, esc(datapath), body, bottom_nav(active_nav))
+        % (esc(title), base, page, esc(datapath), base, body, bottom_nav(active_nav, base), base)
     )
 
 
@@ -152,10 +152,73 @@ def render_list(index):
     return shell("Lista — Conexões da História", "list", "../data", "explorar", body)
 
 
-def build_site(index, site_dir):
-    os.makedirs(site_dir, exist_ok=True)
+def render_node(d):
+    """Full static detail page for one node (share/SEO/no-JS). Lives at site/node/{id}.html,
+    so assets are ../ and data is ../../data; sibling node links are '{id}.html'."""
+    t = d["type"]
+    p = ["<p><a class='detail-back' href='../list.html'>← Lista</a></p>",
+         "<article class='detail'>",
+         "<div class='detail-head'>%s<h1 class='detail-name'>%s</h1></div>"
+         % (badge(t), esc(d["name"]))]
+
+    loc = " · ".join([x for x in [d.get("neighborhood"), d.get("municipality")] if x])
+    if loc:
+        p.append("<p class='detail-loc'>%s</p>" % esc(loc))
+    if d.get("aliases"):
+        p.append("<p class='detail-aliases'>Também conhecido como: %s</p>" % esc(", ".join(d["aliases"])))
+    if d.get("image"):
+        p.append("<img class='detail-img' src='%s' alt='%s' loading='lazy'>"
+                 % (esc(d["image"]), esc(d["name"])))
+    if d.get("description"):
+        p.append("<p class='detail-desc'>%s</p>" % esc(d["description"]))
+    else:
+        p.append("<p class='detail-desc muted'>Sem descrição ainda.</p>")
+
+    edges = d.get("edges", [])
+    p.append("<h2 class='section-h'>Conexões (%d)</h2>" % len(edges))
+    if edges:
+        groups = {}
+        for e in edges:
+            groups.setdefault(e["target_type"], []).append(e)
+        for gt in CATEGORY_ORDER:
+            if gt not in groups:
+                continue
+            p.append("<h3 class='conn-group'>%s <span class='conn'>(%d)</span></h3>"
+                     % (esc(TYPE_META.get(gt, FALLBACK_META)[0]), len(groups[gt])))
+            p.append("<ul class='cards'>")
+            for e in sorted(groups[gt], key=lambda x: x["target_name"]):
+                p.append("<li class='card t-%s'><a class='card-main' href='%s.html'>"
+                         "<span class='card-body'><span class='card-name'>%s</span>"
+                         "<span class='card-meta'>%s</span></span></a></li>"
+                         % (e["target_type"], esc(e["target_id"]),
+                            esc(e["target_name"]), badge(e["target_type"])))
+            p.append("</ul>")
+    else:
+        p.append("<p class='empty-state'>Sem conexões.</p>")
+
+    if d.get("sources"):
+        p.append("<h2 class='section-h'>Fontes</h2><ul class='sources'>")
+        for s in d["sources"]:
+            if s.get("url"):
+                p.append("<li><a href='%s' rel='noopener' target='_blank'>%s</a></li>"
+                         % (esc(s["url"]), esc(s["title"])))
+            else:
+                p.append("<li>%s</li>" % esc(s["title"]))
+        p.append("</ul>")
+
+    p.append("</article>")
+    return shell(d["name"] + " — Conexões da História", "node", "../../data",
+                 "explorar", "\n".join(p), base="../")
+
+
+def build_site(index, details, site_dir):
+    node_dir = os.path.join(site_dir, "node")
+    os.makedirs(node_dir, exist_ok=True)
     with open(os.path.join(site_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(render_home(index))
     with open(os.path.join(site_dir, "list.html"), "w", encoding="utf-8") as f:
         f.write(render_list(index))
-    return ["index.html", "list.html"]
+    for d in details:
+        with open(os.path.join(node_dir, d["id"] + ".html"), "w", encoding="utf-8") as f:
+            f.write(render_node(d))
+    return len(details)
