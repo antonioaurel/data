@@ -14,9 +14,9 @@ from common import normalize
 # type -> (Portuguese label, icon). Keys match the routes (#tipos=local,…).
 # The .get() fallback keeps rendering safe if an unexpected type ever appears.
 TYPE_META = {
-    "local":      ("Local",      "📍"),
-    "personagem": ("Personagem", "👤"),
-    "evento":     ("Evento",     "📅"),
+    "local":      ("Local",                   "📍"),
+    "personagem": ("Personagens Históricos",  "👤"),
+    "evento":     ("Fatos Históricos",        "📅"),
 }
 FALLBACK_META = ("Outro", "●")
 CATEGORY_ORDER = ["local", "personagem", "evento"]
@@ -128,9 +128,8 @@ def viz_row(href, name, desc, external=False):
 def render_home(index, stats):
     types = present_types(index)
     chips = "".join(
-        "<a class='chip t-%s is-active' href='list.html#type=%s'>"
-        "<span class='ico' aria-hidden='true'>%s</span>%s</a>"
-        % (t, t, TYPE_META[t][1], esc(TYPE_META[t][0]))
+        "<a class='chip t-%s is-active' href='list.html#type=%s'>%s</a>"
+        % (t, t, esc(TYPE_META[t][0]))
         for t, _c in types)
 
     top = stats.get("top_id", "")
@@ -161,9 +160,8 @@ def render_home(index, stats):
 def render_list(index):
     types = present_types(index)
     chips = "".join(
-        "<button type='button' class='chip t-%s' data-type='%s' aria-pressed='false'>"
-        "<span class='ico' aria-hidden='true'>%s</span>%s</button>"
-        % (t, t, TYPE_META[t][1], esc(TYPE_META[t][0]))
+        "<button type='button' class='chip t-%s' data-type='%s' aria-pressed='false'>%s</button>"
+        % (t, t, esc(TYPE_META[t][0]))
         for t, _c in types)
 
     cards = []
@@ -187,13 +185,7 @@ def render_list(index):
         "autocomplete='off' aria-label='Buscar na lista'></div>\n"
         "<div class='js-only'><h2 class='section-h'>Filtros</h2>"
         "<div class='chips'>%s</div></div>\n"
-        "<div class='toolbar js-only'>"
-        "<span><label for='sort'>Ordenar:</label> "
-        "<select id='sort'><option value='name'>Nome</option>"
-        "<option value='connections'>Conexões</option>"
-        "<option value='type'>Tipo</option></select></span>"
-        "<span id='count' class='count'>%d nós</span>"
-        "</div>\n"
+        "<div class='toolbar js-only'><span id='count' class='count'>%d nós</span></div>\n"
         "<p id='empty' class='empty-state' hidden>Nenhum resultado.</p>\n"
         "<div class='list-layout'>\n"
         "<ul id='list' class='cards'>%s</ul>\n"
@@ -222,8 +214,9 @@ def render_node(d):
     if d.get("aliases"):
         p.append("<p class='detail-aliases'>Também conhecido como: %s</p>" % esc(", ".join(d["aliases"])))
     if d.get("image"):
-        p.append("<img class='detail-img' src='%s' alt='%s' loading='lazy'>"
-                 % (esc(d["image"]), esc(d["name"])))
+        # hide the image element if the URL is broken (no broken-image icon, just the title/text)
+        p.append("<img class='detail-img' src='%s' alt='%s' loading='lazy' "
+                 "onerror=\"this.style.display='none'\">" % (esc(d["image"]), esc(d["name"])))
     if d.get("description"):
         p.append("<p class='detail-desc'>%s</p>" % esc(d["description"]))
     else:

@@ -207,8 +207,14 @@ html.has-js .no-js-only { display: none !important; }
 .gnode { cursor: pointer; }
 .gnode:focus { outline: none; }
 .gnode:focus circle { stroke: var(--focus); stroke-width: 3; }
-.graph-panel { position: relative; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: var(--s4); margin-top: var(--s4); text-align: center; }
+/* fixed above the bottom nav so the action buttons are never cut off; scrolls internally */
+.graph-panel { position: fixed; left: 0; right: 0; z-index: 25;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  max-width: var(--maxw); margin: 0 auto; max-height: 60vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: var(--s4); text-align: center;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.28); }
+@media (min-width: 1024px) { .graph-panel { bottom: var(--s4); border-radius: var(--radius-lg); } }
 .gp-close { position: absolute; top: var(--s2); right: var(--s2); width: 36px; height: 36px;
   border: 0; background: none; font-size: 18px; color: var(--muted); cursor: pointer; }
 .gp-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--s2); }
