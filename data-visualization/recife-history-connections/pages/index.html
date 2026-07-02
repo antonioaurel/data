@@ -3,6 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Viewport-based routing (no button, no UA sniffing): narrow screens get the mobile app;
+       this rich desktop page is for wide. Redirect on load and live on resize. -->
+  <script>(function(){try{var q=window.matchMedia('(max-width:1023px)'),t='../mobile/site/index.html';
+    if(q.matches){location.replace(t);return;}
+    var f=function(e){if(e.matches)location.replace(t);};
+    q.addEventListener?q.addEventListener('change',f):q.addListener(f);}catch(e){}})();</script>
   <title>Conexões da Historia do Recife</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Product+Sans:wght@400;700&display=swap" rel="stylesheet">
   <style>
