@@ -11,6 +11,84 @@
     evento:     { label: "Fatos Históricos",       ico: "📅" }
   };
   var FALLBACK = { label: "Outro", ico: "●" };
+
+  /* ================================ i18n ================================== */
+  // Default PT (never auto-follow the browser); the toggle persists the choice.
+  var LANG_KEY = "lang";
+  function getLang() {
+    try { return localStorage.getItem(LANG_KEY) === "en" ? "en" : "pt"; } catch (e) { return "pt"; }
+  }
+  function setLang(l) { try { localStorage.setItem(LANG_KEY, l); } catch (e) {} }
+  function L(pt, en) { return getLang() === "en" ? en : pt; }   // inline dual-language for JS strings
+  function typeLabel(t) {                                        // type label per language
+    var en = { local: "Places", personagem: "Historical Figures", evento: "Historical Facts" };
+    return getLang() === "en" ? (en[t] || "Other") : typeMeta(t).label;
+  }
+  // EN strings for static [data-i18n] elements (PT stays in the HTML as the default/fallback).
+  var EN = {
+    "nav-inicio": "Home", "nav-fillrate": "Fill rate", "nav-fontes": "Sources", "nav-sobre": "About",
+    "sw-list": "List", "sw-graph": "Graph", "sw-matrix": "Matrix",
+    "home-tagline": "A mapping of the connections between people, places and events in the history of Pernambuco at points that influenced Brazil.",
+    "home-viz": "Visualizations", "home-verlista": "See the full list →",
+    "viz-grafo-n": "Graph", "viz-grafo-d": "Explore a node's connections, one by one.",
+    "viz-matriz-n": "Matrix", "viz-matriz-d": "Overview of connections by type.",
+    "viz-mapa-n": "Historical map", "viz-mapa-d": "The points on the map of Recife and region.",
+    "viz-diagrama-n": "Diagram", "viz-diagrama-d": "The full network, item by item.",
+    "list-filtros": "Filters", "matriz-h": "Connection matrix",
+    "matriz-intro": "How many connections exist between each pair of types. Tap a cell to see the nodes involved.",
+    "fill-h": "Fill rate", "fill-note-a": "Fields in amber need curation.", "fill-note-link": "See the full report ↗",
+    "fontes-h": "Sources", "sobre-h": "About",
+    "sobre-authormeta": "Recife, Pernambuco — author, curator and creator · ",
+    "sobre-curation": "Curation for studies in data science, data quality, history and software quality.",
+    "sobre-outros": "Other projects",
+    "sobre-disclaimer-b": "AI use:", "sobre-disclaimer": " pairing in development; review of the database quality, the text and validation of the connections; mock generation; and usability, compatibility, availability and performance testing.",
+    "fl-Nome": "Name", "fl-Descrição": "Description", "fl-Interconexões": "Interconnections",
+    "fl-Imagem": "Image", "fl-Tipo": "Type", "fl-Local": "Location",
+    "back-list": "← List", "back-inicio": "← Home"
+  };
+  function applyI18n() {
+    var lang = getLang();
+    document.documentElement.setAttribute("lang", lang === "en" ? "en" : "pt-BR");
+    var nodes = document.querySelectorAll("[data-i18n]"), i;
+    for (i = 0; i < nodes.length; i++) {
+      var el2 = nodes[i], k = el2.getAttribute("data-i18n");
+      if (el2.__pt == null) el2.__pt = el2.textContent;
+      el2.textContent = (lang === "en" && EN[k] != null) ? EN[k] : el2.__pt;
+    }
+    var phs = document.querySelectorAll("[data-i18n-ph]");
+    for (i = 0; i < phs.length; i++) {
+      var el3 = phs[i], k3 = el3.getAttribute("data-i18n-ph");
+      if (el3.__ptph == null) el3.__ptph = el3.getAttribute("placeholder") || "";
+      el3.setAttribute("placeholder", (lang === "en" && EN[k3] != null) ? EN[k3] : el3.__ptph);
+    }
+    // node detail: swap the description + type badge/chips to the chosen language
+    swapNodeLang(lang);
+  }
+  function swapNodeLang(lang) {
+    var art = document.querySelector(".detail[data-node-id]");
+    if (art) {
+      var desc = art.querySelector(".detail-desc:not(.muted)");
+      var de = art.getAttribute("data-de");
+      if (desc) { if (desc.__pt == null) desc.__pt = desc.textContent; desc.textContent = (lang === "en" && de) ? de : desc.__pt; }
+    }
+    // type chips/badges labels (static)
+    var tl = document.querySelectorAll("[data-tlabel]"), i;
+    for (i = 0; i < tl.length; i++) {
+      var e = tl[i], ty = e.getAttribute("data-tlabel");
+      e.textContent = typeLabel(ty);
+    }
+  }
+  function initLang() {
+    var btn = el("lang-toggle");
+    function paint() { if (btn) btn.textContent = getLang() === "en" ? "PT" : "EN"; }
+    applyI18n(); paint();
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      setLang(getLang() === "en" ? "pt" : "en");
+      applyI18n(); paint();
+    });
+  }
+
   function typeMeta(t) { return TYPES[t] || FALLBACK; }
 
   function stripAccents(s) {
@@ -354,6 +432,7 @@
   // detail pane (expanded multi-panel) — renders a node's detail from its JSON
   function paneHTML(nd) {
     var m = typeMeta(nd.type), edges = nd.edges || [];
+    var dsc = (getLang() === "en" && nd.de) ? nd.de : nd.description;
     var loc = [nd.neighborhood, nd.municipality].filter(function (x) { return x; }).join(" · ");
     var conns = "";
     for (var i = 0; i < edges.length && i < 60; i++) {
@@ -368,8 +447,8 @@
       m.ico + "</span>" + escapeHtml(m.label) + "</span><h2 class='detail-name'>" +
       escapeHtml(nd.name) + "</h2></div>" +
       (loc ? "<p class='detail-loc'>" + escapeHtml(loc) + "</p>" : "") +
-      (nd.description ? "<p class='detail-desc'>" + escapeHtml(nd.description) + "</p>"
-                      : "<p class='detail-desc muted'>Sem descrição ainda.</p>") +
+      (dsc ? "<p class='detail-desc'>" + escapeHtml(dsc) + "</p>"
+           : "<p class='detail-desc muted'>" + L("Sem descrição ainda.", "No description yet.") + "</p>") +
       "<div class='gp-actions'><a class='btn' href='node/" + nd.id + ".html'>Abrir página</a>" +
       "<a class='btn btn-primary' href='graph.html#node=" + encodeURIComponent(nd.id) +
       "'>Ver conexões</a></div>" +
@@ -481,7 +560,8 @@
     function selectNeighbor(id) {
       xhrJSON(dataPath() + "/node/" + id + ".json", function (nd) {
         if (!panel || !nd) return;
-        var m = typeMeta(nd.type), desc = nd.description ? trunc(nd.description, 160) : "";
+        var src = (getLang() === "en" && nd.de) ? nd.de : nd.description;
+        var m = typeMeta(nd.type), desc = src ? trunc(src, 160) : "";
         panel.innerHTML =
           "<button class='gp-close' type='button' aria-label='Fechar'>✕</button>" +
           "<div class='gp-head'><span class='badge t-" + nd.type + "'><span class='ico'>" + m.ico +
@@ -590,6 +670,7 @@
   function boot() {
     var page = document.body.getAttribute("data-page");
     initTheme();
+    initLang();
     initResponsive();
     initOffline();
     registerSW();
