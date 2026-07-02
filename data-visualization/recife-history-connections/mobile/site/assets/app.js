@@ -488,7 +488,8 @@
       if (!d || !d.id) { canvas.innerHTML = "<p class='empty-state'>Nó não encontrado.</p>"; return; }
       if (titleEl) titleEl.textContent = "Conexões de " + d.name;
       var edges = d.edges || [];
-      var MAX = 18, shown = edges.slice(0, MAX), more = edges.length - shown.length;
+      var MAX = getMode() === "expanded" ? 18 : 5;   // mobile: cap at 5 neighbours
+      var shown = edges.slice(0, MAX), more = edges.length - shown.length;
       var W = 320, H = 320, cx = 160, cy = 160, R = 116, n = shown.length, i, ang, nx, ny;
 
       var svg = "<svg viewBox='0 0 " + W + " " + H + "' width='100%' " +

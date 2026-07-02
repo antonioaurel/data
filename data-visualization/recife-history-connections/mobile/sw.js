@@ -3,12 +3,12 @@
    Strategy: precache the shell + core indexes; stale-while-revalidate for everything else
    (return cache immediately, refresh in the background) so a data-depleted user keeps
    browsing what they've already seen. Bump CACHE when the shell changes. */
-var CACHE = "cdh-v1";
+var CACHE = "cdh-v2";
 var OFFLINE_FALLBACK = "site/index.html";
 var PRECACHE = [
   "site/index.html", "site/list.html", "site/matriz.html", "site/graph.html",
   "site/sobre.html", "site/favoritos.html",
-  "site/assets/app.css", "site/assets/app.js",
+  "site/assets/app.css", "site/assets/app.js", "site/assets/fonts/inter-latin.woff2",
   "data/index.json", "data/search.json", "data/matrix.json"
 ];
 
