@@ -501,12 +501,23 @@ fetch('../../data/graph.json').then(function(r) { return r.json(); }).then(funct
   buildLabels();
   applyZoom(CELL);
 
-  // descriptions/locations aren't needed to render — load them in the background
+  // descriptions/locations aren't needed to render — deferred to the first node click (#1)
+}).catch(function(err) { console.error(err); });
+
+/* Lazy-load content.json only when a node is first inspected: viewers who just
+   browse the matrix never pay the ~290 KB transfer. Fetched at most once. */
+var contentState = 'idle';   // 'idle' | 'loading' | 'ready'
+function ensureContent(cb) {
+  if (contentState === 'ready') { cb && cb(); return; }
+  if (contentState === 'loading') return;   // a fetch is already in flight
+  contentState = 'loading';
   fetch('../../data/content.json').then(function(r) { return r.json(); }).then(function(c) {
     nodeContent = c;
-    if (selectedRow >= 0) showNodeDetail(names[selectedRow]);
-  }).catch(function() { /* panel just shows no description */ });
-}).catch(function(err) { console.error(err); });
+    contentState = 'ready';
+    if (selectedRow >= 0) showNodeDetail(names[selectedRow]);   // refresh the open panel
+    cb && cb();
+  }).catch(function() { contentState = 'idle'; /* panel just shows no description */ });
+}
 
 /* ── Build axis labels ────────────────────────────────────────────────────── */
 function buildLabels() {
@@ -761,6 +772,7 @@ document.getElementById('filter-clear').addEventListener('click', function() {
 function showNodeDetail(name) {
   var t = nodeType[name];
   if (t === undefined) return;
+  ensureContent();                   // kick off the lazy load; refreshes this panel when ready
   var c = nodeContent[name] || {};   // {} until content.json finishes loading
 
   document.getElementById('panel-placeholder').style.display = 'none';
