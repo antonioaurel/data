@@ -155,7 +155,7 @@ def main():
     src_by_id = {s["id"]: s for s in source_records}
     edge_idx = build_edge_index(nodes, edges, aliases)
 
-    index, search = [], []
+    index, search, details = [], [], []
     os.makedirs(NODE_DIR, exist_ok=True)
 
     for r in nodes:
@@ -195,6 +195,7 @@ def main():
             "sources": [src_by_id[i] for i in node_source_ids(r, url_to_id)],
             "edges": edges_out,
         }
+        details.append(detail)
         write(os.path.join(NODE_DIR, nid + ".json"), dumps(detail))
 
     index.sort(key=lambda o: o["name"])
@@ -209,8 +210,8 @@ def main():
     matrix, edges_counted = build_matrix(nodes, edge_idx)
     write(os.path.join(OUT_DIR, "matrix.json"), dumps(matrix))
 
-    # ---- static HTML (SSG) ----
-    sitegen.build_site(index, SITE_DIR)
+    # ---- static HTML (SSG): home + list + one detail page per node ----
+    n_pages = sitegen.build_site(index, details, SITE_DIR)
 
     # ---- report ----
     print("=== mobile build — Phase 1 (data layer) ===")
@@ -251,7 +252,8 @@ def main():
     if errors:
         print("FAILED: fix the errors above.")
         return 1
-    print("generated: mobile/data/{index,search,sources,matrix}.json + node/*.json + site/*.html")
+    print("generated: mobile/data/{index,search,sources,matrix}.json + node/*.json")
+    print("           site/{index,list}.html + site/node/*.html (%d detail pages)" % n_pages)
     return 0
 
 
