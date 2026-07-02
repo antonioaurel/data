@@ -78,8 +78,13 @@ View locally (from the existing server at repo root):
   `index.json`). Node pages get a ☆ Favoritar toggle; the bottom nav (Explorar · Favoritos ·
   Sobre) now points to real pages. Fixed the `.js-only` rule so it no longer clobbers each
   element's display (search/toolbar/fav-btn).
-- Next: Phase 3 bottom-sheet, Phase 4 Grafo (simplified), Phase 7 responsive, Phase 8 nav,
-  Phase 10 states/a11y/perf. (Map dropped.)
+- **Phase 4 — Grafo (simplified):** done. `graph.html` reads `#node={id}` and renders a
+  **radial SVG** (center node + up to 18 neighbors, no force simulation — cheap on weak CPUs,
+  zero dependencies). Node color = type (JS reads the `:root` vars); edge width ∝ strength. Tap
+  a neighbor → bottom panel (badge, name, short description) with "Ver detalhes" / "Ver
+  conexões"; the latter recenters via `#node=` (hashchange, normal back). Node pages link to it.
+- Next: Phase 3 bottom-sheet, Phase 7 responsive, Phase 8 nav (view switcher Lista·Grafo·Matriz
+  + history), Phase 10 states/a11y/perf (service worker/offline). (Map dropped.)
 - The matrix is built **undirected/symmetric** — the source `relationship_type` values
   (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
   files are deferred to the Matrix phase.

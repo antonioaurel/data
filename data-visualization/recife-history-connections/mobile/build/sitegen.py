@@ -165,7 +165,9 @@ def render_node(d):
          "<div class='detail-head'>%s<h1 class='detail-name'>%s</h1></div>"
          % (badge(t), esc(d["name"])),
          "<button id='fav-btn' class='fav-btn js-only' type='button' data-id='%s' "
-         "aria-pressed='false'>☆ Favoritar</button>" % esc(d["id"])]
+         "aria-pressed='false'>☆ Favoritar</button>" % esc(d["id"]),
+         "<p><a class='btn btn-primary' href='../graph.html#node=%s'>Ver conexões no grafo</a></p>"
+         % esc(d["id"])]
 
     loc = " · ".join([x for x in [d.get("neighborhood"), d.get("municipality")] if x])
     if loc:
@@ -292,6 +294,19 @@ def render_about(sources):
     return shell("Sobre — Conexões da História", "about", "../data", "sobre", body)
 
 
+def render_graph():
+    body = (
+        "<p><a class='detail-back' href='list.html'>← Lista</a></p>\n"
+        "<h1 id='graph-title' class='section-h' style='font-size:18px'>Conexões</h1>\n"
+        "<div id='graph-canvas' class='graph-canvas' role='img' aria-live='polite'></div>\n"
+        "<p id='graph-hint' class='mx-intro'></p>\n"
+        "<div id='graph-panel' class='graph-panel' hidden></div>\n"
+        "<noscript><p class='empty-state'>O grafo precisa de JavaScript. "
+        "<a href='list.html'>Ver a lista</a>.</p></noscript>\n"
+    )
+    return shell("Grafo — Conexões da História", "graph", "../data", "explorar", body)
+
+
 def render_favorites():
     body = (
         "<h1 class='section-h' style='font-size:18px'>Favoritos</h1>\n"
@@ -317,6 +332,8 @@ def build_site(index, details, matrix, sources, site_dir):
         f.write(render_about(sources))
     with open(os.path.join(site_dir, "favoritos.html"), "w", encoding="utf-8") as f:
         f.write(render_favorites())
+    with open(os.path.join(site_dir, "graph.html"), "w", encoding="utf-8") as f:
+        f.write(render_graph())
     for d in details:
         with open(os.path.join(node_dir, d["id"] + ".html"), "w", encoding="utf-8") as f:
             f.write(render_node(d))
