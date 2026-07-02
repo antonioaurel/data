@@ -24,6 +24,7 @@ CATEGORY_ORDER = ["local", "personagem", "evento"]
 # Links out to the existing desktop pages / external map (from mobile/site/ → ../../pages/).
 DESKTOP_DIAGRAM = "../../pages/diagram.html"
 DESKTOP_STATS = "../../pages/stats.html"
+DESKTOP_MATRIX = "../../pages/matrix.html"
 MAP_URL = ("https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj"
            "&ll=-8.06055276702706%2C-34.882075024350215&z=15")
 
@@ -258,7 +259,7 @@ def render_node(d):
                  "inicio", "\n".join(p), base="../")
 
 
-def render_matrix(matrix):
+def render_matrix(matrix, stats):
     """3×3 type×type adjacency as a semantic table. Each non-empty cell is a link to
     the List filtered to that type pair. The number is always shown; background
     intensity (neutral slate, sqrt-scaled) is a secondary cue only."""
@@ -294,12 +295,18 @@ def render_matrix(matrix):
     table = ("<div class='mx-scroll'><table class='matrix'>"
              "<caption class='sr-only'>Conexões entre tipos de nó</caption>"
              "<thead>%s</thead><tbody>%s</tbody></table></div>" % (head, "".join(rows)))
+    n = stats.get("n_nodes", 0)
+    note = ("<p class='mx-note'>Este é um panorama por tipo. O acervo tem <strong>%d</strong> "
+            "itens e <strong>%d</strong> conexões — a matriz completa, item a item, respira "
+            "melhor numa tela grande.<br>"
+            "<a href='%s' target='_blank' rel='noopener'>Abrir matriz completa (%d×%d) no "
+            "computador ↗</a></p>" % (n, stats.get("n_edges", 0), DESKTOP_MATRIX, n, n))
     body = (view_switcher("matrix") + "\n"
             "<h1 class='section-h' style='font-size:18px'>Matriz de conexões</h1>\n"
             "<p class='mx-intro'>Quantas conexões existem entre cada par de tipos. "
             "Toque numa célula para ver os nós envolvidos.</p>\n"
-            + table +
-            "\n<p class='mx-foot'><a href='index.html'>← Explorar</a> · "
+            + table + "\n" + note +
+            "\n<p class='mx-foot'><a href='index.html'>← Início</a> · "
             "<a href='list.html'>Ver lista</a></p>")
     return shell("Matriz — Conexões da História", "matrix", "../data", "inicio", body)
 
@@ -326,11 +333,11 @@ def render_about():
         "<p class='about-p'>Curadoria para estudos de data science, data quality, história e "
         "software quality.</p>\n"
         "<h2 class='section-h' style='margin:12px 0 6px'>Outros projetos</h2>\n"
-        "<p class='projects-inline'>%s</p>\n"
+        "<ul class='projects'>%s</ul>\n"
         "<p class='about-p disclaimer'><strong>Uso de IA:</strong> pareamento no desenvolvimento; "
         "revisão da qualidade da base, do texto e validação das conexões; geração de mocks; e "
         "testes de usabilidade, compatibilidade, disponibilidade e desempenho.</p>\n"
-        % " · ".join(esc(p) for p in PROJECTS)
+        % "".join("<li>%s</li>" % esc(p) for p in PROJECTS)
     )
     return shell("Sobre — Conexões da História", "about", "../data", "sobre", body)
 
@@ -399,7 +406,7 @@ def build_site(index, details, matrix, stats, site_dir):
     pages = {
         "index.html":    render_home(index, stats),
         "list.html":     render_list(index),
-        "matriz.html":   render_matrix(matrix),
+        "matriz.html":   render_matrix(matrix, stats),
         "graph.html":    render_graph(),
         "fillrate.html": render_fillrate(stats),
         "fontes.html":   render_fontes(),
