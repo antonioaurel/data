@@ -170,10 +170,10 @@ def render_home(index, stats):
            + "</ul>")
 
     body = (
-        "<img class='cover-start' src='../../img/cover_start.jpg' alt='Conexões da História' "
-        "onerror=\"this.style.display='none'\">\n"
         "<p class='home-intro' data-i18n='home-tagline'>Um mapeamento das conexões entre pessoas, "
         "locais e eventos da história de Pernambuco em pontos que influenciaram o Brasil.</p>\n"
+        "<img class='cover-start' src='../../img/cover_start.jpg' alt='Conexões da História' "
+        "onerror=\"this.style.display='none'\">\n"
         "<p class='home-stats'><strong>%d</strong> <span data-i18n='w-nos'>nós</span> · "
         "<strong>%d</strong> <span data-i18n='w-conexoes'>conexões</span></p>\n"
         "<form id='home-search' class='search js-only' role='search' action='list.html'>"
