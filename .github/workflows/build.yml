@@ -4,20 +4,20 @@ on:
   push:
     branches: [main]
     paths:
-      - 'data-visualization/recife-history-connections/data/nodes.csv'
-      - 'data-visualization/recife-history-connections/data/edges.csv'
-      - 'data-visualization/recife-history-connections/data/aliases.csv'
-      - 'data-visualization/recife-history-connections/data/graph.json'
-      - 'data-visualization/recife-history-connections/data/content.json'
-      - 'data-visualization/recife-history-connections/build.py'
+      - 'projects/recife-history-connections/data/nodes.csv'
+      - 'projects/recife-history-connections/data/edges.csv'
+      - 'projects/recife-history-connections/data/aliases.csv'
+      - 'projects/recife-history-connections/data/graph.json'
+      - 'projects/recife-history-connections/data/content.json'
+      - 'projects/recife-history-connections/build.py'
   pull_request:
     paths:
-      - 'data-visualization/recife-history-connections/data/nodes.csv'
-      - 'data-visualization/recife-history-connections/data/edges.csv'
-      - 'data-visualization/recife-history-connections/data/aliases.csv'
-      - 'data-visualization/recife-history-connections/data/graph.json'
-      - 'data-visualization/recife-history-connections/data/content.json'
-      - 'data-visualization/recife-history-connections/build.py'
+      - 'projects/recife-history-connections/data/nodes.csv'
+      - 'projects/recife-history-connections/data/edges.csv'
+      - 'projects/recife-history-connections/data/aliases.csv'
+      - 'projects/recife-history-connections/data/graph.json'
+      - 'projects/recife-history-connections/data/content.json'
+      - 'projects/recife-history-connections/build.py'
   workflow_dispatch:
 
 jobs:
@@ -29,5 +29,5 @@ jobs:
         with:
           python-version: '3.x'
       - name: Validate base & check derived files are in sync
-        working-directory: data-visualization/recife-history-connections
+        working-directory: projects/recife-history-connections
         run: python3 build.py --check

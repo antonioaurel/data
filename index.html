@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data — Projetos de dados</title>
+  <meta name="description" content="Hub de projetos de dados: visualização, qualidade e pipelines.">
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --ink: #1b2230;
+      --muted: #647089;
+      --line: #e4e8ef;
+      --accent: #2f6df6;
+      --accent-soft: #eaf1ff;
+      --radius: 14px;
+      --shadow: 0 1px 2px rgba(20,30,50,.04), 0 8px 24px rgba(20,30,50,.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f131a; --card: #161c26; --ink: #eef1f6; --muted: #9aa6bd;
+        --line: #232c3a; --accent: #5b8bff; --accent-soft: #1b2740;
+        --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 940px; margin: 0 auto; padding: 56px 22px 80px; }
+    header.hero { margin-bottom: 34px; }
+    .brand {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-weight: 800; letter-spacing: -.02em; font-size: 15px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+    h1 { font-size: clamp(28px, 5vw, 40px); letter-spacing: -.03em; margin: 14px 0 6px; }
+    .tagline { color: var(--muted); font-size: 18px; margin: 0; }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 30px 0 8px; }
+    .chip {
+      border: 1px solid var(--line); background: var(--card); color: var(--ink);
+      padding: 7px 14px; border-radius: 999px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: .15s; line-height: 1;
+    }
+    .chip:hover { border-color: var(--accent); }
+    .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 22px; }
+    .card {
+      display: flex; flex-direction: column; background: var(--card);
+      border: 1px solid var(--line); border-radius: var(--radius); padding: 22px;
+      text-decoration: none; color: inherit; box-shadow: var(--shadow);
+      transition: transform .15s, border-color .15s;
+    }
+    .card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .card h2 { font-size: 20px; letter-spacing: -.02em; margin: 0 0 8px; }
+    .card p { color: var(--muted); font-size: 14.5px; margin: 0 0 16px; flex: 1; }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .badge { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); }
+    .tech { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tech span { font-size: 12px; color: var(--muted); border: 1px solid var(--line); padding: 3px 8px; border-radius: 6px; }
+    .cta { margin-top: 16px; font-weight: 700; font-size: 14px; color: var(--accent); }
+    .status { margin-left: auto; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #1a9e5f; }
+    .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+    footer { margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <span class="brand"><span class="dot"></span><span id="brand">Data</span></span>
+      <h1 id="title">Projetos de dados</h1>
+      <p class="tagline" id="tagline"></p>
+    </header>
+
+    <nav class="filters" id="filters" aria-label="Filtrar por abordagem"></nav>
+
+    <main class="grid" id="grid"></main>
+    <p class="empty" id="empty" hidden>Nenhum projeto nesta categoria ainda.</p>
+
+    <footer>
+      <span id="footer"></span>
+    </footer>
+  </div>
+
+  <script>
+    var state = { data: null, filter: "all" };
+
+    fetch("projects.json", { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) { state.data = data; render(); })
+      .catch(function (e) {
+        document.getElementById("grid").innerHTML =
+          '<p class="empty">Não foi possível carregar projects.json (' + e.message + ').<br>' +
+          'Rode um servidor local: <code>python3 -m http.server</code></p>';
+      });
+
+    function labelFor(id) {
+      var a = (state.data.approaches || []).find(function (x) { return x.id === id; });
+      return a ? a.label : id;
+    }
+
+    function render() {
+      var d = state.data, site = d.site || {};
+      document.title = (site.title || "Data") + " — Projetos de dados";
+      document.getElementById("brand").textContent = site.title || "Data";
+      document.getElementById("tagline").textContent = site.tagline || "";
+      if (site.author) {
+        document.getElementById("footer").innerHTML =
+          "Por <a href='" + (site.author_url || "#") + "'>" + site.author + "</a>";
+      }
+      renderFilters();
+      renderGrid();
+    }
+
+    function renderFilters() {
+      var nav = document.getElementById("filters");
+      var counts = {};
+      (state.data.projects || []).forEach(function (p) {
+        (p.approaches || []).forEach(function (a) { counts[a] = (counts[a] || 0) + 1; });
+      });
+      var items = [{ id: "all", label: "Todos" }].concat(
+        (state.data.approaches || []).filter(function (a) { return counts[a.id]; })
+      );
+      nav.innerHTML = "";
+      items.forEach(function (it) {
+        var b = document.createElement("button");
+        b.className = "chip";
+        b.textContent = it.label + (it.id === "all" ? "" : " · " + counts[it.id]);
+        b.setAttribute("aria-pressed", state.filter === it.id);
+        b.onclick = function () { state.filter = it.id; renderFilters(); renderGrid(); };
+        nav.appendChild(b);
+      });
+    }
+
+    function renderGrid() {
+      var grid = document.getElementById("grid"), empty = document.getElementById("empty");
+      var list = (state.data.projects || []).filter(function (p) {
+        return state.filter === "all" || (p.approaches || []).indexOf(state.filter) !== -1;
+      });
+      grid.innerHTML = "";
+      empty.hidden = list.length > 0;
+      list.forEach(function (p) {
+        var a = document.createElement("a");
+        a.className = "card";
+        a.href = p.path || "#";
+        var badges = (p.approaches || []).map(function (id) {
+          return '<span class="badge">' + labelFor(id) + "</span>";
+        }).join("");
+        var tech = (p.tech || []).map(function (t) { return "<span>" + t + "</span>"; }).join("");
+        var status = p.status === "live"
+          ? '<span class="status">● no ar</span>' : "";
+        a.innerHTML =
+          '<div style="display:flex;align-items:baseline;gap:8px"><h2>' + p.title + "</h2>" + status + "</div>" +
+          '<p>' + (p.summary || "") + "</p>" +
+          '<div class="badges">' + badges + "</div>" +
+          '<div class="tech">' + tech + "</div>" +
+          '<div class="cta">Abrir projeto →</div>';
+        grid.appendChild(a);
+      });
+    }
+  </script>
+</body>
+</html>
