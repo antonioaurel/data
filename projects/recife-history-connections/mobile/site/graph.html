@@ -44,10 +44,11 @@ button{font-family:inherit;}
 .phone{ position:relative; width:390px; height:820px; max-height:calc(100dvh - 40px); background:var(--bg);
   border:1px solid var(--border); border-radius:34px; box-shadow:0 30px 80px rgba(0,0,0,.55), 0 2px 0 rgba(255,255,255,.03) inset;
   overflow:hidden; display:flex; flex-direction:column; }
-.app-header{ flex:0 0 auto; background:var(--surface); border-bottom:1px solid var(--border); padding:14px 16px 10px; }
+.app-header{ flex:0 0 auto; background:var(--surface); border-bottom:1px solid var(--border); padding:14px 16px 10px; position:relative; text-align:center; }
 .hrow{ display:flex; align-items:center; gap:10px; }
 .htitle{ font-size:15px; font-weight:700; letter-spacing:-.01em; } .htitle .crumb{ color:var(--muted); font-weight:600; }
-.htools{ margin-left:auto; display:flex; gap:6px; }
+.htools{ position:absolute; top:12px; right:14px; display:flex; gap:6px; }
+.crumb{ font-size:12px; color:var(--muted); font-weight:600; margin-top:1px; } .crumb .sw-tab{ display:inline; }
 .tbtn{ width:30px; height:30px; border-radius:8px; border:1px solid var(--border); background:var(--surface-2); color:var(--muted); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .tbtn:hover{ color:var(--text); border-color:var(--accent); }
 .searchbar{ flex:0 0 auto; background:var(--surface); border-bottom:1px solid var(--border); padding:0 12px 10px; }
@@ -134,10 +135,12 @@ button{font-family:inherit;}
 
 <div class="stage">
   <div class="phone" id="phone">
-    <header class="app-header"><div class="hrow"><div class="htitle">Conexões da História</div>
+    <header class="app-header">
       <div class="htools"><button class="tbtn" id="langBtn" type="button" aria-label="Português / English">EN</button>
-        <button class="tbtn" id="themeBtn" type="button" aria-label="Alternar tema">☾</button></div></div>
-      <div class="app-subtitle" data-i18n="subtitle-uf">Pernambuco</div></header>
+        <button class="tbtn" id="themeBtn" type="button" aria-label="Alternar tema">☾</button></div>
+      <div class="htitle">Conexões da História</div>
+      <div class="app-subtitle" data-i18n="subtitle-uf">Pernambuco</div>
+      <div class="crumb">· <span data-i18n="nav-diagrama">Diagrama</span></div></header>
     <nav class="switcher" role="tablist" aria-label="Modo de visualização">
       <a role="tab" class="sw-tab is-active" href="graph.html#node=LC-0215" aria-selected="true" aria-current="page" data-i18n="sw-graph">Diagrama</a>
       <a role="tab" class="sw-tab" href="mapa.html" data-i18n="sw-map">Mapa</a>
