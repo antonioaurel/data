@@ -64,6 +64,25 @@
     .toolbar-stats { font-size: 0.72rem; color: #a09080; white-space: nowrap; margin-left: auto; }
     .toolbar-stats strong { color: #c0b0a0; }
 
+    /* Search autocomplete */
+    .search-wrap { position: relative; display: inline-block; }
+    .suggest {
+      position: absolute; top: calc(100% + 4px); left: 0; z-index: 1200;
+      width: 280px; max-height: 280px; overflow-y: auto;
+      background: #0f1923; border: 1px solid #2a3d52; border-radius: 6px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.55);
+    }
+    .suggest.hidden { display: none; }
+    .suggest::-webkit-scrollbar { width: 6px; }
+    .suggest::-webkit-scrollbar-thumb { background: #2a3d52; border-radius: 4px; }
+    .s-item {
+      display: flex; align-items: center; gap: .45rem;
+      padding: .4rem .6rem; font-size: .78rem; color: #c0b0a0; cursor: pointer;
+    }
+    .s-item:hover, .s-item.active { background: rgba(232,168,56,.12); color: #e8a838; }
+    .s-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .s-cat { margin-left: auto; font-size: .62rem; color: #5a6a70; white-space: nowrap; }
+
     .tb-select {
       background: #0f1923; border: 1px solid #2a3d52; border-radius: 6px;
       color: #f0e6d3; font-family: 'Raleway', sans-serif; font-size: 0.8rem;
@@ -205,7 +224,10 @@
 
 <div class="toolbar">
   <span class="tb-label">Buscar</span>
-  <input id="search" class="tb-input" type="text" placeholder="Nome do local…" autocomplete="off">
+  <div class="search-wrap">
+    <input id="search" class="tb-input" type="text" placeholder="Nome do local… (3+ letras)" autocomplete="off">
+    <div id="suggest" class="suggest hidden"></div>
+  </div>
 
   <span class="tb-label">Bairro</span>
   <select id="bairro" class="tb-select"><option value="">Todos os bairros</option></select>
@@ -292,7 +314,28 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
 }).addTo(map);
 
+// Edges drawn under the markers (like the diagram): a dedicated pane below the overlay.
+map.createPane('edges');
+map.getPane('edges').style.zIndex = 350;
+map.getPane('edges').style.pointerEvents = 'none';
+var edgeLayer = L.layerGroup().addTo(map);
+
 function radiusFor(deg) { return Math.max(4, Math.min(20, 4 + Math.sqrt(deg) * 2)); }
+
+/* Draw the selected place's connections as lines to the connected places that have
+   coordinates (mirrors the diagram's neighbor highlighting). */
+function drawEdges(name) {
+  edgeLayer.clearLayers();
+  var p = placeByName[name];
+  if (!p) return;
+  p.conns.forEach(function(cn) {
+    var q = placeByName[cn.n];
+    if (!q) return;                       // only connections that are mapped places
+    L.polyline([[p.lat, p.lon], [q.lat, q.lon]], {
+      pane: 'edges', color: '#e8a838', weight: 1.5, opacity: 0.55
+    }).addTo(edgeLayer);
+  });
+}
 
 /* ── Load data ──────────────────────────────────────────────────────────────── */
 fetch('../data/map.json').then(function(r) { return r.json(); }).then(function(data) {
@@ -527,6 +570,7 @@ function showDetail(name) {
     '</div>';
   pc.style.display = 'flex';
   pc.scrollTop = 0;
+  drawEdges(name);   // draw links to connected places
 }
 
 /* Select a place from a connection click or search: pan + open + detail */
@@ -545,13 +589,50 @@ function refreshChips() {
   });
 }
 
-/* ── Search ─────────────────────────────────────────────────────────────────── */
-document.getElementById('search').addEventListener('input', function() {
-  var q = this.value.trim().toLowerCase();
-  if (!q || !places.length) return;
-  var hit = places.find(function(p) { return p.n.toLowerCase().indexOf(q) >= 0; });
-  if (hit) selectPlace(hit.n);
+/* ── Search with autocomplete (suggestions after the 3rd character) ──────────── */
+var searchEl = document.getElementById('search');
+var suggestEl = document.getElementById('suggest');
+var sugMatches = [], sugActive = -1;
+
+function norm(s) {
+  s = String(s == null ? '' : s).toLowerCase();
+  return s.normalize ? s.normalize('NFD').replace(/[̀-ͯ]/g, '') : s;
+}
+function hideSuggest() { suggestEl.classList.add('hidden'); suggestEl.innerHTML = ''; sugMatches = []; sugActive = -1; }
+function paintActive() {
+  Array.prototype.forEach.call(suggestEl.children, function(el, i) { el.classList.toggle('active', i === sugActive); });
+  if (sugActive >= 0 && suggestEl.children[sugActive]) suggestEl.children[sugActive].scrollIntoView({ block: 'nearest' });
+}
+function chooseSuggest(name) { hideSuggest(); searchEl.value = name; selectPlace(name); }
+function renderSuggest() {
+  if (!sugMatches.length) { hideSuggest(); return; }
+  sugActive = -1;
+  suggestEl.innerHTML = sugMatches.map(function(p) {
+    var col = CAT_COLOR[p.cat] || CAT_COLOR['Outros'];
+    return '<div class="s-item" data-n="' + esc(p.n) + '">' +
+             '<span class="s-dot" style="background:' + col + '"></span>' + esc(p.n) +
+             '<span class="s-cat">' + esc(p.cat) + '</span></div>';
+  }).join('');
+  suggestEl.classList.remove('hidden');
+  Array.prototype.forEach.call(suggestEl.children, function(el) {
+    el.addEventListener('mousedown', function(ev) { ev.preventDefault(); chooseSuggest(el.getAttribute('data-n')); });
+  });
+}
+
+searchEl.addEventListener('input', function() {
+  var q = norm(this.value.trim());
+  if (q.length < 3 || !places.length) { hideSuggest(); return; }
+  sugMatches = places.filter(function(p) { return norm(p.n).indexOf(q) >= 0; }).slice(0, 10);
+  renderSuggest();
 });
+searchEl.addEventListener('keydown', function(e) {
+  if (suggestEl.classList.contains('hidden')) return;
+  if (e.key === 'ArrowDown')      { e.preventDefault(); sugActive = Math.min(sugActive + 1, sugMatches.length - 1); paintActive(); }
+  else if (e.key === 'ArrowUp')   { e.preventDefault(); sugActive = Math.max(sugActive - 1, 0); paintActive(); }
+  else if (e.key === 'Enter')     { e.preventDefault(); var pick = sugMatches[sugActive >= 0 ? sugActive : 0]; if (pick) chooseSuggest(pick.n); }
+  else if (e.key === 'Escape')    { hideSuggest(); }
+});
+document.addEventListener('click', function(e) { if (!e.target.closest('.search-wrap')) hideSuggest(); });
 
 function esc(s) {
   return String(s == null ? '' : s)
