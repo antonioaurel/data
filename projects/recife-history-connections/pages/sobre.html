@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Viewport-based routing: narrow screens get the mobile app; this page is for wide. -->
+  <script>(function(){try{var q=window.matchMedia('(max-width:1023px)'),t='../mobile/site/sobre.html';
+    var go=function(){try{localStorage.setItem('lang','pt');}catch(e){}location.replace(t);};
+    if(q.matches){go();return;}
+    var f=function(e){if(e.matches)go();};
+    q.addEventListener?q.addEventListener('change',f):q.addListener(f);}catch(e){}})();</script>
+  <title>Sobre · Conexões da Historia do Recife</title>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body { font-family: 'Raleway', sans-serif; background: #0f1923; color: #f0e6d3; min-height: 100vh; }
+
+    /* ── Nav ── */
+    nav {
+      background: #0a1520; border-bottom: 1px solid #1a2d3d; padding: 0 2rem; height: 52px;
+      display: flex; align-items: center; gap: 1.75rem; position: sticky; top: 0; z-index: 10;
+    }
+    .nav-logo { font-weight: 700; font-size: 0.88rem; color: #f0e6d3; text-decoration: none; margin-right: auto; }
+    .nav-link  { font-size: 0.78rem; color: #3a5a6a; text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover  { color: #e8a838; }
+    .nav-link.active { color: #e8a838; font-weight: 600; }
+
+    /* ── Page wrap ── */
+    .page-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+    .page-tag { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 3px; color: #e8a838; margin-bottom: 0.6rem; }
+    h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
+    h1 span { color: #e8a838; }
+
+    .lead {
+      font-size: 0.95rem; color: #8aaabb; font-weight: 300; line-height: 1.85; margin-bottom: 2.5rem;
+    }
+
+    /* ── Sections ── */
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 0.66rem; text-transform: uppercase; letter-spacing: 3px; color: #e8a838;
+      margin-bottom: 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a2d3d;
+    }
+    .about-p { font-size: 0.86rem; color: #b9c9d2; line-height: 1.85; margin-bottom: 0.9rem; max-width: 660px; }
+
+    /* ── Author ── */
+    .author-name { font-size: 1.05rem; font-weight: 600; color: #f0e6d3; margin-bottom: 0.2rem; }
+    .author-meta { font-size: 0.8rem; color: #6a8a9a; line-height: 1.7; }
+    .author-meta a { color: #e8a838; text-decoration: none; }
+    .author-meta a:hover { text-decoration: underline; }
+
+    /* ── Projects list ── */
+    .projects { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .projects li {
+      font-size: 0.76rem; color: #8aaabb; background: #0a1520;
+      border: 1px solid #1a2d3d; border-radius: 20px; padding: 0.3rem 0.8rem;
+    }
+
+    .disclaimer { font-size: 0.78rem; color: #5a7a8a; line-height: 1.8; }
+    .disclaimer strong { color: #b9c9d2; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 2rem; font-size: 0.72rem; color: #1e3545; }
+    footer a { color: #2a4d6d; text-decoration: none; }
+    footer a:hover { color: #e8a838; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Conexões da Historia do Recife</a>
+  <a class="nav-link" href="diagram.html">Diagrama</a>
+  <a class="nav-link" href="matrix.html">Matrix</a>
+  <a class="nav-link" href="stats.html">Fill Rate</a>
+  <a class="nav-link" href="sources.html">Fontes</a>
+  <a class="nav-link" href="mapa.html">Mapa</a>
+  <a class="nav-link active" href="sobre.html">Sobre</a>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="page-tag">Sobre · Conexões da Historia do Recife</div>
+  <h1>Sobre o <span>projeto</span></h1>
+  <p class="lead">
+    Um mapeamento das conexões entre pessoas, locais e eventos da história de Pernambuco
+    em pontos que influenciaram o Brasil.
+  </p>
+
+  <section>
+    <h2>Método</h2>
+    <p class="about-p">
+      O método combina leitura e análise de fontes, identificação dos locais associados em mapa
+      e construção de uma matriz de relação entre os registros. Essa matriz organiza as conexões
+      a partir de quatro critérios principais: interação direta, proximidade territorial, período
+      histórico e consequência dos eventos.
+    </p>
+    <p class="about-p">
+      Após essa etapa, os dados passam por limpeza, normalização e validação de qualidade, com
+      correções contínuas sempre que novas inconsistências, lacunas ou oportunidades de melhoria
+      são identificadas.
+    </p>
+  </section>
+
+  <section>
+    <h2>Autor</h2>
+    <p class="author-name">Antonio A. Oliveira</p>
+    <p class="author-meta">
+      Recife, Pernambuco — autor, curador e criador ·
+      <a href="https://medium.com/@antonio-aureliano" target="_blank" rel="noopener">Medium ↗</a>
+    </p>
+    <p class="about-p" style="margin-top:0.8rem">
+      Curadoria para estudos de data science, data quality, história e software quality.
+    </p>
+  </section>
+
+  <section>
+    <h2>Outros projetos</h2>
+    <ul class="projects">
+      <li>Troça Carnavalesca Segura o Tonho, Charlie Brown</li>
+      <li>Data Quality review using IA to Conexões da História</li>
+      <li>Hundred Days of Playwright</li>
+      <li>Hundred Days of Python</li>
+      <li>Mapa do Frevo</li>
+      <li>Maracatu Quebra Baque</li>
+      <li>Prediction of attendance in events organized through Facebook</li>
+      <li>Quem Representa Você</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Uso de IA</h2>
+    <p class="disclaimer">
+      <strong>Uso de IA:</strong> pareamento no desenvolvimento; revisão da qualidade da base,
+      do texto e validação das conexões; geração de mocks; e testes de usabilidade,
+      compatibilidade, disponibilidade e desempenho.
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  <a href="index.html">← Voltar</a>
+  &nbsp;·&nbsp;
+  <a href="https://conexoesdahistoria.com/" target="_blank">conexoesdahistoria.com</a>
+</footer>
+
+</body>
+</html>
