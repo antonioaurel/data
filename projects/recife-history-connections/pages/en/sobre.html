@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Viewport-based routing: narrow screens get the mobile app; this page is for wide. -->
+  <script>(function(){try{var q=window.matchMedia('(max-width:1023px)'),t='../../mobile/site/sobre.html';
+    var go=function(){try{localStorage.setItem('lang','en');}catch(e){}location.replace(t);};
+    if(q.matches){go();return;}
+    var f=function(e){if(e.matches)go();};
+    q.addEventListener?q.addEventListener('change',f):q.addListener(f);}catch(e){}})();</script>
+  <title>About · Conexões da Historia do Recife</title>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body { font-family: 'Raleway', sans-serif; background: #0f1923; color: #f0e6d3; min-height: 100vh; }
+
+    nav {
+      background: #0a1520; border-bottom: 1px solid #1a2d3d; padding: 0 2rem; height: 52px;
+      display: flex; align-items: center; gap: 1.75rem; position: sticky; top: 0; z-index: 10;
+    }
+    .nav-logo { font-weight: 700; font-size: 0.88rem; color: #f0e6d3; text-decoration: none; margin-right: auto; }
+    .nav-link  { font-size: 0.78rem; color: #3a5a6a; text-decoration: none; transition: color 0.15s; }
+    .nav-link:hover  { color: #e8a838; }
+    .nav-link.active { color: #e8a838; font-weight: 600; }
+
+    .page-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+    .page-tag { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 3px; color: #e8a838; margin-bottom: 0.6rem; }
+    h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
+    h1 span { color: #e8a838; }
+
+    .lead { font-size: 0.95rem; color: #8aaabb; font-weight: 300; line-height: 1.85; margin-bottom: 2.5rem; }
+
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 0.66rem; text-transform: uppercase; letter-spacing: 3px; color: #e8a838;
+      margin-bottom: 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1a2d3d;
+    }
+    .about-p { font-size: 0.86rem; color: #b9c9d2; line-height: 1.85; margin-bottom: 0.9rem; max-width: 660px; }
+
+    .author-name { font-size: 1.05rem; font-weight: 600; color: #f0e6d3; margin-bottom: 0.2rem; }
+    .author-meta { font-size: 0.8rem; color: #6a8a9a; line-height: 1.7; }
+    .author-meta a { color: #e8a838; text-decoration: none; }
+    .author-meta a:hover { text-decoration: underline; }
+
+    .projects { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .projects li {
+      font-size: 0.76rem; color: #8aaabb; background: #0a1520;
+      border: 1px solid #1a2d3d; border-radius: 20px; padding: 0.3rem 0.8rem;
+    }
+
+    .disclaimer { font-size: 0.78rem; color: #5a7a8a; line-height: 1.8; }
+    .disclaimer strong { color: #b9c9d2; }
+
+    footer { text-align: center; padding: 2rem; font-size: 0.72rem; color: #1e3545; }
+    footer a { color: #2a4d6d; text-decoration: none; }
+    footer a:hover { color: #e8a838; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">Conexões da Historia do Recife</a>
+  <a class="nav-link" href="diagram.html">Diagram</a>
+  <a class="nav-link" href="matrix.html">Matrix</a>
+  <a class="nav-link" href="stats.html">Fill Rate</a>
+  <a class="nav-link" href="sources.html">Sources</a>
+  <a class="nav-link" href="../mapa.html">Map</a>
+  <a class="nav-link active" href="sobre.html">About</a>
+</nav>
+
+<div class="page-wrap">
+
+  <div class="page-tag">About · Conexões da Historia do Recife</div>
+  <h1>About the <span>project</span></h1>
+  <p class="lead">
+    A mapping of the connections between people, places and events in the history of Pernambuco
+    at points that influenced Brazil.
+  </p>
+
+  <section>
+    <h2>Method</h2>
+    <p class="about-p">
+      The method combines reading and analysis of sources, identification of the associated places
+      on a map, and building a relationship matrix between the records. This matrix organizes the
+      connections using four main criteria: direct interaction, territorial proximity, historical
+      period, and consequence of the events.
+    </p>
+    <p class="about-p">
+      After this stage, the data goes through cleaning, normalization, and quality validation, with
+      continuous corrections whenever new inconsistencies, gaps, or opportunities for improvement
+      are identified.
+    </p>
+  </section>
+
+  <section>
+    <h2>Author</h2>
+    <p class="author-name">Antonio A. Oliveira</p>
+    <p class="author-meta">
+      Recife, Pernambuco — author, curator and creator ·
+      <a href="https://medium.com/@antonio-aureliano" target="_blank" rel="noopener">Medium ↗</a>
+    </p>
+    <p class="about-p" style="margin-top:0.8rem">
+      Curation for studies in data science, data quality, history and software quality.
+    </p>
+  </section>
+
+  <section>
+    <h2>Other projects</h2>
+    <ul class="projects">
+      <li>Troça Carnavalesca Segura o Tonho, Charlie Brown</li>
+      <li>Data Quality review using IA to Conexões da História</li>
+      <li>Hundred Days of Playwright</li>
+      <li>Hundred Days of Python</li>
+      <li>Mapa do Frevo</li>
+      <li>Maracatu Quebra Baque</li>
+      <li>Prediction of attendance in events organized through Facebook</li>
+      <li>Quem Representa Você</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>AI use</h2>
+    <p class="disclaimer">
+      <strong>AI use:</strong> pairing in development; review of the database quality, the text and
+      validation of the connections; mock generation; and usability, compatibility, availability
+      and performance testing.
+    </p>
+  </section>
+
+</div>
+
+<footer>
+  <a href="index.html">← Back</a>
+  &nbsp;·&nbsp;
+  <a href="https://conexoesdahistoria.com/" target="_blank">conexoesdahistoria.com</a>
+</footer>
+
+</body>
+</html>
