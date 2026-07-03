@@ -55,14 +55,14 @@ button{font-family:inherit;}
   border:1px solid var(--border); background:var(--surface-2); color:var(--muted-2); font-size:13.5px; cursor:pointer; }
 .searchbar svg{ opacity:.7; }
 
-.diagram{ position:relative; flex:0 0 44%; background:radial-gradient(120% 90% at 50% 34%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%), var(--diagram-bg); touch-action:none; overflow:hidden; }
+.diagram{ position:relative; flex:1 1 auto; background:radial-gradient(120% 90% at 50% 34%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%), var(--diagram-bg); touch-action:none; overflow:hidden; }
 #gcanvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .diag-hint{ position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:10.5px; color:var(--muted-2); pointer-events:none; }
 .zoom{ position:absolute; right:10px; bottom:10px; display:flex; flex-direction:column; border:1px solid var(--border); border-radius:9px; overflow:hidden; }
 .zoom button{ width:34px; height:34px; background:var(--surface); color:var(--text); border:0; font-size:17px; cursor:pointer; }
 .zoom button+button{ border-top:1px solid var(--border); } .zoom .zr{ font-size:13px; color:var(--muted); }
 
-.info-panel{ flex:1 1 auto; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border); padding:8px 16px 16px; text-align:center; }
+.info-panel{ flex:0 0 50%; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border); padding:8px 16px 16px; text-align:center; }
 .grab{ width:38px; height:4px; border-radius:2px; background:var(--border); margin:2px auto 12px; }
 .type-chip{ display:inline-flex; align-items:center; gap:7px; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
   color:var(--tc); border:1px solid color-mix(in srgb, var(--tc) 45%, transparent); background:color-mix(in srgb, var(--tc) 12%, transparent); border-radius:999px; padding:4px 10px; }
@@ -196,12 +196,12 @@ function applyI18n(){ var lb=document.getElementById('langBtn'); if(lb) lb.textC
   Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'),function(el){var k=el.getAttribute('data-i18n');if(I18N[k]!=null)el.textContent=I18N[k];});
   Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-ph]'),function(el){var k=el.getAttribute('data-i18n-ph');if(I18N_PH[k]!=null)el.placeholder=I18N_PH[k];}); }
 applyI18n();
-var MAXN=26;                 /* neighbours drawn in the diagram (list shows all) */
+var MAXN=12;                 /* neighbours drawn in the diagram (list shows all) */
 var pos={};                  /* world positions by node index */
 function layout(){
   pos={}; pos[focus]={x:0,y:0,fixed:false};
   var nb=G.adj[focus].slice(0,MAXN);
-  var rings=[{r:100,n:8},{r:180,n:12},{r:255,n:99}];
+  var rings=[{r:95,n:6},{r:172,n:99}];
   var k=0;
   for(var ri=0; ri<rings.length && k<nb.length; ri++){
     var cnt=Math.min(rings[ri].n, nb.length-k), R=rings[ri].r;
@@ -215,8 +215,8 @@ var shownNb=[];
 var cv=document.getElementById('gcanvas'), ctx=cv.getContext('2d');
 var W=0,H=0,DPR=1, scale=1, tx=0, ty=0;
 function sx(x){ return x*scale+tx; } function sy(y){ return y*scale+ty; }
-function rad(i){ return Math.max(6, Math.min(20, 6+Math.sqrt(deg(i))*1.5)); }
-function fit(){ tx=W/2; ty=H/2; scale=Math.min(1, (Math.min(W,H)*0.46)/265); }
+function rad(i){ return Math.max(4, Math.min(12, 4+Math.sqrt(deg(i))*0.85)); }
+function fit(){ tx=W/2; ty=H/2; scale=Math.min(0.95, (Math.min(W,H)*0.44)/180); }
 function resize(){ var r=cv.getBoundingClientRect(); DPR=Math.min(window.devicePixelRatio||1,2.5);
   W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); render(); }
 function render(){
