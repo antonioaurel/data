@@ -32,7 +32,7 @@
     "home-tagline": "A mapping of the connections between people, places and events in the history of Pernambuco at points that influenced Brazil.",
     "home-viz": "Visualizations", "home-verlista": "See the full list →",
     "viz-matriz-n": "Matrix", "viz-matriz-d": "Overview of connections by type.",
-    "viz-mapa-n": "Historical map", "viz-mapa-d": "The points on the map of Recife and region. (original project)",
+    "viz-mapa-n": "Geographic map", "viz-mapa-d": "The sites on the map of Recife and its region, by category.",
     "viz-diagrama-n": "Diagram", "viz-diagrama-d": "Explore a node's connections.",
     "viz-fillrate-n": "Fill rate", "viz-fillrate-d": "How well the base is filled in, field by field.",
     "viz-sobre-n": "About", "viz-sobre-d": "The project, the author and the sources.",

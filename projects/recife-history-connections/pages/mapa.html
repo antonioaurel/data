@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa · Conexões da Historia do Recife</title>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root { --panel-w: 300px; }
+
+    body {
+      font-family: 'Raleway', sans-serif;
+      background: #0f1923;
+      color: #f0e6d3;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Header (shared chrome) ── */
+    header {
+      flex-shrink: 0;
+      background: #131d28;
+      border-bottom: 1px solid #1e2d3d;
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .back-link { color: #c0b0a0; text-decoration: none; font-size: 0.8rem; transition: color .15s; }
+    .back-link:hover { color: #e8a838; }
+    .nav-links { display: flex; gap: 1.1rem; align-items: center; margin-left: auto; }
+    .nav-links a { font-size: 0.78rem; color: #6a7a8a; text-decoration: none; white-space: nowrap; transition: color .15s; }
+    .nav-links a:hover  { color: #e8a838; }
+    .nav-links a.active { color: #e8a838; font-weight: 600; }
+    .header-title { font-size: 0.95rem; font-weight: 600; color: #f0e6d3; }
+    .header-title span { color: #e8a838; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      padding: 0.5rem 1.25rem;
+      background: #111b27;
+      border-bottom: 1px solid #1a2535;
+    }
+    .tb-label { font-size: 0.68rem; color: #5a7080; white-space: nowrap; }
+    .tb-sep   { width: 1px; height: 22px; background: #1e2d3d; flex-shrink: 0; }
+    .tb-input {
+      background: #0f1923; border: 1px solid #2a3d52; border-radius: 6px;
+      color: #f0e6d3; font-family: 'Raleway', sans-serif; font-size: 0.8rem;
+      padding: 0.35rem 0.7rem; outline: none; transition: border-color .15s; width: 220px;
+    }
+    .tb-input::placeholder { color: #4a6070; }
+    .tb-input:focus { border-color: #e8a838; }
+    .toolbar-stats { font-size: 0.72rem; color: #a09080; white-space: nowrap; margin-left: auto; }
+    .toolbar-stats strong { color: #c0b0a0; }
+
+    .tb-select {
+      background: #0f1923; border: 1px solid #2a3d52; border-radius: 6px;
+      color: #f0e6d3; font-family: 'Raleway', sans-serif; font-size: 0.8rem;
+      padding: 0.35rem 0.5rem; outline: none; cursor: pointer; max-width: 220px;
+    }
+    .tb-select:focus { border-color: #e8a838; }
+
+    /* Time slider */
+    .time-group { display: flex; align-items: center; gap: 0.5rem; }
+    #time-range { width: 220px; accent-color: #e8a838; cursor: pointer; }
+    #time-label { font-size: 0.78rem; color: #e8a838; font-weight: 600; min-width: 4ch; text-align: right; }
+    .time-check { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.68rem; color: #7a8a90; cursor: pointer; user-select: none; }
+    .time-group.disabled { opacity: 0.45; }
+
+    /* ── Workspace ── */
+    .workspace { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+    /* Left vertical filter (categories) */
+    #legend {
+      width: 210px; flex-shrink: 0; background: #111b27; border-right: 1px solid #1a2535;
+      display: flex; flex-direction: column; overflow-y: auto; padding: 0.75rem 0.6rem;
+    }
+    #legend::-webkit-scrollbar { width: 6px; }
+    #legend::-webkit-scrollbar-thumb { background: #2a3d52; border-radius: 4px; }
+    .legend-title {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px;
+      color: #5a6a70; margin: 0 0.2rem 0.5rem;
+    }
+    .legend-actions { display: flex; gap: 0.4rem; margin: 0 0.2rem 0.6rem; }
+    .legend-actions button {
+      background: none; border: 1px solid #2a3d52; border-radius: 5px; color: #7a8a90;
+      font-size: 0.62rem; padding: 0.2rem 0.4rem; cursor: pointer; flex: 1;
+      transition: color .12s, border-color .12s;
+    }
+    .legend-actions button:hover { color: #e8a838; border-color: #e8a838; }
+    .cat-chip {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.74rem; color: #c0b0a0;
+      background: #0f1923; border: 1px solid #2a3d52; border-radius: 6px;
+      padding: 0.4rem 0.55rem; margin-bottom: 0.35rem; cursor: pointer; user-select: none;
+      transition: opacity .12s, border-color .12s;
+    }
+    .cat-chip .cc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .cat-chip .cc-label { flex: 1; }
+    .cat-chip .cc-n { color: #5a6a70; font-size: 0.68rem; }
+    .cat-chip.off { opacity: 0.4; }
+    .cat-chip.off .cc-dot { background: #3a4a52 !important; }
+    .cat-chip:hover { border-color: #e8a838; }
+    /* category disabled because its parent type is unchecked */
+    .cat-chip.disabled { opacity: 0.28; pointer-events: none; }
+    .cat-chip.disabled .cc-dot { background: #3a4a52 !important; }
+    /* type chips: square marker, amber when active */
+    .type-chip .cc-dot { border-radius: 3px; background: #e8a838; }
+    .type-chip.off .cc-dot { background: #3a4a52 !important; }
+    .type-chip .cc-n { color: #5a6a70; }
+
+    #map { flex: 1; min-width: 0; background: #0d1720; }
+
+    /* Leaflet dark-ish tweaks */
+    .leaflet-container { background: #0d1720; font-family: 'Raleway', sans-serif; }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background: rgba(8,14,20,0.97); color: #e0d3c0; border: 1px solid #2a3d52;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    .leaflet-popup-content { margin: .5rem .7rem; font-size: .74rem; line-height: 1.5; }
+    .lp-name { font-weight: 600; color: #f0e6d3; }
+    .lp-st { color: #8aa0b0; font-size: .68rem; }
+    .lp-deg { color: #e8a838; font-size: .68rem; }
+    .leaflet-bar a, .leaflet-bar a:hover { background: #1a2d3d; color: #c0b0a0; border-bottom-color: #2a3d52; }
+    .leaflet-control-attribution { background: rgba(8,14,20,0.7) !important; color: #5a7080 !important; }
+    .leaflet-control-attribution a { color: #7a8a9a !important; }
+
+    /* ── Right detail panel (shared chrome) ── */
+    #panel {
+      width: var(--panel-w); flex-shrink: 0;
+      background: #111b27; border-left: 1px solid #1a2535;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .panel-placeholder {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1.5rem; text-align: center; gap: .75rem;
+    }
+    .panel-placeholder p { font-size: 0.78rem; line-height: 1.7; color: #7a8a90; }
+
+    #panel-content { display: none; flex-direction: column; height: 100%; overflow-y: auto; }
+    #panel-content::-webkit-scrollbar { width: 6px; }
+    #panel-content::-webkit-scrollbar-thumb { background: #2a3d52; border-radius: 4px; }
+
+    .pd-header {
+      padding: .85rem 1rem; border-bottom: 1px solid #1a2535; flex-shrink: 0;
+      position: sticky; top: 0; background: #111b27; z-index: 1;
+    }
+    .pd-type { font-size: .6rem; text-transform: uppercase; letter-spacing: 2px; color: #e8a838; margin-bottom: .35rem; }
+    .pd-name { font-size: 1rem; font-weight: 600; color: #f0e6d3; line-height: 1.3; }
+    .pd-local { font-size: .7rem; color: #a09080; margin-top: .25rem; }
+    .pd-img { width: 100%; height: 130px; object-fit: cover; display: block; background: #0d1720; }
+    .pd-desc {
+      padding: .75rem 1rem; font-size: .76rem; line-height: 1.7; color: #c0b0a0;
+      border-bottom: 1px solid #1a2535; flex-shrink: 0;
+    }
+    .pd-conn-list { flex-shrink: 0; padding: .6rem .9rem 1rem; }
+    .pd-conn-total {
+      font-size: .6rem; text-transform: uppercase; letter-spacing: 2px;
+      color: #5a6a70; margin-bottom: .6rem; padding-bottom: .4rem; border-bottom: 1px solid #1a2535;
+    }
+    .conn-group { margin-bottom: .85rem; }
+    .conn-group-header {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .3rem .4rem .3rem .6rem; border-left: 2px solid #2a3d52; margin-bottom: .3rem;
+    }
+    .cg-dot  { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .cg-name { font-size: .72rem; color: #c0b0a0; font-weight: 600; }
+    .cg-latin { font-size: .6rem; color: #5a6a70; font-style: italic; margin-left: .2rem; }
+    .cg-count { font-size: .64rem; color: #5a6a70; margin-left: auto; }
+    .conn-item {
+      font-size: .75rem; color: #c0b0a0; padding: .28rem .4rem .28rem .8rem;
+      border-radius: 4px; border: 1px solid transparent; transition: background .1s, border-color .1s, color .1s;
+    }
+    .conn-item.is-place { cursor: pointer; }
+    .conn-item.is-place:hover { background: rgba(232,168,56,.07); border-color: rgba(232,168,56,.25); color: #e8a838; }
+    .conn-item.no-place { color: #6a7a82; }
+    .conn-item.no-place::after { content: ' ·'; color: #3a4a52; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="back-link" href="index.html">← Início</a>
+  <div class="header-title">Mapa · <span>Conexões da Historia do Recife</span></div>
+  <nav class="nav-links">
+    <a href="diagram.html">Diagrama</a>
+    <a href="matrix.html">Matrix</a>
+    <a href="stats.html">Fill Rate</a>
+    <a href="sources.html">Fontes</a>
+    <a class="active" href="mapa.html">Mapa</a>
+  </nav>
+</header>
+
+<div class="toolbar">
+  <span class="tb-label">Buscar</span>
+  <input id="search" class="tb-input" type="text" placeholder="Nome do local…" autocomplete="off">
+
+  <span class="tb-label">Bairro</span>
+  <select id="bairro" class="tb-select"><option value="">Todos os bairros</option></select>
+
+  <div class="tb-sep"></div>
+
+  <div class="time-group" id="time-group">
+    <span class="tb-label">Ano</span>
+    <input id="time-range" type="range" min="1500" max="2025" value="2025" step="1">
+    <span id="time-label">2025</span>
+    <label class="time-check"><input type="checkbox" id="time-on"> filtrar por ano</label>
+  </div>
+
+  <div class="toolbar-stats" id="stats">Carregando…</div>
+</div>
+
+<div class="workspace">
+  <aside id="legend">
+    <div class="legend-title">Tipo</div>
+    <div id="types"></div>
+    <div class="legend-title" style="margin-top:1rem">Categorias</div>
+    <div class="legend-actions">
+      <button id="cat-all" type="button">Todas</button>
+      <button id="cat-none" type="button">Nenhuma</button>
+    </div>
+    <div id="cats"></div>
+  </aside>
+
+  <div id="map"></div>
+
+  <div id="panel">
+    <div class="panel-placeholder" id="panel-placeholder">
+      <p>Clique em qualquer <strong style="color:#c0b0a0">ponto no mapa</strong> para ver os detalhes do local e suas conexões agrupadas por tipo.</p>
+      <p style="font-size:.7rem;color:#5a6a70">O tamanho do ponto reflete o número de conexões; a cor, a categoria do local.</p>
+    </div>
+    <div id="panel-content"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+/* ── Category → color (9 buckets from build_map.py) ─────────────────────────── */
+var CAT_COLOR = {
+  'Igreja':            '#7e57c2',
+  'Templo Religioso':  '#4527a0',
+  'Museu':             '#e8833a',
+  'Teatro':            '#ec407a',
+  'Sítio Histórico':   '#6d4c41',
+  'Cultura & Memória': '#fdd835',
+  'Logradouro':        '#607d8b',
+  'Praças e Parques':  '#43a047',
+  'Educação':          '#1e88e5',
+  'Instituições & Governo': '#546e7a',
+  'Água & Transporte': '#00acc1',
+  'Saúde':             '#e53935',
+  'Carnaval & Clubes': '#d81b60',
+  'Comércio & Mídia':  '#8d6e63',
+  'Outros':            '#9aa4ad'
+};
+
+/* Connection-type colors + latin labels (same as the matrix page) */
+var TYPE_META = {
+  'Local':          { label: 'Local',          latin: 'Loca Historica',     color: '#4a90d9' },
+  'Personagem':     { label: 'Personagem',     latin: 'Personae Illustres', color: '#e8833a' },
+  'Fato Histórico': { label: 'Fato Histórico', latin: 'Res Gestae',         color: '#5cb85c' }
+};
+function typeMeta(t) { return TYPE_META[t] || { label: t || 'Outro', latin: '', color: '#7a8a90' }; }
+
+/* ── State ──────────────────────────────────────────────────────────────────── */
+var map, places = [], markerByName = {}, placeByName = {};
+var activeCats = {};              // cat -> bool (shown)
+var activeTypes = {};            // type -> bool (shown)
+var catType = {};                // category -> its type
+var bairroFilter = '';           // '' = all neighborhoods
+var yearOn = false, curYear = null;   // time-slider filter
+var nodeContent = null;          // content.json, lazy
+var pendingName = null;          // place whose panel awaits content.json
+
+/* ── Init map ───────────────────────────────────────────────────────────────── */
+map = L.map('map', { zoomControl: true, attributionControl: true }).setView([-8.05, -34.89], 13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+}).addTo(map);
+
+function radiusFor(deg) { return Math.max(4, Math.min(20, 4 + Math.sqrt(deg) * 2)); }
+
+/* ── Load data ──────────────────────────────────────────────────────────────── */
+fetch('../data/map.json').then(function(r) { return r.json(); }).then(function(data) {
+  places = data.places;
+  catType = data.catType || {};
+  buildTypes(data.types || []);
+  buildCats(data.cats);
+  buildBairros(data.bairros);
+  initTime(data.years, data.dated);
+  var bounds = [];
+
+  places.forEach(function(p) {
+    placeByName[p.n] = p;
+    var color = CAT_COLOR[p.cat] || CAT_COLOR['Outros'];
+    var m = L.circleMarker([p.lat, p.lon], {
+      radius: radiusFor(p.deg),
+      fillColor: color, color: '#0d1720', weight: 1, opacity: 1, fillOpacity: 0.82
+    });
+    m.bindPopup(
+      '<div class="lp-name">' + esc(p.n) + '</div>' +
+      (p.st ? '<div class="lp-st">' + esc(p.st) + '</div>' : '') +
+      '<div class="lp-deg">' + p.deg + ' conexões</div>' +
+      (p.y0 != null || p.y1 != null ? '<div class="lp-st">' + periodLabel(p) + '</div>' : '')
+    );
+    m.on('click', function() { showDetail(p.n); });
+    m.on('mouseover', function() { this.openPopup(); });
+    markerByName[p.n] = m;
+    bounds.push([p.lat, p.lon]);
+  });
+
+  if (bounds.length) map.fitBounds(bounds, { padding: [40, 40] });
+  applyFilter();
+});
+
+function periodLabel(p) {
+  if (p.y0 != null && p.y1 != null) return p.y0 + '–' + p.y1;
+  if (p.y0 != null) return 'desde ' + p.y0;
+  if (p.y1 != null) return 'até ' + p.y1;
+  return '';
+}
+
+/* ── Left legend: type filter (parent of categories) ────────────────────────── */
+function buildTypes(types) {
+  var host = document.getElementById('types');
+  host.innerHTML = '';
+  types.forEach(function(pair) {
+    var t = pair[0], n = pair[1];
+    activeTypes[t] = true;
+    var chip = document.createElement('div');
+    chip.className = 'cat-chip type-chip';
+    chip.dataset.type = t;
+    chip.innerHTML =
+      '<span class="cc-dot"></span>' +
+      '<span class="cc-label">' + esc(t) + '</span>' +
+      '<span class="cc-n">' + n + '</span>';
+    chip.onclick = function() { toggleType(t); };
+    host.appendChild(chip);
+  });
+}
+/* Toggling a type enables/disables its categories: unchecked -> its subtypes are
+   disabled (greyed, not clickable) until the type is checked again, when they are
+   re-marked. */
+function toggleType(t) {
+  activeTypes[t] = !activeTypes[t];
+  var on = activeTypes[t];
+  document.querySelectorAll('.type-chip').forEach(function(c) {
+    if (c.dataset.type === t) c.classList.toggle('off', !on);
+  });
+  document.querySelectorAll('#cats .cat-chip').forEach(function(chip) {
+    var cat = chip.dataset.cat;
+    if (catType[cat] !== t) return;
+    if (on) { activeCats[cat] = true; chip.classList.remove('disabled', 'off'); }
+    else    { chip.classList.add('disabled'); }
+  });
+  applyFilter();
+}
+
+/* ── Left legend: category filter ───────────────────────────────────────────── */
+function buildCats(cats) {
+  var host = document.getElementById('cats');
+  host.innerHTML = '';
+  cats.forEach(function(pair) {
+    var cat = pair[0], n = pair[1];
+    activeCats[cat] = true;
+    var chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.dataset.cat = cat;
+    chip.innerHTML =
+      '<span class="cc-dot" style="background:' + (CAT_COLOR[cat] || CAT_COLOR['Outros']) + '"></span>' +
+      '<span class="cc-label">' + esc(cat) + '</span>' +
+      '<span class="cc-n">' + n + '</span>';
+    chip.onclick = function() {
+      activeCats[cat] = !activeCats[cat];
+      chip.classList.toggle('off', !activeCats[cat]);
+      applyFilter();
+    };
+    host.appendChild(chip);
+  });
+  document.getElementById('cat-all').onclick  = function() { setAllCats(true); };
+  document.getElementById('cat-none').onclick = function() { setAllCats(false); };
+}
+function setAllCats(on) {
+  Object.keys(activeCats).forEach(function(c) {
+    if (activeTypes[catType[c]] !== false) activeCats[c] = on;   // skip disabled (type off)
+  });
+  refreshChips();
+  applyFilter();
+}
+
+/* ── Bairro dropdown ────────────────────────────────────────────────────────── */
+function buildBairros(bairros) {
+  var sel = document.getElementById('bairro');
+  (bairros || []).forEach(function(b) {
+    var o = document.createElement('option');
+    o.value = b; o.textContent = b;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', function() { bairroFilter = this.value; applyFilter(); });
+}
+
+/* ── Time slider ────────────────────────────────────────────────────────────── */
+function initTime(years, dated) {
+  var lo = years[0], hi = years[1];
+  var range = document.getElementById('time-range');
+  var label = document.getElementById('time-label');
+  var check = document.getElementById('time-on');
+  var group = document.getElementById('time-group');
+  range.min = lo; range.max = hi; range.value = hi;
+  curYear = hi; label.textContent = hi;
+
+  function paintEnabled() { group.classList.toggle('disabled', !yearOn); }
+  paintEnabled();
+
+  range.addEventListener('input', function() {
+    curYear = parseInt(this.value, 10);
+    label.textContent = curYear;
+    if (yearOn) applyFilter();
+  });
+  check.addEventListener('change', function() {
+    yearOn = this.checked; paintEnabled(); applyFilter();
+  });
+
+  // If no periods are filled in yet, keep the control but hint it's inert.
+  if (!dated) group.title = 'Preencha data/periods.csv (year_start/year_end) para ativar a linha do tempo.';
+}
+
+/* Show a place at the current year? Undated places stay visible (data still being filled). */
+function inYear(p) {
+  if (!yearOn) return true;
+  if (p.y0 == null && p.y1 == null) return true;
+  var lo = p.y0 == null ? -Infinity : p.y0;
+  var hi = p.y1 == null ?  Infinity : p.y1;
+  return curYear >= lo && curYear <= hi;
+}
+
+/* ── Combined filter (category ∧ bairro ∧ year) ─────────────────────────────── */
+function applyFilter() {
+  var shown = 0;
+  places.forEach(function(p) {
+    var m = markerByName[p.n];
+    if (!m) return;
+    var on = activeTypes[p.t] !== false && activeCats[p.cat] &&
+             (!bairroFilter || p.l === bairroFilter) && inYear(p);
+    if (on) { if (!map.hasLayer(m)) m.addTo(map); shown++; }
+    else if (map.hasLayer(m)) map.removeLayer(m);
+  });
+  document.getElementById('stats').innerHTML =
+    '<strong>' + shown + '</strong> de ' + places.length + ' locais';
+}
+
+/* ── Detail panel ───────────────────────────────────────────────────────────── */
+function ensureContent() {
+  if (nodeContent !== null) return;
+  nodeContent = {};   // mark as loading
+  fetch('../data/content.json').then(function(r) { return r.json(); }).then(function(c) {
+    nodeContent = c;
+    if (pendingName) showDetail(pendingName);   // refresh once text/images arrive
+  });
+}
+
+function showDetail(name) {
+  var p = placeByName[name];
+  if (!p) return;
+  pendingName = name;
+  ensureContent();
+  var c = (nodeContent && nodeContent[name]) || {};
+
+  document.getElementById('panel-placeholder').style.display = 'none';
+
+  // Group connections by type
+  var groups = {}, ORDER = ['Local', 'Personagem', 'Fato Histórico'];
+  p.conns.forEach(function(cn) {
+    (groups[cn.t] = groups[cn.t] || []).push(cn.n);
+  });
+
+  var groupHtml = '';
+  ORDER.concat(Object.keys(groups).filter(function(t) { return ORDER.indexOf(t) < 0; }))
+    .forEach(function(tipo) {
+      var list = groups[tipo];
+      if (!list || !list.length) return;
+      var m = typeMeta(tipo);
+      groupHtml +=
+        '<div class="conn-group">' +
+          '<div class="conn-group-header" style="border-left-color:' + m.color + '">' +
+            '<div class="cg-dot" style="background:' + m.color + '"></div>' +
+            '<span class="cg-name">' + m.label + '</span>' +
+            '<span class="cg-latin">' + m.latin + '</span>' +
+            '<span class="cg-count">(' + list.length + ')</span>' +
+          '</div>';
+      list.forEach(function(cn) {
+        var isPlace = !!placeByName[cn];
+        groupHtml += '<div class="conn-item ' + (isPlace ? 'is-place' : 'no-place') + '"' +
+          (isPlace ? ' onclick="selectPlace(\'' + cn.replace(/'/g, "\\'") + '\')"' : '') +
+          '>' + esc(cn) + '</div>';
+      });
+      groupHtml += '</div>';
+    });
+  if (!groupHtml) groupHtml = '<div style="font-size:.75rem;color:#4a5a60;font-style:italic">Sem conexões.</div>';
+
+  var pc = document.getElementById('panel-content');
+  pc.innerHTML =
+    '<div class="pd-header">' +
+      '<div class="pd-type">' + esc(p.st || 'Local') + ' · ' + esc(p.cat) + '</div>' +
+      '<div class="pd-name">' + esc(p.n) + '</div>' +
+      (p.l ? '<div class="pd-local">📍 ' + esc(p.l) + '</div>' : '') +
+    '</div>' +
+    (c.img ? '<img class="pd-img" src="' + esc(c.img) + '" alt="" onerror="this.style.display=\'none\'">' : '') +
+    (c.d ? '<div class="pd-desc">' + esc(c.d) + '</div>' : '') +
+    '<div class="pd-conn-list">' +
+      '<div class="pd-conn-total">Conexões (' + p.conns.length + ')</div>' +
+      groupHtml +
+    '</div>';
+  pc.style.display = 'flex';
+  pc.scrollTop = 0;
+}
+
+/* Select a place from a connection click or search: pan + open + detail */
+function selectPlace(name) {
+  var m = markerByName[name], p = placeByName[name];
+  if (!m || !p) return;
+  if (!map.hasLayer(m)) { activeCats[p.cat] = true; applyFilter(); refreshChips(); }
+  map.setView([p.lat, p.lon], Math.max(map.getZoom(), 15), { animate: true });
+  m.openPopup();
+  showDetail(name);
+}
+function refreshChips() {
+  document.querySelectorAll('#cats .cat-chip').forEach(function(chip) {
+    if (chip.classList.contains('disabled')) return;   // type off: leave greyed
+    chip.classList.toggle('off', !activeCats[chip.dataset.cat]);
+  });
+}
+
+/* ── Search ─────────────────────────────────────────────────────────────────── */
+document.getElementById('search').addEventListener('input', function() {
+  var q = this.value.trim().toLowerCase();
+  if (!q || !places.length) return;
+  var hit = places.find(function(p) { return p.n.toLowerCase().indexOf(q) >= 0; });
+  if (hit) selectPlace(hit.n);
+});
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
