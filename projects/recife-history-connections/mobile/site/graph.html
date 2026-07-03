@@ -139,7 +139,7 @@ button{font-family:inherit;}
         <button class="tbtn" id="themeBtn" type="button" aria-label="Alternar tema">☾</button></div></div>
       <div class="app-subtitle" data-i18n="subtitle-uf">Pernambuco</div></header>
     <nav class="switcher" role="tablist" aria-label="Modo de visualização">
-      <a role="tab" class="sw-tab is-active" href="graph.html#node=LC-0215" aria-selected="true" aria-current="page" data-i18n="sw-graph">Grafo</a>
+      <a role="tab" class="sw-tab is-active" href="graph.html#node=LC-0215" aria-selected="true" aria-current="page" data-i18n="sw-graph">Diagrama</a>
       <a role="tab" class="sw-tab" href="mapa.html" data-i18n="sw-map">Mapa</a>
       <a role="tab" class="sw-tab" href="matriz.html" data-i18n="sw-matrix">Matriz</a>
       <a role="tab" class="sw-tab" href="list.html" data-i18n="sw-list">Lista</a>
@@ -157,7 +157,7 @@ button{font-family:inherit;}
     <div class="info-panel" id="infoPanel"></div>
 
     <nav class="bottom-nav" aria-label="Seções"><ul>
-      <li><a href="index.html" data-i18n="nav-inicio">Início</a></li><li><a href="graph.html#node=LC-0215" class="active" aria-current="page" data-i18n="nav-diagrama">Diagram</a></li>
+      <li><a href="index.html" data-i18n="nav-inicio">Início</a></li><li><a href="graph.html#node=LC-0215" class="active" aria-current="page" data-i18n="nav-diagrama">Diagrama</a></li>
       <li><a href="mapa.html" data-i18n="nav-mapa">Mapa</a></li><li><a href="matriz.html" data-i18n="nav-matriz">Matriz</a></li>
       <li><a href="fillrate.html" data-i18n="nav-fillrate">Fill rate</a></li><li><a href="fontes.html" data-i18n="nav-fontes">Fontes</a></li><li><a href="sobre.html" data-i18n="nav-sobre">Sobre</a></li></ul></nav>
 
@@ -190,7 +190,7 @@ function deg(i){ return G.adj[i].length; }
 var focus=0;
 var LANG=(function(){try{return localStorage.getItem('lang')==='en'?'en':'pt';}catch(e){return 'pt';}})();
 function T(pt,en){ return LANG==='en'?en:pt; }
-var I18N={'subtitle-uf':'Pernambuco','sw-graph':'Graph','sw-map':'Map','sw-matrix':'Matrix','sw-list':'List','nav-inicio':'Home','nav-diagrama':'Diagram','nav-mapa':'Map','nav-matriz':'Matrix','nav-fillrate':'Fill rate','nav-fontes':'Sources','nav-sobre':'About','d-search':'Search a person, place or fact…','d-hint':'drag · pinch/wheel to zoom · tap a node','f-search':'Search','d-page':'Node page'};
+var I18N={'subtitle-uf':'Pernambuco','sw-graph':'Diagram','sw-map':'Map','sw-matrix':'Matrix','sw-list':'List','nav-inicio':'Home','nav-diagrama':'Diagram','nav-mapa':'Map','nav-matriz':'Matrix','nav-fillrate':'Fill rate','nav-fontes':'Sources','nav-sobre':'About','d-search':'Search a person, place or fact…','d-hint':'drag · pinch/wheel to zoom · tap a node','f-search':'Search','d-page':'Node page'};
 var I18N_PH={'ph-name':'Name…'};
 function applyI18n(){ var lb=document.getElementById('langBtn'); if(lb) lb.textContent=LANG==='en'?'PT':'EN'; if(LANG!=='en') return;
   Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'),function(el){var k=el.getAttribute('data-i18n');if(I18N[k]!=null)el.textContent=I18N[k];});
