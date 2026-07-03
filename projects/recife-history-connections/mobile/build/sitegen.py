@@ -41,6 +41,7 @@ MAP_URL = "../../pages/mapa.html"   # geographic map (Leaflet); lives under desk
 NAV_ITEMS = [("index.html", "Início", "🏠", "inicio"),
              ("graph.html#node=" + MARCO_ZERO, "Diagram", "🕸", "diagrama"),
              ("matriz.html", "Matriz", "▦", "matriz"),
+             (MAP_URL, "Mapa", "🗺", "mapa"),
              ("fillrate.html", "Fill rate", "📊", "fillrate"),
              ("fontes.html", "Fontes", "📚", "fontes"),
              ("sobre.html", "Sobre", "ℹ", "sobre")]
@@ -415,12 +416,6 @@ def render_fillrate(stats):
         "<div class='fr'>%s</div>\n"
         "<p class='mx-intro'><span data-i18n='fill-note-a'>Campos em âmbar precisam de curadoria.</span> "
         "<a href='%s' target='_blank' rel='noopener' data-i18n='fill-note-link'>Ver o relatório completo ↗</a></p>\n"
-        "<h2 class='section-h' data-i18n='fill-method-h'>Método de trabalho</h2>\n"
-        "<p class='about-p' data-i18n='fill-method-1'>Leitura de fontes, identificação dos locais "
-        "associados em um mapa e criação de uma matriz de-para — considerando interação direta, "
-        "área, período e consequência.</p>\n"
-        "<p class='about-p' data-i18n='fill-method-2'>Limpeza de dados, validação de qualidade e "
-        "publicação com correção constante.</p>\n"
         % (stats.get("n_nodes", 0), stats.get("n_edges", 0), rows, DESKTOP_STATS)
     )
     return shell("Fill rate — Conexões da História", "fillrate", "../data", "fillrate", body)
