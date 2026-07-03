@@ -21,3 +21,18 @@ Lourenço da Fonseca Barbosa,PE-AUS-0041,Capiba,civil_name,nodes/edges,Civil nam
 Basílica da Penha,LC-0422,Basílica de Nossa Senhora da Penha (Igreja da Penha),short_name,nodes/edges,Prefer full canonical religious name.
 Basílica do Carmo,LC-0425,Basílica de Nossa Senhora do Carmo,short_name,nodes/edges,Prefer full canonical religious name.
 Clube Carnavalesco Misto Vassourinhas,LC-0446,Clube Carnavalesco Misto Vassourinhas de Olinda,short_name,nodes/edges,Canonical name includes de Olinda.
+Igreja Basílica de Nossa Senhora do Carmo,LC-0425,Basílica de Nossa Senhora do Carmo (Basílica do Carmo),merge,,fusão de duplicata
+Igreja da Penha,LC-0422,Basílica de Nossa Senhora da Penha (Basílica da Penha),merge,,fusão de duplicata
+Igreja do Pilar,LC-0420,Igreja de Nossa Senhora do Pilar (Igreja do Pilar),merge,,fusão de duplicata
+Igreja do Amparo,LC-0457,Igreja Nossa Senhora do Amparo (Igreja do Amparo),merge,,fusão de duplicata
+Basílica de Nossa Senhora do Carmo,LC-0425,Basílica de Nossa Senhora do Carmo (Basílica do Carmo),rename,,nome anterior
+Basílica de Nossa Senhora da Penha (Igreja da Penha),LC-0422,Basílica de Nossa Senhora da Penha (Basílica da Penha),rename,,nome anterior
+Igreja de Nossa Senhora do Pilar,LC-0420,Igreja de Nossa Senhora do Pilar (Igreja do Pilar),rename,,nome anterior
+Igreja Nossa Senhora do Amparo,LC-0457,Igreja Nossa Senhora do Amparo (Igreja do Amparo),rename,,nome anterior
+Igreja da Conceição dos Militares,LC-0417,Igreja de Nossa Senhora da Conceição dos Militares,merge,,fusão/rename revisão religião
+Igreja de Nossa Senhora do Rosário,LC-0181,Igreja de Nossa Senhora do Rosário dos Homens Pretos,merge,,fusão/rename revisão religião
+Igreja Rosário dos Pretos,LC-0181,Igreja de Nossa Senhora do Rosário dos Homens Pretos,rename,,fusão/rename revisão religião
+Teatro Apolo,LC-0524,Cine Teatro Apolo,merge,,fusão duplicata (Apolo)
+Praça Dom Vital,LC-0293,Praça Dom Vidal,merge,,fusão duplicata (Dom Vital/Vidal)
+Arsenal da Marinha,LC-0022,Praça do Arsenal da Marinha,rename,,nome anterior
+Ponte D'Uchôa,LC-0269,Estação Ponte D'Uchôa,rename,,nome anterior

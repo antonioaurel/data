@@ -35,8 +35,7 @@ DESKTOP_DIAGRAM = "../../pages/diagram.html"
 DESKTOP_STATS = "../../pages/stats.html"
 DESKTOP_MATRIX = "../../pages/matrix.html"
 MARCO_ZERO = "LC-0215"   # symbolic entry point for the graph from Início
-MAP_URL = ("https://www.google.com.br/maps/d/u/0/viewer?mid=1eOwVJYlWOV6PLI06K-h-ofmkJXyrgrnj"
-           "&ll=-8.06055276702706%2C-34.882075024350215&z=15")
+MAP_URL = "../../pages/mapa.html"   # geographic map (Leaflet); lives under desktop pages/
 
 # Bottom/top nav sections.
 NAV_ITEMS = [("index.html", "Início", "🏠", "inicio"),
@@ -185,7 +184,7 @@ def render_home(index, stats):
     viz = ("<ul class='viz-list'>"
            + viz_row("graph.html#node=" + MARCO_ZERO, "diagrama", "Diagrama", "Explore as conexões de nó.")
            + viz_row("matriz.html", "matriz", "Matriz", "Panorama das conexões por tipo.")
-           + viz_row(MAP_URL, "mapa", "Mapa histórico", "Os pontos no mapa do Recife e região. (projeto original)", external=True)
+           + viz_row(MAP_URL, "mapa", "Mapa geográfico", "Os locais no mapa do Recife e região, por categoria.")
            + viz_row("fillrate.html", "fillrate", "Fill rate", "Qualidade do preenchimento da base, campo a campo.")
            + viz_row("sobre.html", "sobre", "Sobre", "O projeto, o autor e as fontes.")
            + "</ul>")
