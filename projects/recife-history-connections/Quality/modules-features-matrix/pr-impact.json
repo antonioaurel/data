@@ -1,0 +1,17 @@
+{
+  "desktop": {
+    "prs": [
+      { "id": "pr-1", "label": "PR 1" },
+      { "id": "pr-2", "label": "PR 2" }
+    ],
+    "marks": {
+      "desktop/top-navigation/diagram": ["pr-1"],
+      "desktop/home/card-diagram": ["pr-1"],
+      "desktop/diagram/graph-canvas": ["pr-1"],
+      "desktop/top-navigation/map": ["pr-2"],
+      "desktop/map/leaflet-map": ["pr-2"]
+    }
+  },
+  "mobile": { "prs": [], "marks": {} },
+  "platform": { "prs": [], "marks": {} }
+}
