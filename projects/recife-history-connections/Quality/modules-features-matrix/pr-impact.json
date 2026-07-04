@@ -1,17 +1,47 @@
 {
   "desktop": {
     "prs": [
-      { "id": "pr-1", "label": "PR 1" },
-      { "id": "pr-2", "label": "PR 2" }
+      { "id": "pr-2", "label": "#2", "title": "fix marco-zero image URL" },
+      { "id": "pr-3", "label": "#3", "title": "Sobre Método (PT/EN) + path fix" },
+      { "id": "pr-7", "label": "#7", "title": "add About page (PT/EN) + nav link" }
     ],
     "marks": {
-      "desktop/top-navigation/diagram": ["pr-1"],
-      "desktop/home/card-diagram": ["pr-1"],
-      "desktop/diagram/graph-canvas": ["pr-1"],
-      "desktop/top-navigation/map": ["pr-2"],
-      "desktop/map/leaflet-map": ["pr-2"]
+      "desktop/top-navigation/active-state": ["pr-7"],
+      "desktop/home/hero": ["pr-7"],
+      "desktop/diagram/detail-panel": ["pr-3", "pr-2"],
+      "desktop/matrix/detail-panel": ["pr-3"],
+      "desktop/map/detail-panel": ["pr-3", "pr-2"]
     }
   },
-  "mobile": { "prs": [], "marks": {} },
-  "platform": { "prs": [], "marks": {} }
+  "mobile": {
+    "prs": [
+      { "id": "pr-2", "label": "#2", "title": "fix marco-zero image URL" },
+      { "id": "pr-3", "label": "#3", "title": "Sobre Método (PT/EN) + path fix" },
+      { "id": "pr-5", "label": "#5", "title": "mobile Map page + Map in nav" },
+      { "id": "pr-15", "label": "#15", "title": "UI localization + 50% info panel + Roboto" },
+      { "id": "pr-16", "label": "#16", "title": "Mobile interactive diagram + rename + Roboto" }
+    ],
+    "marks": {
+      "mobile/graph/ego-graph": ["pr-16"],
+      "mobile/graph/neighbor-tap": ["pr-16"],
+      "mobile/graph/detail-panel": ["pr-16", "pr-15", "pr-2"],
+      "mobile/bottom-bar/diagram": ["pr-16"],
+      "mobile/bottom-bar/active-state": ["pr-5"],
+      "mobile/top-header/nav-tabs": ["pr-5"],
+      "mobile/top-header/language-toggle": ["pr-15"],
+      "mobile/top-header/theme-toggle": ["pr-15"],
+      "mobile/about/method": ["pr-15", "pr-3"],
+      "mobile/node-detail/header": ["pr-2"]
+    }
+  },
+  "platform": {
+    "prs": [
+      { "id": "pr-4", "label": "#4", "title": "ADRs + i18n report + shared tokens" }
+    ],
+    "marks": {
+      "platform/language-i18n/mobile-in-place": ["pr-4"],
+      "platform/theme/theme-toggle": ["pr-4"],
+      "platform/responsiveness/breakpoints": ["pr-4"]
+    }
+  }
 }
