@@ -301,8 +301,8 @@ def reuse_view(page):
             f'<section class="rcard"><h3>Backbone <span class="sub">functionality → resources it touches</span></h3>{bb}</section>'
             f'</div>')
 
-# ---------- PR IMPACT view (Module | Feature | Type | PR columns, script-fed) ----------
-def pr_impact_view(page):
+# ---------- PR IMPACT doc (separate) — Module | Feature | Type | Total | PR columns ----------
+def pr_impact_table(page):
     rows=''
     for c in page['columns']:
         feats=sorted(c['fns'],key=lambda x:x[0].lower())
@@ -314,27 +314,21 @@ def pr_impact_view(page):
             rows+=(f'<tr data-fid="{esc(fid)}">{modcell}'
                    f'<td class="featcol">{esc(name)}</td>'
                    f'<td class="typecol"><span class="tbadge" style="color:{color};border-color:{color}">{esc(kind)}</span></td>'
+                   f'<td class="totcol zero">0</td>'
                    f'</tr>')
-    note=('<p class="vnote">One row per functionality, with <b>Module and Feature in separate columns</b>. '
-          'The PR columns and their marks are <b>maintained by the review script</b> — a mark means that PR '
-          'touches (impacts) that functionality. You can also add or toggle manually; manual state is saved in your browser. '
-          '<b>The Desktop PR&nbsp;1/PR&nbsp;2 marks are example data.</b></p>')
-    contract=('<details class="contract"><summary>Data contract for the script</summary>'
-              '<pre>// pr-impact.json  (regenerate the page after writing)\n'
-              '{\n'
-              '  "'+page['id']+'": {\n'
-              '    "prs":   [ { "id": "pr-4", "label": "#4 mobile-nav" } ],\n'
-              '    "marks": { "'+page['id']+'/&lt;module-slug&gt;/&lt;feature-slug&gt;": ["pr-4"] }\n'
-              '  }\n'
-              '}</pre>'
-              '<p>Every row carries its id in <code>&lt;tr data-fid&gt;</code>. The script writes this object; '
-              'the view renders the PR columns and marks from it (browser edits override it locally).</p></details>')
-    return (f'{note}{contract}'
-            f'<div class="prm-wrap"><table class="prm" data-sub="{page["id"]}">'
-            f'<thead><tr><th class="modcol">Module</th><th class="featcol">Feature</th><th class="typecol">Type</th></tr></thead>'
+    return (f'<div class="prm-wrap"><table class="prm" data-sub="{page["id"]}">'
+            f'<thead><tr><th class="modcol">Module</th><th class="featcol">Feature</th>'
+            f'<th class="typecol">Type</th><th class="totcol">Total</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></div>'
             f'<div class="pr-controls"><button class="add-pr" data-sub="{page["id"]}">+ Add PR column</button>'
-            f'<span class="pr-hint">Click a cell to toggle impact · click ✕ on a PR header to remove it</span></div>')
+            f'<span class="pr-hint">Click a cell to toggle impact · newest PR first · Total = PRs touching that feature</span></div>')
+
+def page_pr(page,active):
+    cls='page is-active' if active else 'page'
+    return (f'<section id="page-{page["id"]}" class="{cls}">'
+            f'<div class="band-head"><span class="sys-tag" style="background:{page["dot"]}">{esc(page["tag"])}</span>'
+            f'<h2>{esc(page["title"])}</h2><span class="sub">{esc(page["subtitle"])}</span></div>'
+            f'{pr_impact_table(page)}</section>')
 
 # ---------- assemble pages ----------
 def page_html(p,active):
@@ -346,7 +340,6 @@ def page_html(p,active):
             f'<div class="view view-modules">{modules_view(p)}</div>'
             f'<div class="view view-impact">{impact}</div>'
             f'<div class="view view-reuse">{reuse_view(p)}</div>'
-            f'<div class="view view-primpact">{pr_impact_view(p)}</div>'
             f'</section>')
 
 navlinks=''.join(
@@ -356,16 +349,14 @@ botlinks=''.join(
  f'<button class="bot-item{" is-active" if i==0 else ""}" data-nav="{p["id"]}">'
  f'<span class="bot-dot" style="background:{p["dot"]}"></span><span class="bot-lbl">{esc(p["label"])}</span></button>'
  for i,p in enumerate(PAGES))
-VIEWS=[('modules','Modules','Modules & features'),('impact','Impact','Functionality × functionality'),('reuse','Reuse','Component reuse & backbone'),('primpact','PR Impact','PR × functionality · script-fed')]
+VIEWS=[('modules','Modules','Modules & features'),('impact','Impact','Functionality × functionality'),('reuse','Reuse','Component reuse & backbone')]
 viewtabs=''.join(
  f'<button class="vtab{" is-active" if i==0 else ""}" data-view="{vid}"><b>{esc(lbl)}</b><small>{esc(desc)}</small></button>'
  for i,(vid,lbl,desc) in enumerate(VIEWS))
 pages_html=''.join(page_html(p,i==0) for i,p in enumerate(PAGES))
 pr_seed_js=json.dumps(PR_DATA)
 
-HTML=f'''<meta charset="utf-8">
-<title>Modules &amp; Features Matrix — Conexões da História</title>
-<style>
+STYLE=f'''<style>
 @font-face{{font-family:'Roboto';font-style:normal;font-weight:100 900;font-display:swap;
  src:url(data:font/woff2;base64,{b64}) format('woff2');}}
 :root{{--ground:#eef1f4;--surface:#fff;--surface-2:#f5f7fa;--ink:#12202e;--ink-2:#3a4653;--ink-3:#6b7885;
@@ -503,9 +494,13 @@ table.prm{{border-collapse:separate;border-spacing:0;font-size:.8rem;width:100%;
 .prm thead .modcol{{z-index:3;}}
 .prm .featcol{{color:var(--ink);min-width:150px;font-weight:500;}}
 .prm .typecol{{white-space:nowrap;}}
+.prm .totcol{{text-align:center;font-weight:800;color:var(--ink);background:#f7f9fb;font-variant-numeric:tabular-nums;min-width:56px;border-right:2px solid #c3ccd6;}}
+.prm thead .totcol{{color:var(--ink-3);}}
+.prm .totcol.zero{{color:#b7c0ca;font-weight:600;}}
 .tbadge{{font-size:.56rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border:1px solid;border-radius:5px;padding:.06rem .32rem;background:#fff;}}
-.prm .prh{{text-align:center;white-space:nowrap;}}
-.prm .prh .prlbl{{font-weight:700;color:var(--ink-2);}}
+.prm .prh{{text-align:center;white-space:normal;vertical-align:bottom;min-width:100px;max-width:150px;}}
+.prm .prh .prlbl{{display:block;font-weight:800;color:var(--ink);font-size:.8rem;}}
+.prm .prh .prtitle{{display:block;font-size:.62rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink-3);line-height:1.2;margin-top:.15rem;}}
 .prm .prx{{margin-left:.35rem;border:0;background:none;cursor:pointer;color:var(--ink-3);font-size:.95rem;line-height:1;}}
 .prm .prx:hover{{color:#c0553f;}}
 .prm .prcell{{text-align:center;cursor:pointer;color:transparent;min-width:66px;font-weight:800;}}
@@ -535,100 +530,145 @@ table.prm{{border-collapse:separate;border-spacing:0;font-size:.8rem;width:100%;
 .bot-dot{{width:.55rem;height:.55rem;border-radius:50%;}}
 
 @media (max-width:560px){{.brand small{{display:none;}}.nav-item .nav-dot{{display:none;}}.mcol{{flex-basis:164px;min-width:164px;}}.mcell .kd{{display:none;}}.msub .t-lbl{{display:none;}}.bbname{{flex-basis:100%;}}}}
-</style>
+</style>'''
 
+ref_pages_html=''.join(page_html(p,i==0) for i,p in enumerate(PAGES))
+pr_pages_html=''.join(page_pr(p,i==0) for i,p in enumerate(PAGES))
+
+NAVJS_REF='''(function(){
+ var navs=document.querySelectorAll('[data-nav]'), views=document.querySelectorAll('.vtab');
+ function goPage(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('is-active',p.id==='page-'+id);});
+  navs.forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-nav')===id);});
+  if(window.scrollTo)window.scrollTo({top:0,behavior:'auto'});
+ }
+ function goView(v){
+  document.body.setAttribute('data-view',v);
+  views.forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-view')===v);});
+ }
+ navs.forEach(function(b){b.addEventListener('click',function(){goPage(b.getAttribute('data-nav'));});});
+ views.forEach(function(b){b.addEventListener('click',function(){goView(b.getAttribute('data-view'));});});
+ document.body.setAttribute('data-view','modules');
+})();'''
+
+NAVJS_PR='''(function(){
+ var navs=document.querySelectorAll('[data-nav]');
+ function goPage(id){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('is-active',p.id==='page-'+id);});
+  navs.forEach(function(b){b.classList.toggle('is-active',b.getAttribute('data-nav')===id);});
+  if(window.scrollTo)window.scrollTo({top:0,behavior:'auto'});
+ }
+ navs.forEach(function(b){b.addEventListener('click',function(){goPage(b.getAttribute('data-nav'));});});
+})();'''
+
+PR_MANAGE_JS='''(function(){
+ var SEED=window.PR_SEED||{};
+ function key(s){return 'primpact:'+s;}
+ function load(s){
+  try{var v=localStorage.getItem(key(s)); if(v)return JSON.parse(v);}catch(e){}
+  var sd=SEED[s]||{}; return {prs:(sd.prs||[]).slice(),marks:JSON.parse(JSON.stringify(sd.marks||{}))};
+ }
+ function save(s,d){try{localStorage.setItem(key(s),JSON.stringify(d));}catch(e){}}
+ function esc(t){return (t+'').replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+ function num(p){var m=(p.label||'').match(/\\d+/);return m?parseInt(m[0],10):null;}
+ function ordered(prs){return prs.slice().sort(function(a,b){var na=num(a),nb=num(b);if(na!==null&&nb!==null)return nb-na;return prs.indexOf(b)-prs.indexOf(a);});}
+ function render(s){
+  var table=document.querySelector('.prm[data-sub="'+s+'"]'); if(!table)return;
+  var d=load(s); var prs=ordered(d.prs); var prIds={}; prs.forEach(function(p){prIds[p.id]=1;});
+  table.querySelectorAll('.pr-col').forEach(function(e){e.remove();});
+  var head=table.querySelector('thead tr');
+  prs.forEach(function(pr){
+   var th=document.createElement('th'); th.className='pr-col prh';
+   th.innerHTML='<span class="prlbl">'+esc(pr.label)+'</span>'+(pr.title?'<span class="prtitle">'+esc(pr.title)+'</span>':'')+'<button class="prx" title="remove">×</button>';
+   th.querySelector('.prx').addEventListener('click',function(){
+    d.prs=d.prs.filter(function(p){return p.id!==pr.id;});
+    Object.keys(d.marks).forEach(function(f){d.marks[f]=(d.marks[f]||[]).filter(function(x){return x!==pr.id;});});
+    save(s,d); render(s);
+   });
+   head.appendChild(th);
+  });
+  table.querySelectorAll('tbody tr').forEach(function(tr){
+   var fid=tr.getAttribute('data-fid');
+   function setTotal(){var c=(d.marks[fid]||[]).filter(function(x){return prIds[x];}).length;var tc=tr.querySelector('.totcol');tc.textContent=c;tc.classList.toggle('zero',c===0);}
+   prs.forEach(function(pr){
+    var td=document.createElement('td'); td.className='pr-col prcell';
+    if((d.marks[fid]||[]).indexOf(pr.id)>=0){td.classList.add('on'); td.textContent='×';}
+    td.addEventListener('click',function(){
+     var arr=d.marks[fid]||(d.marks[fid]=[]); var k=arr.indexOf(pr.id);
+     if(k>=0){arr.splice(k,1); td.classList.remove('on'); td.textContent='';}
+     else{arr.push(pr.id); td.classList.add('on'); td.textContent='×';}
+     save(s,d); setTotal();
+    });
+    tr.appendChild(td);
+   });
+   setTotal();
+  });
+ }
+ document.querySelectorAll('.add-pr').forEach(function(btn){
+  btn.addEventListener('click',function(){
+   var s=btn.getAttribute('data-sub'); var d=load(s);
+   var label=prompt('PR number / label (e.g. #17):'); if(!label)return;
+   var title=prompt('PR title (from the real PR):')||'';
+   d.prs.push({id:'pr-'+Date.now().toString(36),label:label,title:title}); save(s,d); render(s);
+  });
+ });
+ ['desktop','mobile','platform'].forEach(render);
+})();'''
+
+REF_HTML=f'''<meta charset="utf-8">
+<title>Modules &amp; Features — reference · Conexões da História</title>
+{STYLE}
 <nav class="navbar">
- <div class="brand">Modules &amp; Features Matrix <small>Conexões da História · test docs</small></div>
+ <div class="brand">Modules &amp; Features <small>Conexões da História · reference</small></div>
  {navlinks}
 </nav>
-
 <div class="doc">
  <header class="mast">
-  <p class="eyebrow">Test documentation · v3</p>
+  <p class="eyebrow">Test documentation · reference</p>
   <h1>Modules, Features &amp; Impact</h1>
-  <p class="lede">Structural map of <b>Conexões da História do Recife</b> for test planning. Pick a <b>subsystem</b> (top / bottom bar), then a <b>view</b>: <b>Modules</b> (features by page), <b>Impact</b> (which functionalities affect which), or <b>Reuse</b> (shared components as hubs). Impact is <b>derived from shared resources</b> — two functionalities are coupled when they share code (C), data (D), state (S), a route (N) or a visual component (L).</p>
+  <p class="lede">Reference map of <b>Conexões da História do Recife</b> for test planning. Pick a <b>subsystem</b> (top / bottom bar), then a <b>view</b>: <b>Modules</b> (features by page), <b>Impact</b> (which functionalities affect which), or <b>Reuse</b> (shared components as hubs). Impact is <b>derived from shared resources</b> — two functionalities are coupled when they share code (C), data (D), state (S), a route (N) or a visual component (L). <b>Per-PR impact tracking lives in a separate document</b> (PR Impact Tracking).</p>
  </header>
-
  <div class="vtabs">{viewtabs}</div>
-
- {pages_html}
-
+ {ref_pages_html}
  <footer class="howto">
-  <b>How to read.</b> <b>Modules</b>: each column is a Module/Page, each cell a Functionality (left stripe = component kind, small dots = resource types it touches). <b>Impact</b>: a square functionality×functionality grid — a marked cell means row and column <b>share a resource</b> (letters say which: C/D/S/N/L), so touching one is a reason to re-test the other; hover for the exact shared resources. <b>Reuse</b>: every shared resource and who uses it (hubs = used by ≥3), plus the backbone (each functionality → what it touches). Impact is symmetric and derived from the current code (branch <code>sobre-pc-mobile-nav</code>) — confirm before finalising test cases. Scope: structure only; PT/EN is a translation detail.
+  <b>How to read.</b> <b>Modules</b>: each column is a Module/Page, each cell a Functionality (left stripe = component kind, small dots = resource types it touches). <b>Impact</b>: a square functionality×functionality grid — a marked cell means row and column <b>share a resource</b> (letters say which: C/D/S/N/L), so touching one is a reason to re-test the other; hover for the exact shared resources. <b>Reuse</b>: every shared resource and who uses it (hubs = used by ≥3), plus the backbone (each functionality → what it touches). This is a <b>reference</b> document, stable per release. Scope: structure only; PT/EN is a translation detail.
  </footer>
 </div>
-
 <nav class="bottombar">{botlinks}</nav>
-
-<script>window.PR_SEED={pr_seed_js};</script>
-<script>
-(function(){{
- var navs=document.querySelectorAll('[data-nav]'), views=document.querySelectorAll('.vtab');
- function goPage(id){{
-  document.querySelectorAll('.page').forEach(function(p){{p.classList.toggle('is-active',p.id==='page-'+id);}});
-  navs.forEach(function(b){{b.classList.toggle('is-active',b.getAttribute('data-nav')===id);}});
-  if(window.scrollTo)window.scrollTo({{top:0,behavior:'auto'}});
- }}
- function goView(v){{
-  document.body.setAttribute('data-view',v);
-  views.forEach(function(b){{b.classList.toggle('is-active',b.getAttribute('data-view')===v);}});
- }}
- navs.forEach(function(b){{b.addEventListener('click',function(){{goPage(b.getAttribute('data-nav'));}});}});
- views.forEach(function(b){{b.addEventListener('click',function(){{goView(b.getAttribute('data-view'));}});}});
- document.body.setAttribute('data-view','modules');
-}})();
-
-/* ---- PR Impact: render columns/marks from seed (script) + localStorage overrides ---- */
-(function(){{
- var SEED=window.PR_SEED||{{}};
- function key(s){{return 'primpact:'+s;}}
- function load(s){{
-  try{{var v=localStorage.getItem(key(s)); if(v)return JSON.parse(v);}}catch(e){{}}
-  var sd=SEED[s]||{{}}; return {{prs:(sd.prs||[]).slice(),marks:JSON.parse(JSON.stringify(sd.marks||{{}}))}};
- }}
- function save(s,d){{try{{localStorage.setItem(key(s),JSON.stringify(d));}}catch(e){{}}}}
- function esc(t){{return (t+'').replace(/[&<>"]/g,function(c){{return {{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}}[c];}});}}
- function render(s){{
-  var table=document.querySelector('.prm[data-sub="'+s+'"]'); if(!table)return;
-  var d=load(s);
-  table.querySelectorAll('.pr-col').forEach(function(e){{e.remove();}});
-  var head=table.querySelector('thead tr');
-  d.prs.forEach(function(pr){{
-   var th=document.createElement('th'); th.className='pr-col prh';
-   th.innerHTML='<span class="prlbl">'+esc(pr.label)+'</span><button class="prx" title="remove">×</button>';
-   th.querySelector('.prx').addEventListener('click',function(){{
-    d.prs=d.prs.filter(function(p){{return p.id!==pr.id;}});
-    Object.keys(d.marks).forEach(function(f){{d.marks[f]=(d.marks[f]||[]).filter(function(x){{return x!==pr.id;}});}});
-    save(s,d); render(s);
-   }});
-   head.appendChild(th);
-  }});
-  table.querySelectorAll('tbody tr').forEach(function(tr){{
-   var fid=tr.getAttribute('data-fid');
-   d.prs.forEach(function(pr){{
-    var td=document.createElement('td'); td.className='pr-col prcell';
-    if((d.marks[fid]||[]).indexOf(pr.id)>=0){{td.classList.add('on'); td.textContent='×';}}
-    td.addEventListener('click',function(){{
-     var arr=d.marks[fid]||(d.marks[fid]=[]); var k=arr.indexOf(pr.id);
-     if(k>=0){{arr.splice(k,1); td.classList.remove('on'); td.textContent='';}}
-     else{{arr.push(pr.id); td.classList.add('on'); td.textContent='×';}}
-     save(s,d);
-    }});
-    tr.appendChild(td);
-   }});
-  }});
- }}
- document.querySelectorAll('.add-pr').forEach(function(btn){{
-  btn.addEventListener('click',function(){{
-   var s=btn.getAttribute('data-sub'); var d=load(s);
-   var label=prompt('PR label (e.g. #4 mobile-nav):'); if(!label)return;
-   d.prs.push({{id:'pr-'+Date.now().toString(36),label:label}}); save(s,d); render(s);
-  }});
- }});
- ['desktop','mobile','platform'].forEach(render);
-}})();
-</script>
+<script>{NAVJS_REF}</script>
 '''
 
-pathlib.Path('matrix.html').write_text(HTML,encoding='utf-8')
-print('wrote matrix.html',len(HTML),'chars')
+PR_HTML=f'''<meta charset="utf-8">
+<title>PR Impact Tracking · Conexões da História</title>
+{STYLE}
+<nav class="navbar">
+ <div class="brand">PR Impact Tracking <small>Conexões da História · test docs</small></div>
+ {navlinks}
+</nav>
+<div class="doc">
+ <header class="mast">
+  <p class="eyebrow">Test documentation · PR tracking</p>
+  <h1>PR × Functionality Impact</h1>
+  <p class="lede">One row per functionality, with <b>Module and Feature in separate columns</b>. <b>Each PR column is a real pull request</b> — its number and title — sourced from the review flow (the board's <em>Linked pull requests</em>). Columns are <b>newest-first</b>; a mark means that PR's diff touches (impacts) that functionality, and <b>Total</b> accumulates how many real PRs have hit each feature — the evolution of the worked edges. Marks are <b>written by the review script</b> into <code>pr-impact.json</code>; you can also add or toggle manually (saved in your browser). Separate from the Modules &amp; Features reference. <b>Seeded with real open (#15/#16) and previous merged PRs (#7/#5/#4/#3/#2) as an illustration</b>; the review flow keeps it current.</p>
+  <details class="contract"><summary>Data contract for the script</summary><pre>// pr-impact.json  (regenerate the page after writing)
+{{
+  "&lt;subsystem&gt;": {{
+    "prs":   [ {{ "id": "pr-16", "label": "#16", "title": "Mobile interactive diagram" }} ],
+    "marks": {{ "&lt;subsystem&gt;/&lt;module-slug&gt;/&lt;feature-slug&gt;": ["pr-16"] }}
+  }}
+}}</pre><p>Every row carries its id in <code>&lt;tr data-fid&gt;</code>, e.g. <code>desktop/top-navigation/map</code>. The script writes this object; the view renders PR columns, marks and Totals from it (browser edits override it locally).</p></details>
+ </header>
+ {pr_pages_html}
+ <footer class="howto">
+  <b>How to read.</b> Rows are functionalities grouped by Module (separate columns). <b>Total</b> = number of PRs impacting that functionality (× + × + … ). PR columns are ordered newest-first. Data comes from <code>pr-impact.json</code>, written by the PR review flow; regenerate the page after the file changes. Manual edits persist per browser via <code>localStorage</code>.
+ </footer>
+</div>
+<nav class="bottombar">{botlinks}</nav>
+<script>window.PR_SEED={pr_seed_js};</script>
+<script>{NAVJS_PR}
+{PR_MANAGE_JS}</script>
+'''
+
+pathlib.Path('matrix.html').write_text(REF_HTML,encoding='utf-8')
+pathlib.Path('pr-impact.html').write_text(PR_HTML,encoding='utf-8')
+print('wrote matrix.html',len(REF_HTML),'and pr-impact.html',len(PR_HTML))
