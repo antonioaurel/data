@@ -124,12 +124,60 @@ def remove_worktree(root: Path, worktree: Path) -> None:
     shutil.rmtree(worktree.parent, ignore_errors=True)
 
 
+def extract_review(raw: str, worktree: Path) -> str:
+    """Pull the final review text out of a `codex review` transcript.
+
+    `codex review` streams the whole session to stdout (workdir banner, every
+    `exec` tool call, the full diff). The agent's final message is everything
+    after the last standalone `codex` marker line. Codex also sometimes prints
+    that final message twice back-to-back, and file references carry the
+    temporary worktree path, so we collapse the duplicate and rewrite paths to
+    be repo-relative.
+    """
+    lines = raw.splitlines()
+    marker_idxs = [i for i, line in enumerate(lines) if line.strip() == "codex"]
+    block = "\n".join(lines[marker_idxs[-1] + 1 :]).strip() if marker_idxs else raw.strip()
+
+    # Collapse an exact/near-exact duplication that restarts with the same line.
+    first_line = block.splitlines()[0] if block else ""
+    if first_line:
+        pos = block.find(first_line, len(first_line))
+        if pos != -1:
+            head, tail = block[:pos].strip(), block[pos:].strip()
+            if tail[:80] == head[:80] and abs(len(tail) - len(head)) <= max(20, len(head) // 5):
+                block = head
+
+    # Rewrite the temporary worktree path back to repo-relative file references.
+    # codex reports realpath'd paths, so on macOS `/var/folders/...` comes back
+    # as `/private/var/folders/...`; strip every variant, longest first.
+    variants = {str(worktree), str(worktree.resolve()), "/private" + str(worktree)}
+    for wt in sorted((v.rstrip("/") for v in variants), key=len, reverse=True):
+        block = block.replace(wt + "/", "").replace(wt, "")
+    return block.strip()
+
+
 def codex_review(worktree: Path, base: str, instructions: str) -> str:
-    result = run(["codex", "review", "--base", f"origin/{base}", instructions], cwd=worktree)
-    output = result.stdout.strip()
-    if result.stderr.strip():
-        output = output + "\n\nCodex stderr:\n" + result.stderr.strip()
-    return output.strip()
+    base_cmd = ["codex", "review", "--base", f"origin/{base}"]
+    # Older codex accepted custom instructions as a positional PROMPT alongside
+    # --base. codex >= ~0.142 makes `--base <BRANCH>` and `[PROMPT]` mutually
+    # exclusive, so try with instructions and fall back to a base-only review
+    # (codex's built-in review) when that combination is rejected.
+    result = run(base_cmd + [instructions], cwd=worktree, check=False)
+    if result.returncode != 0:
+        combined = (result.stderr or "") + (result.stdout or "")
+        if "cannot be used with" in combined:
+            result = run(base_cmd, cwd=worktree)
+        else:
+            raise subprocess.CalledProcessError(
+                result.returncode, result.args, result.stdout, result.stderr
+            )
+    # codex review streams the full session (banner + exec traces + diff) to
+    # stdout; keep only the final review so the PR comment stays within GitHub's
+    # 65536-char limit and reads cleanly.
+    review = extract_review(result.stdout, worktree)
+    if not review and result.stderr.strip():
+        review = "Codex produced no review text.\n\nCodex stderr:\n" + result.stderr.strip()
+    return review
 
 
 def post_comment(repo: str, pr_number: str, body: str) -> str:
