@@ -1,0 +1,356 @@
+#!/usr/bin/env python3
+"""Review GitHub PRs with the local Codex CLI and post the result back to GitHub.
+
+Intended handoff:
+  Claude opens a PR, then runs:
+    python3 tools/review_pr_with_codex_cli.py 123
+
+The script creates a temporary git worktree for the PR branch, runs
+`codex review --base origin/<base>`, and posts the review as a PR comment.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import json
+import re
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_REPO = "antonioaurel/data"
+DEFAULT_INSTRUCTIONS = (
+    "Review this PR in a strict code-review stance. Prioritize bugs, regressions, "
+    "edge cases, security/data issues, and missing tests. Lead with findings ordered "
+    "by severity and include file/line references when possible. If there are no "
+    "blocking findings, say that clearly and mention residual risk or test gaps."
+)
+DEFAULT_LOG_DIR = ".pr-review-logs"
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def run(
+    cmd: list[str],
+    *,
+    cwd: str | Path | None = None,
+    check: bool = True,
+    input_text: str | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        cmd,
+        cwd=str(cwd) if cwd else None,
+        input=input_text,
+        check=check,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+
+def ensure_tools() -> None:
+    missing = [tool for tool in ("gh", "git", "codex") if shutil.which(tool) is None]
+    if missing:
+        raise SystemExit("Missing required command(s): " + ", ".join(missing))
+
+
+def git_root() -> Path:
+    result = run(["git", "rev-parse", "--show-toplevel"])
+    return Path(result.stdout.strip())
+
+
+def pr_info(repo: str, pr: str) -> dict[str, Any]:
+    result = run(
+        [
+            "gh",
+            "pr",
+            "view",
+            pr,
+            "--repo",
+            repo,
+            "--json",
+            "number,title,url,headRefName,baseRefName,author,body",
+        ]
+    )
+    return json.loads(result.stdout)
+
+
+def linked_issue(info: dict[str, Any]) -> str | None:
+    """Issue number linked to a PR: from a '#<n> \u00b7 ...' title or a 'Part of #<n>' body."""
+    m = re.match(r"#(\d+)\b", info.get("title", ""))
+    if m:
+        return m.group(1)
+    m = re.search(r"[Pp]art of #(\d+)", info.get("body", "") or "")
+    return m.group(1) if m else None
+
+
+def issue_header(repo: str, number: str | None) -> str:
+    if not number:
+        return ""
+    try:
+        data = json.loads(
+            run(["gh", "issue", "view", number, "--repo", repo, "--json", "number,title,url"]).stdout
+        )
+        return (
+            f"**Task:** {data['title']} \u2014 [issue #{data['number']}]({data['url']}) "
+            "\u00b7 tracked in `docs/task-evolution.md` + board #3"
+        )
+    except Exception:
+        return f"**Task:** issue #{number}"
+
+
+def fetch_pr(root: Path, info: dict[str, Any]) -> str:
+    pr_number = str(info["number"])
+    pr_ref = f"refs/remotes/origin/pr-{pr_number}"
+    run(["git", "fetch", "origin", info["baseRefName"], f"pull/{pr_number}/head:{pr_ref}"], cwd=root)
+    return pr_ref
+
+
+def add_worktree(root: Path, pr_ref: str, pr_number: str) -> Path:
+    temp_parent = Path(tempfile.mkdtemp(prefix=f"codex-pr-{pr_number}-"))
+    worktree = temp_parent / "worktree"
+    run(["git", "worktree", "add", "--detach", str(worktree), pr_ref], cwd=root)
+    return worktree
+
+
+def remove_worktree(root: Path, worktree: Path) -> None:
+    run(["git", "worktree", "remove", "--force", str(worktree)], cwd=root, check=False)
+    shutil.rmtree(worktree.parent, ignore_errors=True)
+
+
+def codex_review(worktree: Path, base: str, instructions: str) -> str:
+    result = run(["codex", "review", "--base", f"origin/{base}", instructions], cwd=worktree)
+    output = result.stdout.strip()
+    if result.stderr.strip():
+        output = output + "\n\nCodex stderr:\n" + result.stderr.strip()
+    return output.strip()
+
+
+def post_comment(repo: str, pr_number: str, body: str) -> str:
+    result = run(["gh", "pr", "comment", pr_number, "--repo", repo, "--body", body])
+    return result.stdout.strip()
+
+
+def discussion_summary(review: str) -> str:
+    text = review.strip()
+    if not text:
+        return (
+            "Codex produced no review output. There is no substantive review "
+            "discussion yet; treat this as inconclusive."
+        )
+
+    lowered = text.lower()
+    no_findings_markers = (
+        "no blocking findings",
+        "no findings",
+        "no issues found",
+        "no blocking issues",
+    )
+    if any(marker in lowered for marker in no_findings_markers):
+        outcome = "Codex did not report blocking findings in the automated review."
+    else:
+        outcome = "Codex reported review findings that need triage."
+
+    first_lines = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped:
+            first_lines.append(stripped)
+        if len(first_lines) == 5:
+            break
+    excerpt = "\n".join(f"- {line}" for line in first_lines)
+    return (
+        f"Outcome: {outcome}\n\n"
+        "Main discussion points:\n"
+        f"{excerpt or '- No excerpt available.'}\n\n"
+        "Pending decision: the user should decide whether the PR is ready to merge "
+        "after Claude addresses any findings or explicitly accepts the residual risk."
+    )
+
+
+def merge_guidance(review: str) -> str:
+    text = review.strip().lower()
+    if not text:
+        return "Treat this review as inconclusive; do not merge based on automation alone."
+    no_findings_markers = (
+        "no blocking findings",
+        "no findings",
+        "no issues found",
+        "no blocking issues",
+    )
+    if any(marker in text for marker in no_findings_markers):
+        return "Merge can proceed if required CI and human checks are also green."
+    return "Merge only after the findings are resolved or explicitly accepted by the user."
+
+
+def work_summary(info: dict[str, Any], posted_review_url: str | None) -> str:
+    lines = [
+        f"- Reviewed PR #{info['number']}: {info['title']}",
+        f"- Compared `{info['headRefName']}` against `{info['baseRefName']}`",
+        "- Fetched the PR branch into an isolated local ref",
+        "- Created a temporary git worktree for the review",
+        "- Ran `codex review` against the base branch",
+    ]
+    if posted_review_url:
+        lines.append(f"- Posted the full automated review comment: {posted_review_url}")
+    lines.extend(
+        [
+            "- Posted this completion summary for the operator",
+            "- Removed the temporary worktree",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def log_event(root: Path, log_dir: str, pr_number: str, message: str) -> None:
+    path = root / log_dir / f"pr-{pr_number}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(f"\n## {now_iso()}\n\n{message.rstrip()}\n")
+
+
+def update_dashboard(
+    root: Path,
+    log_dir: str,
+    info: dict[str, Any],
+    status: str,
+    detail: str,
+) -> None:
+    path = root / log_dir / "dashboard.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    content = [
+        "# PR Review Operator Dashboard",
+        "",
+        f"Last updated: {now_iso()}",
+        "",
+        "| Field | Value |",
+        "|---|---|",
+        f"| Status | {status} |",
+        f"| PR | #{info['number']} - {info['title']} |",
+        f"| URL | {info['url']} |",
+        f"| Branch | {info['headRefName']} -> {info['baseRefName']} |",
+        "",
+        "## Detail",
+        "",
+        detail.rstrip(),
+        "",
+        "## Where to look",
+        "",
+        f"- Execution log: `{log_dir}/pr-{info['number']}.md`",
+        "- Canonical discussion: GitHub PR comments",
+    ]
+    path.write_text("\n".join(content), encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Run Codex CLI review for one or more PRs.")
+    parser.add_argument("prs", nargs="+", help="PR numbers or URLs")
+    parser.add_argument("--repo", default=DEFAULT_REPO, help=f"GitHub repo, default: {DEFAULT_REPO}")
+    parser.add_argument("--instructions", default=DEFAULT_INSTRUCTIONS)
+    parser.add_argument(
+        "--log-dir",
+        default=DEFAULT_LOG_DIR,
+        help=f"Local execution log directory, default: {DEFAULT_LOG_DIR}",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the review instead of posting it to GitHub",
+    )
+    args = parser.parse_args()
+
+    ensure_tools()
+    root = git_root()
+
+    for pr in args.prs:
+        info = pr_info(args.repo, pr)
+        number = str(info["number"])
+        print(f"Codex PR review started for #{number}: {info['title']}", flush=True)
+        update_dashboard(
+            root,
+            args.log_dir,
+            info,
+            "RUNNING",
+            "Codex review has started. The bridge is fetching the PR, creating an isolated worktree, and running `codex review`.",
+        )
+        log_event(
+            root,
+            args.log_dir,
+            number,
+            "\n".join(
+                [
+                    "Codex PR review started.",
+                    "",
+                    f"- Repository: {args.repo}",
+                    f"- PR: #{number} - {info['title']}",
+                    f"- URL: {info['url']}",
+                    f"- Branch: {info['headRefName']} -> {info['baseRefName']}",
+                ]
+            ),
+        )
+        post_url = ""
+        worktree: Path | None = None
+        try:
+            pr_ref = fetch_pr(root, info)
+            log_event(root, args.log_dir, number, f"Fetched PR ref `{pr_ref}`.")
+            worktree = add_worktree(root, pr_ref, number)
+            log_event(root, args.log_dir, number, f"Created temporary worktree `{worktree}`.")
+            review = codex_review(worktree, info["baseRefName"], args.instructions)
+            log_event(root, args.log_dir, number, "Codex review output:\n\n" + (review or "No output."))
+            # One consolidated comment: linked task info + the Codex review + merge guidance.
+            header = issue_header(args.repo, linked_issue(info))
+            body = (
+                (header + "\n\n" if header else "")
+                + "## Codex automated review\n\n"
+                + f"{review or 'No review output was produced.'}\n\n"
+                + "### Merge guidance\n\n"
+                + f"{merge_guidance(review)}"
+            )
+            if args.dry_run:
+                print(body)
+            else:
+                post_url = post_comment(args.repo, number, body)
+                print(f"Posted Codex review: {post_url}", flush=True)
+                log_event(root, args.log_dir, number, f"Posted GitHub review comment: {post_url}")
+                update_dashboard(
+                    root,
+                    args.log_dir,
+                    info,
+                    "COMPLETED",
+                    "Codex review completed.\n\n"
+                    "What was done:\n\n"
+                    f"{work_summary(info, post_url or None)}\n\n"
+                    "Discussion summary:\n\n"
+                    f"{discussion_summary(review)}\n\n"
+                    "Merge guidance:\n\n"
+                    f"{merge_guidance(review)}",
+                )
+        except Exception as exc:
+            update_dashboard(
+                root,
+                args.log_dir,
+                info,
+                "FAILED",
+                f"Codex review failed before completion.\n\nError: `{type(exc).__name__}: {exc}`",
+            )
+            log_event(root, args.log_dir, number, f"Codex PR review failed: {type(exc).__name__}: {exc}")
+            raise
+        finally:
+            if worktree is not None:
+                remove_worktree(root, worktree)
+                log_event(root, args.log_dir, number, f"Removed temporary worktree `{worktree}`.")
+        if post_url:
+            print(f"Codex PR review finished for #{number}", flush=True)
+            log_event(root, args.log_dir, number, "Codex PR review finished.")
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
