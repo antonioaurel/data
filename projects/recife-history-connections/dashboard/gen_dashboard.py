@@ -114,7 +114,13 @@ def fetch_prs():
             return None
         data = json.loads(out.stdout)
         for p in data:
-            p["comment_count"] = len(p.get("comments") or [])
+            cs = p.get("comments") or []
+            p["comment_count"] = len(cs)
+            p["_comments"] = [{
+                "body": c.get("body", ""),
+                "createdAt": c.get("createdAt", ""),
+                "author": (c.get("author") or {}).get("login", ""),
+            } for c in cs]
             p.pop("comments", None)
         return data
     except Exception as e:
@@ -136,6 +142,7 @@ def prs_from_tasks(tasks):
             "state": "MERGED" if merged else "OPEN", "isDraft": False,
             "reviewDecision": "", "mergedAt": None, "createdAt": None,
             "updatedAt": None, "headRefName": "", "comment_count": 0,
+            "_comments": [],
         })
     return prs
 
@@ -212,6 +219,42 @@ def build():
         "tasks": tasks, "prs": prs, "by_num": by_num, "live": live,
         "pr_to_fids": pr_to_fids, "fid_info": fid_info, "pr_titles": pr_titles,
     }
+
+# ---------------------------------------------------------------- review cycle
+# The Codex bridge posts one consolidated comment headed with this marker.
+CODEX_MARK = "## Codex automated review"
+
+# review-stage -> (label, color). Derived live from the PR's GitHub comments,
+# which the review flow treats as the canonical discussion log.
+RSTAGE = {
+    "await-review": ("Awaiting Codex review", "#c07d16"),
+    "await-claude": ("Codex reviewed · awaiting Claude", "#2f6db0"),
+    "responded":    ("Response posted · awaiting your call", "#7a5bd0"),
+    "merged":       ("Merged · cycle closed", "#2f9e57"),
+    "closed":       ("Closed · no merge", "#c0553f"),
+}
+
+def _extract_guidance(body):
+    m = re.search(r"###\s*Merge guidance\s*\n+(.+)", body)
+    return m.group(1).strip() if m else ""
+
+def review_stage(p):
+    """Where a PR sits in the Claude <-> Codex(ChatGPT) review loop."""
+    state = p["_state"]
+    comments = p.get("_comments") or []
+    codex = [c for c in comments if CODEX_MARK in c["body"]]
+    rounds = len(codex)
+    guidance = _extract_guidance(max(codex, key=lambda c: c["createdAt"])["body"]) if codex else ""
+    if state == "MERGED":
+        key = "merged"
+    elif state == "CLOSED":
+        key = "closed"
+    elif rounds == 0:
+        key = "await-review"
+    else:
+        last = max(comments, key=lambda c: c["createdAt"])
+        key = "await-claude" if CODEX_MARK in last["body"] else "responded"
+    return {"key": key, "rounds": rounds, "guidance": guidance}
 
 # ---------------------------------------------------------------- HTML pieces
 def pr_chip(num, extra=""):
@@ -336,6 +379,62 @@ def prs_section(M):
         f'<h2>PR state</h2><span class="bsub">{src} · grouped by state, newest first</span></div>'
         f'<div class="prboard">{cols}</div></section>')
 
+def orchestration_section(M):
+    # ---- the cycle diagram (Claude <-> Codex/ChatGPT) ----
+    CLAUDE, GPT, YOU = "#d97757", "#10a37f", "#12202e"
+    steps = [
+        (CLAUDE, "Claude", "opens the PR", "1"),
+        (GPT, "ChatGPT · Codex", "reviews the diff", "2"),
+        (CLAUDE, "Claude", "addresses findings / replies", "3"),
+        (GPT, "Both", "converge on the evidence", "⟳"),
+        (YOU, "You", "decide the merge", "4"),
+    ]
+    nodes = ""
+    for i, (col, actor, act, n) in enumerate(steps):
+        if i:
+            nodes += '<span class="flarrow">→</span>'
+        nodes += (f'<span class="flnode" style="--ac:{col}"><span class="fln-n">{esc(n)}</span>'
+                  f'<span class="fln-actor">{esc(actor)}</span><span class="fln-act">{esc(act)}</span></span>')
+    diagram = (
+        f'<div class="flow">{nodes}</div>'
+        '<div class="flow-note">The loop repeats from <b>ChatGPT · Codex</b> whenever Claude pushes changes '
+        'that need another review. Codex is a peer reviewer, not a subordinate — on disagreement they converge '
+        'on the evidence, and if they can\'t, <b>you</b> decide. The GitHub PR conversation is the canonical log '
+        '(see <code>docs/pr-review-flow.md</code>). Run a round with '
+        '<code>python3 tools/review_pr_with_codex_cli.py &lt;PR&gt;</code>.</div>'
+        '<div class="fllegend">'
+        f'<span class="lgd"><i style="background:{CLAUDE}"></i>Claude — implementation</span>'
+        f'<span class="lgd"><i style="background:{GPT}"></i>ChatGPT · Codex — review</span>'
+        f'<span class="lgd"><i style="background:{YOU}"></i>You — merge decision</span></div>')
+
+    # ---- per-PR live stage ----
+    task_by_pr = {t["pr_num"]: t for t in M["tasks"] if t["pr_num"]}
+    order = {"await-claude": 0, "responded": 1, "await-review": 2, "merged": 3, "closed": 4}
+    prs = sorted(M["prs"], key=lambda p: (order.get(review_stage(p)["key"], 9), -p["number"]))
+    cards = ""
+    for p in prs:
+        st = review_stage(p)
+        label, color = RSTAGE[st["key"]]
+        t = task_by_pr.get(p["number"])
+        rounds = st["rounds"]
+        rounds_txt = (f'{rounds} review round{"s" if rounds != 1 else ""}' if rounds else "no review yet")
+        guid = f'<div class="og-guid">{esc(st["guidance"])}</div>' if st["guidance"] else ""
+        cards += (
+            f'<article class="ocard" data-pr="{p["number"]}" data-sub="{esc(slug(t["subsystem"])) if t else ""}">'
+            f'<div class="otop"><button class="prchip" data-pr="{p["number"]}">#{p["number"]}</button>'
+            + (f'<span class="task-ref">{esc(t["id"])}</span>' if t else '')
+            + '</div>'
+            f'<div class="ostage" style="--sc:{color}">{esc(label)}</div>'
+            f'<a class="otitle" href="{esc(p.get("url") or "#")}" target="_blank" rel="noopener">{esc(p["title"])}</a>'
+            f'<div class="ometa">{esc(rounds_txt)}' + (f' · updated {ago(p["updatedAt"])}' if p.get("updatedAt") else '') + '</div>'
+            + guid + '</article>')
+    live = ("live from PR comments" if M["live"] else "offline — comment history unavailable")
+    return (
+        '<section class="block" id="sec-orch">'
+        '<div class="bhead"><span class="btag" style="background:#10a37f">3 · Review orchestration</span>'
+        f'<h2>Claude ↔ ChatGPT review flow</h2><span class="bsub">the review cycle, and where each PR sits in it · {live}</span></div>'
+        f'{diagram}<div class="oboard">{cards}</div></section>')
+
 def impacts_section(M):
     # per-PR -> functionalities, grouped by subsystem
     fid_info = M["fid_info"]
@@ -374,7 +473,7 @@ def impacts_section(M):
         blocks = '<p class="muted">No impact marks yet — the review flow writes them into <code>pr-impact.json</code>.</p>'
     return (
         '<section class="block" id="sec-impacts">'
-        '<div class="bhead"><span class="btag" style="background:#7a5bd0">3 · Impacts</span>'
+        '<div class="bhead"><span class="btag" style="background:#7a5bd0">4 · Impacts</span>'
         '<h2>App impact</h2><span class="bsub">from <code>Quality/modules-features-matrix/pr-impact.json</code> · each PR → the functionalities its diff touches</span></div>'
         f'<div class="impboard">{blocks}</div></section>')
 
@@ -386,7 +485,8 @@ def render(M):
             if b64 else "")
     stamp = NOW.strftime("%Y-%m-%d %H:%M UTC")
     live_tag = "live" if M["live"] else "offline snapshot"
-    body = summary(M) + tasks_section(M) + prs_section(M) + impacts_section(M)
+    body = (summary(M) + tasks_section(M) + prs_section(M)
+            + orchestration_section(M) + impacts_section(M))
     return TEMPLATE.format(font=font, style=STYLE, body=body, stamp=stamp,
                            live_tag=live_tag, js=JS)
 
@@ -471,6 +571,33 @@ table.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:.84rem;
 .prfoot.muted{color:#b7c0ca;}
 .prcard.dim{opacity:.28;} .prcard.hl{border-color:var(--hl-line);box-shadow:0 0 0 2px var(--hl-line);}
 
+/* review orchestration */
+.flow{display:flex;align-items:stretch;gap:.4rem;flex-wrap:wrap;padding:.9rem;background:var(--surface);
+ border:1px solid var(--line);border-radius:12px;margin-bottom:.6rem;}
+.flnode{flex:1 1 150px;min-width:130px;background:var(--surface-2);border:1px solid var(--line);
+ border-top:3px solid var(--ac);border-radius:9px;padding:.5rem .6rem;display:flex;flex-direction:column;gap:.1rem;position:relative;}
+.fln-n{position:absolute;top:.4rem;right:.5rem;font-size:.62rem;font-weight:800;color:var(--ac);opacity:.8;}
+.fln-actor{font-size:.8rem;font-weight:700;color:var(--ink);}
+.fln-act{font-size:.7rem;color:var(--ink-3);}
+.flarrow{align-self:center;color:var(--ink-3);font-weight:700;font-size:1rem;}
+@media(max-width:640px){.flarrow{transform:rotate(90deg);}.flnode{flex-basis:100%;}}
+.flow-note{font-size:.78rem;color:var(--ink-3);max-width:90ch;margin:0 0 .5rem;}
+.flow-note b{color:var(--ink-2);}
+.fllegend{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:.9rem;}
+.lgd{font-size:.74rem;color:var(--ink-2);display:flex;align-items:center;gap:.35rem;}
+.lgd i{width:.7rem;height:.7rem;border-radius:3px;display:inline-block;}
+.oboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.6rem;}
+.ocard{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:.65rem .75rem;
+ border-left:4px solid var(--line);}
+.ocard.dim{opacity:.28;} .ocard.hl{border-color:var(--hl-line);box-shadow:0 0 0 2px var(--hl-line);}
+.otop{display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;}
+.ostage{font-size:.72rem;font-weight:700;color:#fff;background:var(--sc);border-radius:6px;
+ padding:.18rem .5rem;display:inline-block;margin-bottom:.35rem;}
+.otitle{display:block;color:var(--ink);font-size:.82rem;font-weight:600;text-decoration:none;line-height:1.3;}
+.otitle:hover{color:var(--amber);}
+.ometa{font-size:.68rem;color:var(--ink-3);margin-top:.3rem;}
+.og-guid{font-size:.72rem;color:var(--ink-2);margin-top:.4rem;padding-top:.4rem;border-top:1px solid var(--line-2);font-style:italic;}
+
 /* impacts */
 .impboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:.8rem;align-items:start;}
 .impcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.75rem .85rem;}
@@ -493,7 +620,7 @@ JS = """
  var sel=null;
  var all=document.querySelectorAll('[data-pr]');
  function apply(pr){
-  document.querySelectorAll('.trow,.prcard,.impcard').forEach(function(el){
+  document.querySelectorAll('.trow,.prcard,.ocard,.impcard').forEach(function(el){
    var m=el.getAttribute('data-pr');
    el.classList.toggle('hl', pr!=null && m===String(pr));
    el.classList.toggle('dim', pr!=null && m!==String(pr));
@@ -509,7 +636,7 @@ JS = """
    }
   });
  });
- document.querySelectorAll('.trow[data-pr],.prcard[data-pr],.impcard[data-pr]').forEach(function(el){
+ document.querySelectorAll('.trow[data-pr],.prcard[data-pr],.ocard[data-pr],.impcard[data-pr]').forEach(function(el){
   var pr=el.getAttribute('data-pr');
   el.addEventListener('mouseenter',function(){hover(pr);});
   el.addEventListener('mouseleave',function(){hover(null);});
@@ -546,7 +673,7 @@ TEMPLATE = """<!doctype html>
  <header class="mast">
   <p class="eyebrow">Operator dashboard</p>
   <h1>Tasks · Pull Requests · Impact</h1>
-  <p>One view over the work: every task and its merge status, the live pull-request state, and which app functionalities each PR touches. Click any <b>#PR</b> chip to highlight it across all three sections.</p>
+  <p>One view over the work: every task and its merge status, the live pull-request state, where each PR sits in the <b>Claude ↔ ChatGPT (Codex)</b> review loop, and which app functionalities each PR touches. Click any <b>#PR</b> chip to highlight it across every section.</p>
   <span class="live">Generated <b>{stamp}</b> · PR data: <b>{live_tag}</b></span>
  </header>
  <div class="filters" id="filters"></div>
