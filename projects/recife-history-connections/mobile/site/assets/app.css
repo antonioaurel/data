@@ -1,9 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
-
 /* Conexões da História — mobile. Design tokens + shell + home + list.
    Target 360px, fluid to 414+, content max-width 440px. Inter (self-hosted subset), AA. */
 
-/* Roboto — loaded from Google Fonts (see @import at top). */
+/* Roboto — self-hosted latin subset (covers PT accents); precached by sw.js for offline. */
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("fonts/roboto-latin.woff2") format("woff2");
+}
 
 :root {
   /* spacing */
