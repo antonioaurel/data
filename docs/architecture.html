@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitetura — Data (Conexões da História)</title>
+<meta name="description" content="Documento de arquitetura do projeto: pipeline, dados, frontend, CI/CD e decisões.">
+<style>
+  :root{
+    --bg:#f5f7f9; --panel:#ffffff; --ink:#161b22; --muted:#5a6673; --muted-2:#8b95a1;
+    --line:#e4e8ee; --line-2:#eef1f5; --accent:#0f766e; --accent-ink:#ffffff; --accent-soft:#e3f1ef;
+    --code-bg:#f1f4f7; --shadow:0 1px 2px rgba(20,30,50,.04),0 8px 26px rgba(20,30,50,.06);
+    --src:#1d6fb8; --xf:#a9721b; --out:#0f766e;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#0e1218; --panel:#151b23; --ink:#e6eaef; --muted:#9aa5b2; --muted-2:#6b7683;
+      --line:#242c37; --line-2:#1c232c; --accent:#2dd4bf; --accent-ink:#04211d; --accent-soft:#10312d;
+      --code-bg:#111721; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+      --src:#5aa9e6; --xf:#e0b25f; --out:#2dd4bf; }
+  }
+  :root[data-theme="light"]{ --bg:#f5f7f9; --panel:#ffffff; --ink:#161b22; --muted:#5a6673; --muted-2:#8b95a1;
+    --line:#e4e8ee; --line-2:#eef1f5; --accent:#0f766e; --accent-ink:#ffffff; --accent-soft:#e3f1ef;
+    --code-bg:#f1f4f7; --shadow:0 1px 2px rgba(20,30,50,.04),0 8px 26px rgba(20,30,50,.06);
+    --src:#1d6fb8; --xf:#a9721b; --out:#0f766e; }
+  :root[data-theme="dark"]{ --bg:#0e1218; --panel:#151b23; --ink:#e6eaef; --muted:#9aa5b2; --muted-2:#6b7683;
+    --line:#242c37; --line-2:#1c232c; --accent:#2dd4bf; --accent-ink:#04211d; --accent-soft:#10312d;
+    --code-bg:#111721; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+    --src:#5aa9e6; --xf:#e0b25f; --out:#2dd4bf; }
+
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;} body{margin:0;}
+  body{ background:var(--bg); color:var(--ink);
+    font:16px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; }
+  code,pre,.mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace; }
+  a{ color:var(--accent); }
+  .wrap{ max-width:1000px; margin:0 auto; padding:0 22px; }
+
+  header.top{ border-bottom:1px solid var(--line); background:
+     radial-gradient(1000px 380px at 15% -40%, var(--accent-soft), transparent 60%), var(--panel); }
+  header.top .wrap{ padding:40px 22px 30px; position:relative; }
+  .eyebrow{ font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); }
+  h1{ font-size:31px; letter-spacing:-.025em; margin:10px 0 8px; }
+  .lede{ font-size:16.5px; color:var(--muted); max-width:70ch; margin:0; }
+  .meta{ margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; }
+  .tag{ font-size:12px; font-weight:600; color:var(--muted); background:var(--panel); border:1px solid var(--line);
+    border-radius:999px; padding:5px 11px; }
+  .themebtn{ position:absolute; top:22px; right:22px; background:var(--panel); border:1px solid var(--line);
+    color:var(--ink); border-radius:999px; padding:7px 13px; font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; }
+
+  nav.toc{ position:sticky; top:0; z-index:5; background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  nav.toc .wrap{ display:flex; gap:6px; overflow-x:auto; padding:10px 22px; scrollbar-width:none; }
+  nav.toc .wrap::-webkit-scrollbar{ display:none; }
+  nav.toc a{ flex:0 0 auto; font-size:13px; font-weight:600; color:var(--muted); text-decoration:none;
+    padding:6px 11px; border-radius:8px; white-space:nowrap; }
+  nav.toc a:hover{ color:var(--ink); background:var(--line-2); }
+
+  main .wrap{ padding:14px 22px 70px; }
+  section{ padding-top:34px; }
+  h2{ font-size:22px; letter-spacing:-.02em; margin:8px 0 4px; padding-top:8px; }
+  h2 .n{ color:var(--muted-2); font-variant-numeric:tabular-nums; font-weight:700; margin-right:10px; }
+  h3{ font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:22px 0 8px; }
+  p{ margin:10px 0; max-width:72ch; }
+  ul{ max-width:72ch; } li{ margin:5px 0; }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
+    padding:18px 20px; margin:14px 0; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; } .grid2 .card{ margin:0; }
+  @media (max-width:640px){ .grid2{ grid-template-columns:1fr; } }
+  kbd,code.inline{ background:var(--code-bg); border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-size:.86em; }
+  pre{ background:var(--code-bg); border:1px solid var(--line); border-radius:10px; padding:14px 16px; overflow-x:auto; font-size:13px; line-height:1.55; }
+
+  /* pipeline diagram */
+  .pipe{ display:flex; align-items:stretch; gap:0; overflow-x:auto; padding:6px 0 2px; }
+  .stage{ flex:1 0 150px; min-width:150px; border:1px solid var(--line); border-radius:12px; background:var(--panel);
+    padding:12px 13px; position:relative; }
+  .stage + .stage{ margin-left:26px; }
+  .stage + .stage::before{ content:"→"; position:absolute; left:-22px; top:50%; transform:translateY(-50%);
+    color:var(--muted-2); font-size:18px; }
+  .stage .k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+  .stage.src .k{ color:var(--src); } .stage.xf .k{ color:var(--xf); } .stage.out .k{ color:var(--out); }
+  .stage .t{ font-weight:600; font-size:14px; } .stage .d{ font-size:12px; color:var(--muted); margin-top:3px; }
+  .stage .cmd{ font-size:11.5px; color:var(--muted-2); margin-top:6px; }
+
+  table{ width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; display:block; overflow-x:auto; }
+  th,td{ text-align:left; padding:9px 12px; border-bottom:1px solid var(--line-2); vertical-align:top; white-space:nowrap; }
+  th{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted-2); border-bottom:1px solid var(--line); }
+  td.wrap{ white-space:normal; }
+  .pill{ display:inline-block; font-size:11px; font-weight:700; border-radius:6px; padding:2px 8px; }
+  .pill.src{ background:color-mix(in srgb,var(--src) 15%,transparent); color:var(--src); }
+  .pill.der{ background:color-mix(in srgb,var(--out) 15%,transparent); color:var(--out); }
+
+  .adr{ display:flex; gap:12px; align-items:flex-start; }
+  .adr .num{ flex:0 0 auto; width:40px; height:40px; border-radius:10px; background:var(--accent-soft); color:var(--accent);
+    font-weight:800; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .note{ border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 10px 10px 0; padding:10px 14px; margin:14px 0; font-size:14px; }
+  footer{ border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+  footer .wrap{ padding:22px; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin-top:8px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; } .legend i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <button class="themebtn" id="themebtn" type="button">Tema</button>
+    <div class="eyebrow">Documento de arquitetura</div>
+    <h1>Data — hub de projetos de dados</h1>
+    <p class="lede">Um site estático no GitHub Pages sobre uma base curada de história de Pernambuco
+      (“Conexões da História”). Este documento descreve o padrão de arquitetura, o pipeline de dados,
+      o frontend, o CI/CD e as decisões registradas (ADRs).</p>
+    <div class="meta">
+      <span class="tag">Jamstack estático</span><span class="tag">ETL em build-time</span>
+      <span class="tag">Sem banco de dados</span><span class="tag">GitHub Pages</span>
+      <span class="tag">i18n PT/EN</span><span class="tag">556 nós · 3.814 arestas</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#visao">Visão geral</a><a href="#padrao">Padrão</a><a href="#pipeline">Pipeline</a>
+  <a href="#dados">Modelo de dados</a><a href="#frontend">Frontend</a><a href="#repo">Repositório</a>
+  <a href="#cicd">CI/CD</a><a href="#shared">Camada compartilhada</a><a href="#adr">Decisões (ADR)</a>
+  <a href="#stack">Stack</a><a href="#futuro">Quando revisitar</a>
+</div></nav>
+
+<main><div class="wrap">
+
+  <section id="visao">
+    <h2><span class="n">01</span>Visão geral</h2>
+    <p>O repositório é um <strong>hub de projetos de dados</strong>. A página inicial (<code class="inline">index.html</code>)
+      lê um manifesto (<code class="inline">projects.json</code>) e monta os cards dos projetos, agrupados por
+      <em>abordagem</em> (Visualização, Qualidade, Pipeline/ETL, Predição). O projeto principal é
+      <strong>Conexões da História</strong>: um grafo de pessoas, lugares e fatos de Recife/Pernambuco,
+      com visualizações (diagrama, mapa, matriz), lista e um painel de qualidade (fill rate).</p>
+    <div class="note">O dado é <strong>somente leitura em runtime</strong>: nada é gravado pelo site.
+      A edição acontece numa planilha; o site apenas consome arquivos gerados.</div>
+  </section>
+
+  <section id="padrao">
+    <h2><span class="n">02</span>Padrão de arquitetura</h2>
+    <p>Combinação de padrões conhecidos:</p>
+    <ul>
+      <li><strong>Static-first / Jamstack (sem o “A” de API):</strong> tudo é pré-construído e servido como
+        arquivo estático; renderização <em>client-side</em> (D3, Leaflet, canvas).</li>
+      <li><strong>ETL em build-time:</strong> <em>extract</em> da planilha → <em>transform/validate</em> em Python
+        → <em>load</em> como JSON.</li>
+      <li><strong>Single source of truth → derivados (precomputed views):</strong> os JSON são <em>views</em>
+        geradas e commitadas; um <em>drift-check</em> garante <code class="inline">fonte == derivado</code>.</li>
+      <li><strong>Flat-file data (schema-on-write):</strong> sem banco; integridade validada na escrita/build.</li>
+      <li><strong>MPA + roteamento por viewport:</strong> múltiplas páginas, com troca desktop↔mobile em 1024&nbsp;px.</li>
+      <li><strong>Registry/manifest:</strong> <code class="inline">projects.json</code> dirige o hub.</li>
+    </ul>
+  </section>
+
+  <section id="pipeline">
+    <h2><span class="n">03</span>Pipeline de dados</h2>
+    <p>Fluxo determinístico da fonte até o site:</p>
+    <div class="card">
+      <div class="pipe">
+        <div class="stage src"><div class="k">Fonte</div><div class="t">Google Sheet</div>
+          <div class="d">Abas nodes / edges / aliases — superfície de edição humana.</div></div>
+        <div class="stage xf"><div class="k">Extract</div><div class="t">pull_sheet.py</div>
+          <div class="d">Baixa as abas (CSV publicado).</div><div class="cmd mono">→ data/*.csv</div></div>
+        <div class="stage xf"><div class="k">Transform</div><div class="t">build.py</div>
+          <div class="d">Valida + resolve arestas (id→nome→alias) e gera os derivados.</div></div>
+        <div class="stage out"><div class="k">Load</div><div class="t">data/*.json</div>
+          <div class="d">graph, content, map, matrix, node/*, i18n — o que o site consome.</div></div>
+        <div class="stage out"><div class="k">Deploy</div><div class="t">GitHub Pages</div>
+          <div class="d">Publica o repositório inteiro (site estático).</div></div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--src)"></i> Fonte</span>
+        <span><i style="background:var(--xf)"></i> Transformação (Python, stdlib)</span>
+        <span><i style="background:var(--out)"></i> Derivado / deploy</span>
+      </div>
+    </div>
+    <h3>Integridade</h3>
+    <ul>
+      <li><strong>Erros (falham o build/CI):</strong> id duplicado, nome duplicado, origem de aresta não resolvida.</li>
+      <li><strong>Avisos:</strong> aresta quebrada (alvo não resolvido), alias sem canônico, self-loop, descrição/cidade faltando.</li>
+      <li><strong>Drift-check diário:</strong> se o CSV commitado divergir da planilha, o CI falha.</li>
+    </ul>
+  </section>
+
+  <section id="dados">
+    <h2><span class="n">04</span>Modelo de dados</h2>
+    <p>A fonte são CSVs versionados no git (exportados da planilha). Os JSON são gerados a partir deles.</p>
+    <table>
+      <thead><tr><th>Arquivo</th><th>Tipo</th><th class="wrap">Conteúdo</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">nodes.csv</td><td><span class="pill src">fonte</span></td><td class="wrap">id, name, type, sub_type, neighborhood, city, lat, lon, image, description…</td></tr>
+        <tr><td class="mono">edges.csv</td><td><span class="pill src">fonte</span></td><td class="wrap">origin_id, target_id, relationship_type…</td></tr>
+        <tr><td class="mono">aliases.csv</td><td><span class="pill src">fonte</span></td><td class="wrap">alias → canonical_id (resolução de arestas por nome)</td></tr>
+        <tr><td class="mono">coords.csv / periods.csv</td><td><span class="pill src">fonte</span></td><td class="wrap">coordenadas e períodos auxiliares</td></tr>
+        <tr><td class="mono">graph.json</td><td><span class="pill der">derivado</span></td><td class="wrap"><code class="inline">{nodes:[{n,t}], edges:[[i,j]]}</code> — pares por índice, não direcionado</td></tr>
+        <tr><td class="mono">content.json</td><td><span class="pill der">derivado</span></td><td class="wrap"><code class="inline">{nome:{st, l, img, d}}</code> — subtipo, bairro, imagem, descrição</td></tr>
+        <tr><td class="mono">map.json</td><td><span class="pill der">derivado</span></td><td class="wrap">locais com coordenada (255) + conexões, para o mapa</td></tr>
+        <tr><td class="mono">matrix.json / node/*</td><td><span class="pill der">derivado</span></td><td class="wrap">matriz por tipo e páginas por nó (mobile)</td></tr>
+        <tr><td class="mono">descriptions_en.json</td><td><span class="pill der">derivado</span></td><td class="wrap">fonte de EN (mesclada por id no build mobile)</td></tr>
+      </tbody>
+    </table>
+    <div class="note">Tipos de nó: <strong>Local</strong> (azul), <strong>Personagem</strong> (vermelho),
+      <strong>Fato Histórico</strong> (verde). Nunca colorir só por matiz — ícone/rótulo sempre acompanham.</div>
+  </section>
+
+  <section id="frontend">
+    <h2><span class="n">05</span>Frontend</h2>
+    <div class="grid2">
+      <div class="card"><h3 style="margin-top:0">Desktop — <code class="inline">pages/</code></h3>
+        <p>Páginas ricas em <strong>D3.js</strong> (diagrama) e <strong>Leaflet + tiles CARTO</strong> (mapa geográfico).
+          i18n via páginas <code class="inline">pages/en/</code>.</p></div>
+      <div class="card"><h3 style="margin-top:0">Mobile — <code class="inline">mobile/site/</code></h3>
+        <p>App <strong>self-contained</strong> (<code class="inline">app.js</code>/<code class="inline">app.css</code>,
+          fonte self-hosted). Algumas telas (mapa, diagrama) são páginas próprias com canvas e i18n embutido.</p></div>
+    </div>
+    <h3>Roteamento por viewport</h3>
+    <p>Cada página tem um par desktop↔mobile. Abaixo de <strong>1024&nbsp;px</strong> o desktop redireciona para o mobile;
+      em <strong>≥1024&nbsp;px</strong> o mobile redireciona para o desktop — nos dois sentidos, e reagindo a resize.</p>
+    <h3>i18n (PT/EN)</h3>
+    <p>Strings estáticas marcadas com <code class="inline">data-i18n</code>; um dicionário aplica o EN quando
+      <code class="inline">localStorage.lang === "en"</code>. Descrições de conteúdo têm sua própria fonte de tradução.</p>
+  </section>
+
+  <section id="repo">
+    <h2><span class="n">06</span>Layout do repositório</h2>
+    <pre>Data/
+├── index.html            # hub: lê projects.json e monta os cards
+├── projects.json         # manifesto de projetos + abordagens
+├── projects/
+│   └── recife-history-connections/
+│       ├── data/         # CSV (fonte) + JSON (derivado)
+│       ├── pages/        # frontend desktop (D3, Leaflet) + en/
+│       ├── mobile/site/  # app mobile self-contained
+│       ├── shared/       # tokens compartilhados (ADR 0002)
+│       ├── tools/        # utilitários (ex.: i18n_report.py)
+│       ├── pull_sheet.py # extract (planilha → CSV)
+│       └── build.py      # transform/validate (CSV → JSON)
+├── docs/adr/             # decisões de arquitetura
+├── _archive/             # material aposentado (não publicado)
+└── .github/workflows/    # CI: sync, build, deploy</pre>
+  </section>
+
+  <section id="cicd">
+    <h2><span class="n">07</span>CI/CD</h2>
+    <table>
+      <thead><tr><th>Workflow</th><th class="wrap">Faz</th><th>Gatilho</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">sync-sheet.yml</td><td class="wrap">pull_sheet + build + commit; ou só drift-check</td><td>manual · diário (cron)</td></tr>
+        <tr><td class="mono">build.yml</td><td class="wrap">valida a base e verifica derivados em sincronia (<code class="inline">--check</code>)</td><td>push/PR nos dados</td></tr>
+        <tr><td class="mono">deploy-pages.yml</td><td class="wrap">publica o site inteiro no GitHub Pages</td><td>push na main</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="shared">
+    <h2><span class="n">08</span>Camada compartilhada</h2>
+    <p>Para reduzir duplicação entre desktop e mobile (ADR 0002), <code class="inline">shared/</code> é a fonte única do
+      que ambos usam. Já existe <code class="inline">tokens.json</code> (cores por tipo/categoria) →
+      <code class="inline">build_shared.py</code> gera <code class="inline">tokens.css</code> (com <code class="inline">--check</code> no CI).
+      Próximos passos: dicionário i18n e modelo de dados do grafo compartilhados.</p>
+  </section>
+
+  <section id="adr">
+    <h2><span class="n">09</span>Decisões de arquitetura (ADRs)</h2>
+    <p>Registros datados em <code class="inline">docs/adr/</code> (Contexto · Situação anterior · Decisão · Benefícios · Pontos de atenção · Melhora esperada).</p>
+    <div class="card adr"><div class="num">01</div><div><strong>Sem banco de dados</strong> — JSON estático gerado a partir da planilha.
+      Um banco só se justificaria com uma camada de API/serviços (projeto à parte). <a href="adr/0001-sem-banco-de-dados.md">ler →</a></div></div>
+    <div class="card adr"><div class="num">02</div><div><strong>Unificar a camada, não a página</strong> — compartilhar dados/i18n/tokens
+      entre desktop e mobile, mantendo a apresentação separada por formato. <a href="adr/0002-unificar-a-camada-nao-a-pagina.md">ler →</a></div></div>
+    <div class="card adr"><div class="num">03</div><div><strong>i18n no modelo de dados (sem SQL)</strong> — PT e EN como cidadãos de
+      primeira classe; relatório de cobertura no lugar de uma <em>view</em> SQL. <a href="adr/0003-i18n-no-modelo-de-dados.md">ler →</a></div></div>
+  </section>
+
+  <section id="stack">
+    <h2><span class="n">10</span>Stack</h2>
+    <ul>
+      <li><strong>Dados/build:</strong> Python (biblioteca padrão), CSV, JSON.</li>
+      <li><strong>Frontend:</strong> HTML/CSS/JS vanilla; D3.js v4; Leaflet + tiles CARTO; canvas/SVG.</li>
+      <li><strong>Fonte da verdade:</strong> Google Sheets (publicado como CSV).</li>
+      <li><strong>Hospedagem/CI:</strong> GitHub Pages + GitHub Actions.</li>
+    </ul>
+  </section>
+
+  <section id="futuro">
+    <h2><span class="n">11</span>Quando revisitar</h2>
+    <p>A decisão de “sem banco” vale para o <strong>site estático</strong>. Reconsiderar se surgir:</p>
+    <ul>
+      <li>uma <strong>camada de API/serviços</strong> (runtime dinâmico, escrita, auth) — seria um projeto separado, com o próprio banco e ADR;</li>
+      <li>crescimento do dataset além do que o JSON estático serve bem, ou necessidade de consulta real no cliente —
+        avaliar <strong>SQLite em build-time</strong> ou <strong>SQLite no browser (sql.js)</strong> antes de qualquer banco em servidor.</li>
+    </ul>
+  </section>
+
+</div></main>
+
+<footer><div class="wrap">
+  Documento gerado para o repositório <code class="inline">antonioaurel/data</code>. Complementa os ADRs em
+  <code class="inline">docs/adr/</code>. Mantenha em sincronia com o código quando a arquitetura mudar.
+</div></footer>
+
+<script>
+  var tb=document.getElementById('themebtn');
+  tb.onclick=function(){ var cur=document.documentElement.getAttribute('data-theme');
+    if(!cur) cur=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+    document.documentElement.setAttribute('data-theme', cur==='dark'?'light':'dark'); };
+</script>
+</body>
+</html>
