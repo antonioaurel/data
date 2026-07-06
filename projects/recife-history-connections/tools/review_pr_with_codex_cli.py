@@ -30,6 +30,9 @@ DEFAULT_INSTRUCTIONS = (
     "blocking findings, say that clearly and mention residual risk or test gaps."
 )
 DEFAULT_LOG_DIR = ".pr-review-logs"
+# Hidden marker identifying the single consolidated review comment so re-review
+# rounds edit it in place instead of stacking new comments.
+REVIEW_MARKER = "<!-- codex-automated-review -->"
 
 
 def now_iso() -> str:
@@ -199,6 +202,44 @@ def codex_review(worktree: Path, base: str, instructions: str) -> str:
 def post_comment(repo: str, pr_number: str, body: str) -> str:
     result = run(["gh", "pr", "comment", pr_number, "--repo", repo, "--body", body])
     return result.stdout.strip()
+
+
+def upsert_review_comment(
+    repo: str, pr_number: str, review_body: str, head_sha: str, base_ref: str
+) -> tuple[str, int]:
+    """Post or update the single consolidated Codex review comment.
+
+    Finds the newest comment carrying REVIEW_MARKER and edits it in place so
+    repeated review rounds don't stack new comments; otherwise creates one.
+    Prepends the marker plus a round/timestamp/head-SHA line. Returns
+    (comment_url, round_number).
+    """
+    listed = run(["gh", "api", f"repos/{repo}/issues/{pr_number}/comments?per_page=100"])
+    try:
+        comments = json.loads(listed.stdout or "[]")
+    except json.JSONDecodeError:
+        comments = []
+    marked = [c for c in comments if REVIEW_MARKER in (c.get("body") or "")]
+    target = marked[-1] if marked else None  # GitHub returns comments oldest-first
+
+    round_number = 1
+    if target:
+        m = re.search(r"[Rr]ound (\d+)", target.get("body") or "")
+        round_number = (int(m.group(1)) if m else 1) + 1
+
+    meta = (
+        f"_Codex review round {round_number} · head `{head_sha[:9] or '?'}` "
+        f"vs `{base_ref}` · {now_iso()}_"
+    )
+    body = f"{REVIEW_MARKER}\n{meta}\n\n{review_body}"
+
+    if target:
+        run(
+            ["gh", "api", "-X", "PATCH",
+             f"repos/{repo}/issues/comments/{target['id']}", "-f", f"body={body}"]
+        )
+        return target.get("html_url", ""), round_number
+    return post_comment(repo, pr_number, body), round_number
 
 
 def notify_claude(
@@ -410,7 +451,7 @@ def main() -> int:
             log_event(root, args.log_dir, number, "Codex review output:\n\n" + (review or "No output."))
             # One consolidated comment: linked task info + the Codex review + merge guidance.
             header = issue_header(args.repo, linked_issue(info))
-            body = (
+            review_body = (
                 (header + "\n\n" if header else "")
                 + "## Codex automated review\n\n"
                 + f"{review or 'No review output was produced.'}\n\n"
@@ -418,10 +459,12 @@ def main() -> int:
                 + f"{merge_guidance(review)}"
             )
             if args.dry_run:
-                print(body)
+                print(REVIEW_MARKER + "\n" + review_body)
             else:
-                post_url = post_comment(args.repo, number, body)
-                print(f"Posted Codex review: {post_url}", flush=True)
+                post_url, round_number = upsert_review_comment(
+                    args.repo, number, review_body, info.get("headRefOid", ""), info["baseRefName"]
+                )
+                print(f"Posted Codex review (round {round_number}): {post_url}", flush=True)
                 log_event(root, args.log_dir, number, f"Posted GitHub review comment: {post_url}")
                 update_dashboard(
                     root,
