@@ -28,7 +28,7 @@
   var EN = {
     "nav-inicio": "Home", "nav-diagrama": "Diagram", "nav-mapa": "Map", "nav-matriz": "Matrix",
     "nav-fillrate": "Fill rate", "nav-fontes": "Sources", "nav-sobre": "About", "subtitle-uf": "Pernambuco",
-    "sw-list": "List", "sw-graph": "Graph", "sw-map": "Map", "sw-matrix": "Matrix",
+    "sw-list": "List", "sw-graph": "Diagram", "sw-map": "Map", "sw-matrix": "Matrix",
     "home-tagline": "A mapping of the connections between people, places and events in the history of Pernambuco at points that influenced Brazil.",
     "home-viz": "Visualizations", "home-verlista": "See the full list →",
     "viz-matriz-n": "Matrix", "viz-matriz-d": "Overview of connections by type.",
