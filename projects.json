@@ -35,7 +35,17 @@
       "summary": "Interactive D3.js graph mapping the historical connections between people, places, and events in Recife and Pernambuco, with a data-quality (fill rate) panel.",
       "approaches": ["visualization", "quality", "pipeline"],
       "tech": ["D3.js", "Python", "GitHub Pages"],
-      "status": "live"
+      "status": "live",
+      "links": {
+        "title": "Impact Monitoring Dashboard",
+        "items": [
+          { "label": "Architecture", "href": "projects/recife-history-connections/docs/architecture.html", "desc": "System design & key decisions" },
+          { "label": "Monitoring Dashboard", "href": "projects/recife-history-connections/dashboard/dashboard.html", "desc": "Operator view — tasks × PRs × impact" },
+          { "label": "Modules & Features", "href": "projects/recife-history-connections/Quality/modules-features-matrix/matrix.html", "desc": "Modules × features coverage matrix" },
+          { "label": "PR Impact", "href": "projects/recife-history-connections/Quality/modules-features-matrix/pr-impact.html", "desc": "Which PRs touch which modules" },
+          { "label": "ChatGPT Review", "href": "projects/recife-history-connections/docs/documentation-review-chatgpt-claude.html", "desc": "Cross-model documentation review" }
+        ]
+      }
     },
     {
       "title": "Historical Connections — Base Cleaning",
