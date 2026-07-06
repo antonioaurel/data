@@ -9,8 +9,7 @@
 <script>document.documentElement.className='has-js';try{var _t=localStorage.getItem('theme');if(_t)document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <title>Mapa — Conexões da História</title>
 <style>
-@font-face{ font-family:"InterMock"; font-style:normal; font-weight:100 900; font-display:swap;
-  src:url("assets/fonts/inter-latin.woff2") format("woff2"); }
+@font-face{ font-family:"Roboto"; font-style:normal; font-weight:300 700; font-display:swap; src:url("assets/fonts/roboto-latin.woff2") format("woff2"); }
 :root{
   --bg:#0f1115; --studio:#08090c; --surface:#171a21; --surface-2:#1e222b; --border:#2a2f3a;
   --text:#e8eaed; --muted:#9aa0ab; --muted-2:#6b7280; --accent:#14b8a6; --accent-ink:#04211d; --focus:#5b9bd5;
@@ -31,7 +30,7 @@
 *{box-sizing:border-box;}
 html,body{margin:0;height:100%;}
 body{ background:radial-gradient(1200px 700px at 50% -10%, rgba(20,184,166,.06), transparent 60%), var(--studio);
-  color:var(--text); font-family:"InterMock",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color:var(--text); font-family:"Roboto",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   -webkit-font-smoothing:antialiased; display:flex; flex-direction:column; align-items:center; min-height:100%; }
 button{font-family:inherit;}
 :focus-visible{outline:3px solid var(--focus); outline-offset:2px; border-radius:8px;}
@@ -64,7 +63,7 @@ button{font-family:inherit;}
 .fbtn.on{ border-color:var(--accent); }
 
 .map-wrap{ position:relative; flex:1 1 auto; min-height:0; background:var(--map); touch-action:none; }
-.phone.has-sel .map-wrap{ flex:0 0 42%; }
+.phone.has-sel .map-wrap{ flex:1 1 0; min-height:34%; }
 #map{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .map-badge{ position:absolute; left:12px; top:12px; z-index:3; display:flex; align-items:center; gap:7px;
   background:color-mix(in srgb, var(--surface) 82%, transparent); border:1px solid var(--border);
@@ -84,7 +83,7 @@ button{font-family:inherit;}
 /* half-screen info panel */
 .info-panel{ flex:1 1 auto; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border);
   padding:8px 16px 16px; display:none; text-align:center; }
-.phone.has-sel .info-panel{ display:block; }
+.phone.has-sel .info-panel{ display:block; flex:1 1 0; min-height:0; }
 .info-panel .assoc, .info-panel .assoc-head{ text-align:left; }
 .info-panel .panel-actions{ justify-content:center; }
 .info-panel .panel-actions .btn{ flex:0 1 auto; min-width:240px; }
@@ -185,16 +184,16 @@ button{font-family:inherit;}
     <div class="filterbar">
       <button class="fbtn" id="openSearch" type="button">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
-        Buscar local</button>
-      <button class="fbtn" id="openBairro" type="button">Bairro <span class="v" id="bairroLabel">Todos</span> <span class="chev">▾</span></button>
-      <button class="fbtn" id="openCat" type="button">Categoria <span class="v" id="catLabel">14</span> <span class="chev">▾</span></button>
+        <span data-i18n="f-search">Buscar local</span></button>
+      <button class="fbtn" id="openBairro" type="button"><span data-i18n="f-bairro">Bairro</span> <span class="v" id="bairroLabel">Todos</span> <span class="chev">▾</span></button>
+      <button class="fbtn" id="openCat" type="button"><span data-i18n="f-cat">Categoria</span> <span class="v" id="catLabel">14</span> <span class="chev">▾</span></button>
     </div>
 
     <div class="map-wrap" id="mapWrap">
       <canvas id="map"></canvas>
-      <div class="map-badge"><span><b id="visCount">255</b> locais</span></div>
+      <div class="map-badge"><span><b id="visCount">255</b> <span data-i18n="m-places">locais</span></span></div>
       <div class="compass"><b>N</b></div>
-      <div class="hint" id="hint">Toque num ponto · arraste · + / − para zoom</div>
+      <div class="hint" id="hint" data-i18n="m-hint">Toque num ponto · arraste · + / − para zoom</div>
       <div class="zoom">
         <button id="zin" type="button" aria-label="Aproximar">+</button>
         <button id="zout" type="button" aria-label="Afastar">−</button>
@@ -212,31 +211,39 @@ button{font-family:inherit;}
     </nav>
 
     <div class="fs" id="fsSearch" hidden>
-      <div class="fs-head"><button class="fs-back" data-close type="button" aria-label="Voltar">←</button><div class="fs-title">Buscar local</div></div>
+      <div class="fs-head"><button class="fs-back" data-close type="button" aria-label="Voltar">←</button><div class="fs-title" data-i18n="f-search">Buscar local</div></div>
       <div class="fs-search"><div class="box">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
-        <input id="searchInput" type="text" placeholder="Nome do local…" autocomplete="off"></div></div>
-      <div class="fs-hint" id="searchHint">Digite ao menos 2 letras.</div>
+        <input id="searchInput" type="text" placeholder="Nome do local…" data-i18n-ph="ph-search" autocomplete="off"></div></div>
+      <div class="fs-hint" id="searchHint" data-i18n="s-min">Digite ao menos 2 letras.</div>
       <ul class="fs-list" id="searchList"></ul>
     </div>
     <div class="fs" id="fsBairro" hidden>
-      <div class="fs-head"><button class="fs-back" data-close type="button" aria-label="Voltar">←</button><div class="fs-title">Bairro</div></div>
+      <div class="fs-head"><button class="fs-back" data-close type="button" aria-label="Voltar">←</button><div class="fs-title" data-i18n="f-bairro">Bairro</div></div>
       <div class="fs-search"><div class="box">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line></svg>
-        <input id="bairroInput" type="text" placeholder="Filtrar bairros…" autocomplete="off"></div></div>
+        <input id="bairroInput" type="text" placeholder="Filtrar bairros…" data-i18n-ph="ph-bairro" autocomplete="off"></div></div>
       <ul class="fs-list" id="bairroList"></ul>
     </div>
     <div class="fs" id="fsCat" hidden>
-      <div class="fs-head"><button class="fs-back" data-close type="button" aria-label="Voltar">←</button><div class="fs-title">Categoria</div>
-        <button class="link-btn first" id="catAll" type="button">Todas</button><button class="link-btn" id="catNone" type="button">Limpar</button></div>
+      <div class="fs-head"><button class="fs-back" data-close type="button" aria-label="Voltar">←</button><div class="fs-title" data-i18n="f-cat">Categoria</div>
+        <button class="link-btn first" id="catAll" type="button" data-i18n="c-all">Todas</button><button class="link-btn" id="catNone" type="button" data-i18n="c-clear">Limpar</button></div>
       <ul class="fs-list" id="catList"></ul>
-      <div class="fs-foot"><button class="btn primary" id="catApply" type="button">Aplicar</button></div>
+      <div class="fs-foot"><button class="btn primary" id="catApply" type="button" data-i18n="c-apply">Aplicar</button></div>
     </div>
   </div>
 </div>
 
 <script>
 var PLACES = [];
+var LANG=(function(){try{return localStorage.getItem('lang')==='en'?'en':'pt';}catch(e){return 'pt';}})();
+function T(pt,en){ return LANG==='en'?en:pt; }
+var I18N={'subtitle-uf':'Pernambuco','sw-graph':'Graph','sw-map':'Map','sw-matrix':'Matrix','sw-list':'List','nav-inicio':'Home','nav-diagrama':'Diagram','nav-mapa':'Map','nav-matriz':'Matrix','nav-fillrate':'Fill rate','nav-fontes':'Sources','nav-sobre':'About','f-search':'Search place','f-bairro':'Neighborhood','f-cat':'Category','m-places':'places','m-hint':'Tap a point · drag · + / − to zoom','s-min':'Type at least 2 letters.','c-all':'All','c-clear':'Clear','c-apply':'Apply'};
+var I18N_PH={'ph-search':'Place name…','ph-bairro':'Filter neighborhoods…'};
+function applyI18n(){ var lb=document.getElementById('langBtn'); if(lb) lb.textContent=LANG==='en'?'PT':'EN'; document.documentElement.lang=LANG==='en'?'en':'pt-BR'; if(LANG!=='en') return;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'),function(el){ var k=el.getAttribute('data-i18n'); if(I18N[k]!=null) el.textContent=I18N[k]; });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-ph]'),function(el){ var k=el.getAttribute('data-i18n-ph'); if(I18N_PH[k]!=null) el.placeholder=I18N_PH[k]; }); var bl=document.getElementById('bairroLabel'); if(bl) bl.textContent='All'; }
+applyI18n();
 var CAT_COLOR = { 'Igreja':'#7e57c2','Templo Religioso':'#4527a0','Museu':'#e8833a','Teatro':'#ec407a',
   'Sítio Histórico':'#6d4c41','Cultura & Memória':'#fdd835','Logradouro':'#607d8b','Praças e Parques':'#43a047',
   'Educação':'#1e88e5','Instituições & Governo':'#546e7a','Água & Transporte':'#00acc1','Saúde':'#e53935',
@@ -356,16 +363,16 @@ function renderPanel(p){
   var list=conns.map(function(q){ return '<li data-n="'+encodeURIComponent(q.n)+'">'+
     '<span class="dot" style="background:'+catColor(q.c)+'"></span>'+
     '<span class="tx"><div class="nm">'+esc(q.n)+'</div><div class="sub">'+esc(q.c)+' · '+esc(q.l||'—')+'</div></span>'+
-    '<span class="chev">›</span></li>'; }).join('') || '<li style="cursor:default;color:var(--muted)">Sem locais conectados no mapa.</li>';
+    '<span class="chev">›</span></li>'; }).join('') || '<li style="cursor:default;color:var(--muted)">'+T('Sem locais conectados no mapa.','No connected places on the map.')+'</li>';
   var panel=document.getElementById('infoPanel');
   panel.style.setProperty('--tc', col);
   panel.innerHTML='<div class="grab"></div>'+
-    '<span class="type-chip" style="--tc:'+col+'"><span class="dot"></span>'+esc(p.st||'Local')+'</span>'+
+    '<span class="type-chip" style="--tc:'+col+'"><span class="dot"></span>'+esc(p.st||T('Local','Place'))+'</span>'+
     '<h2>'+esc(p.n)+'</h2>'+
-    '<div class="loc"><b>'+esc(p.l||'—')+'</b> · <span class="num">'+p.d+'</span> conexões'+(p.dm<p.d?' · <span class="num">'+p.dm+'</span> no mapa':'')+'</div>'+
+    '<div class="loc"><b>'+esc(p.l||'—')+'</b> · <span class="num">'+p.d+'</span> '+T('conexões','connections')+(p.dm<p.d?' · <span class="num">'+p.dm+'</span> '+T('no mapa','on the map'):'')+'</div>'+
     (p.ds?'<p class="desc">'+esc(p.ds)+'</p>':'')+
-    '<div class="panel-actions"><button class="btn primary" id="pGraph" type="button">Ver no diagrama</button></div>'+
-    '<div class="assoc-head">Conexões no mapa <span class="n">'+p.dm+'</span><span class="rule"></span></div>'+
+    '<div class="panel-actions"><button class="btn primary" id="pGraph" type="button">'+T('Ver no diagrama','View in diagram')+'</button></div>'+
+    '<div class="assoc-head">'+T('Conexões no mapa','Connections on the map')+' <span class="n">'+p.dm+'</span><span class="rule"></span></div>'+
     '<ul class="assoc" id="assocList">'+list+'</ul>';
   panel.scrollTop=0;
   Array.prototype.forEach.call(panel.querySelectorAll('#assocList li[data-n]'),function(el){ el.onclick=function(){
@@ -381,7 +388,7 @@ document.getElementById('openSearch').onclick=function(){ openFs('fsSearch'); va
 function renderSearch(q){ var list=document.getElementById('searchList'), hint=document.getElementById('searchHint'); q=norm(q);
   if(q.length<2){ list.innerHTML=''; hint.style.display=''; return; } hint.style.display='none';
   var res=PLACES.filter(function(p){ return norm(p.n).indexOf(q)>=0; }).slice(0,60);
-  if(!res.length){ list.innerHTML='<li class="fs-empty">Nenhum local encontrado.</li>'; return; }
+  if(!res.length){ list.innerHTML='<li class="fs-empty">'+T('Nenhum local encontrado.','No place found.')+'</li>'; return; }
   list.innerHTML=res.map(function(p){ return '<button class="li" data-n="'+encodeURIComponent(p.n)+'">'+
     '<span class="dot" style="background:'+catColor(p.c)+'"></span><span class="tx"><div class="nm">'+esc(p.n)+'</div><div class="sub">'+esc(p.c)+' · '+esc(p.l||'—')+'</div></span><span class="ct">'+p.d+'</span></button>'; }).join('');
   Array.prototype.forEach.call(list.children,function(el){ el.onclick=function(){ var p=placeByName[decodeURIComponent(el.getAttribute('data-n'))];
@@ -390,13 +397,13 @@ document.getElementById('searchInput').addEventListener('input',function(){ rend
 
 document.getElementById('openBairro').onclick=function(){ openFs('fsBairro'); var i=document.getElementById('bairroInput'); i.value=''; renderBairros(''); setTimeout(function(){i.focus();},60); };
 function renderBairros(q){ var list=document.getElementById('bairroList'); q=norm(q);
-  var items=[{v:'',lab:'Todos os bairros',ct:PLACES.length}].concat(bairros.filter(function(b){return norm(b).indexOf(q)>=0;})
+  var items=[{v:'',lab:T('Todos os bairros','All neighborhoods'),ct:PLACES.length}].concat(bairros.filter(function(b){return norm(b).indexOf(q)>=0;})
     .map(function(b){ return {v:b,lab:b,ct:PLACES.filter(function(p){return p.l===b;}).length}; }));
   list.innerHTML=items.map(function(it){ var sel=(bairroFilter===it.v); return '<button class="li" role="option" aria-selected="'+sel+'" data-v="'+encodeURIComponent(it.v)+'"><span class="tx"><div class="nm">'+esc(it.lab)+'</div></span><span class="ct">'+it.ct+'</span><span class="tick">✓</span></button>'; }).join('');
   Array.prototype.forEach.call(list.children,function(el){ el.onclick=function(){ bairroFilter=decodeURIComponent(el.getAttribute('data-v'));
     syncBairroLabel(); updateCount(); render(); closeFs(document.getElementById('fsBairro')); }; }); }
 document.getElementById('bairroInput').addEventListener('input',function(){ renderBairros(this.value); });
-function syncBairroLabel(){ document.getElementById('bairroLabel').textContent=bairroFilter||'Todos'; document.getElementById('openBairro').classList.toggle('on',!!bairroFilter); }
+function syncBairroLabel(){ document.getElementById('bairroLabel').textContent=bairroFilter||T('Todos','All'); document.getElementById('openBairro').classList.toggle('on',!!bairroFilter); }
 
 document.getElementById('openCat').onclick=function(){ openFs('fsCat'); renderCats(); };
 function renderCats(){ var list=document.getElementById('catList');
@@ -427,7 +434,7 @@ fetch('../../data/map.json').then(function(r){return r.json();}).then(function(d
   return fetch('../../data/content.json').then(function(r){return r.json();}).then(function(cx){
     PLACES.forEach(function(p){ var e=cx[p.n]; if(e&&e.d) p.ds=e.d; });
   }).catch(function(){});
-}).then(function(){ initData(); resize(); updateCount(); }).catch(function(e){ var h=document.getElementById('hint'); if(h) h.textContent='Não foi possível carregar o mapa.'; });
+}).then(function(){ initData(); resize(); updateCount(); }).catch(function(e){ var h=document.getElementById('hint'); if(h) h.textContent=T('Não foi possível carregar o mapa.','Could not load the map.'); });
 </script>
 </body>
 </html>
