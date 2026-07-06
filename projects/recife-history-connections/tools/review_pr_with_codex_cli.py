@@ -260,7 +260,10 @@ def notify_claude(
     from_pr: bool,
     github_ping: bool,
 ) -> None:
-    script = root / "tools" / "notify_claude_pr_review.py"
+    # This tool lives in projects/recife-history-connections/tools/, not at the
+    # git root; resolve the sibling handoff script relative to THIS file so it is
+    # found regardless of the repo root or the caller's cwd.
+    script = Path(__file__).resolve().parent / "notify_claude_pr_review.py"
     cmd = [
         "python3",
         str(script),
