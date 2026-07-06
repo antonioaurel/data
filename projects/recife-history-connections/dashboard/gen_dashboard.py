@@ -201,6 +201,23 @@ def build():
         prs = prs_from_tasks(tasks)
     pr_to_fids, fid_info, pr_titles = load_impacts()
 
+    # pr-impact.json keys impacts by the task's *issue* number (e.g. 15, 16),
+    # but PRs are addressed by their real PR number (8, 9). Remap impact keys
+    # through the task table's issue -> pr_num link so impacts land on the live
+    # PR instead of rendering as orphan #issue cards. Keys with no known issue
+    # mapping pass through unchanged.
+    issue_to_pr = {t["issue_num"]: t["pr_num"] for t in tasks
+                   if t.get("issue_num") and t.get("pr_num")}
+    if issue_to_pr:
+        remapped = {}
+        for key, fids in pr_to_fids.items():
+            bucket = remapped.setdefault(issue_to_pr.get(key, key), [])
+            for f in fids:
+                if f not in bucket:
+                    bucket.append(f)
+        pr_to_fids = remapped
+        pr_titles = {issue_to_pr.get(n, n): v for n, v in pr_titles.items()}
+
     by_num = {p["number"]: p for p in prs}
     # normalise draft into a pseudo-state for display
     for p in prs:
