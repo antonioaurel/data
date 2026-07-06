@@ -238,7 +238,9 @@ def build():
     }
 
 # ---------------------------------------------------------------- review cycle
-# The Codex bridge posts one consolidated comment headed with this marker.
+# The Codex bridge posts one consolidated comment with the hidden marker and
+# the visible heading below. Older rounds used only the heading.
+CODEX_MARKER = "<!-- codex-automated-review"
 CODEX_MARK = "## Codex automated review"
 
 # review-stage -> (label, color). Derived live from the PR's GitHub comments,
@@ -255,12 +257,24 @@ def _extract_guidance(body):
     m = re.search(r"###\s*Merge guidance\s*\n+(.+)", body)
     return m.group(1).strip() if m else ""
 
+def _is_codex_comment(body):
+    return CODEX_MARKER in body or CODEX_MARK in body
+
+def _codex_rounds(comments):
+    codex = [c for c in comments if _is_codex_comment(c["body"])]
+    explicit = []
+    for c in codex:
+        m = re.search(r"\bround\s+(\d+)\b", c["body"], re.I)
+        if m:
+            explicit.append(int(m.group(1)))
+    return max(explicit) if explicit else len(codex)
+
 def review_stage(p):
     """Where a PR sits in the Claude <-> Codex(ChatGPT) review loop."""
     state = p["_state"]
     comments = p.get("_comments") or []
-    codex = [c for c in comments if CODEX_MARK in c["body"]]
-    rounds = len(codex)
+    codex = [c for c in comments if _is_codex_comment(c["body"])]
+    rounds = _codex_rounds(comments)
     guidance = _extract_guidance(max(codex, key=lambda c: c["createdAt"])["body"]) if codex else ""
     if state == "MERGED":
         key = "merged"
@@ -270,8 +284,102 @@ def review_stage(p):
         key = "await-review"
     else:
         last = max(comments, key=lambda c: c["createdAt"])
-        key = "await-claude" if CODEX_MARK in last["body"] else "responded"
+        key = "await-claude" if _is_codex_comment(last["body"]) else "responded"
     return {"key": key, "rounds": rounds, "guidance": guidance}
+
+def _plain(s, limit=190):
+    s = re.sub(r"<!--.*?-->", " ", s or "", flags=re.S)
+    s = re.sub(r"`([^`]+)`", r"\1", s)
+    s = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", s)
+    s = re.sub(r"[*_#>]+", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return (s[:limit - 1].rstrip() + "…") if len(s) > limit else s
+
+def _codex_findings(body):
+    findings = []
+    for line in (body or "").splitlines():
+        m = re.match(r"\s*-\s+\[(P[123])\]\s+(.+)", line)
+        if not m:
+            continue
+        sev, title = m.groups()
+        title = re.split(r"\s+[—-]\s+", title, maxsplit=1)[0]
+        findings.append({"sev": sev, "title": _plain(title, 120)})
+    return findings
+
+def _comment_excerpt(body):
+    for line in (body or "").splitlines():
+        line = line.strip()
+        if not line or line.startswith("<!--") or line.startswith("##"):
+            continue
+        if line.startswith("**Task:**") or line.startswith("### Task"):
+            continue
+        return _plain(line)
+    return ""
+
+def _is_claude_or_fix_reply(body):
+    body_l = (body or "").lower()
+    signals = (
+        "fixed in", "corrig", "addressed", "claude-reply", "what was done",
+        "review — what was done", "good catch", "thanks for the catch",
+    )
+    return any(s in body_l for s in signals)
+
+def trace_events(p, task):
+    comments = sorted(p.get("_comments") or [], key=lambda c: c.get("createdAt") or "")
+    events = []
+    if task:
+        events.append({
+            "actor": "Claude",
+            "kind": "Implementation",
+            "summary": f"{task['id']} · {task['task']}",
+            "evidence": "task table",
+        })
+    else:
+        events.append({
+            "actor": "Claude",
+            "kind": "Implementation",
+            "summary": p["title"],
+            "evidence": "PR title",
+        })
+    seen_codex = False
+    for c in comments:
+        body = c["body"]
+        if _is_codex_comment(body):
+            seen_codex = True
+            findings = _codex_findings(body)
+            if findings:
+                sev = ", ".join(sorted({f["sev"] for f in findings}))
+                titles = "; ".join(f["title"] for f in findings[:2])
+                more = f" +{len(findings)-2} more" if len(findings) > 2 else ""
+                summary = f"{sev}: {titles}{more}"
+            else:
+                summary = "No blocking finding captured in the automated review."
+            events.append({
+                "actor": "Codex",
+                "kind": "Review",
+                "summary": summary,
+                "evidence": "Codex comment",
+            })
+        elif seen_codex and _is_claude_or_fix_reply(body):
+            events.append({
+                "actor": "Claude / operator",
+                "kind": "Fix or reply",
+                "summary": _comment_excerpt(body) or "Response posted after Codex review.",
+                "evidence": "PR comment",
+            })
+    return [events[0], *events[-4:]] if len(events) > 5 else events
+
+def impacted_area_chips(p, M):
+    chips = ""
+    for fid in p.get("_impacts") or []:
+        info = M["fid_info"].get(fid, {})
+        label = " / ".join(x for x in (
+            _pretty(info.get("subsystem", "")),
+            info.get("module", ""),
+            info.get("feature", ""),
+        ) if x)
+        chips += f'<span class="achip">{esc(label or fid)}</span>'
+    return chips or '<span class="muted">No mapped impact</span>'
 
 # ---------------------------------------------------------------- HTML pieces
 def pr_chip(num, extra=""):
@@ -452,6 +560,42 @@ def orchestration_section(M):
         f'<h2>Claude ↔ ChatGPT review flow</h2><span class="bsub">the review cycle, and where each PR sits in it · {live}</span></div>'
         f'{diagram}<div class="oboard">{cards}</div></section>')
 
+def trace_section(M):
+    task_by_pr = {t["pr_num"]: t for t in M["tasks"] if t["pr_num"]}
+    cards = ""
+    for p in sorted(M["prs"], key=lambda x: -x["number"]):
+        t = task_by_pr.get(p["number"])
+        events = trace_events(p, t)
+        st = review_stage(p)
+        slabel, scol = RSTAGE[st["key"]]
+        nimp = len(p.get("_impacts") or [])
+        if events:
+            timeline = ""
+            for i, ev in enumerate(events, 1):
+                timeline += (
+                    f'<li><span class="tnum">{i}</span><div><b>{esc(ev["actor"])}</b>'
+                    f'<span class="tkind">{esc(ev["kind"])}</span>'
+                    f'<p>{esc(ev["summary"])}</p>'
+                    f'<em>{esc(ev["evidence"])}</em></div></li>')
+        else:
+            timeline = '<li><span class="tnum">1</span><div><b>No exchange captured</b><p>No Claude/Codex exchange was found in PR comments.</p></div></li>'
+        cards += (
+            f'<article class="tracecard" data-pr="{p["number"]}" data-sub="{esc(slug(t["subsystem"])) if t else ""}">'
+            f'<div class="trtop"><button class="prchip" data-pr="{p["number"]}">#{p["number"]}</button>'
+            + (f'<span class="task-ref">{esc(t["id"])}</span>' if t else '')
+            + f'<span class="mini" style="background:{scol}">{esc(slabel)}</span></div>'
+            f'<a class="trtitle" href="{esc(p.get("url") or "#")}" target="_blank" rel="noopener">{esc(p["title"])}</a>'
+            f'<ol class="timeline">{timeline}</ol>'
+            f'<div class="areas"><div class="areas-h">Impacted areas <span>{nimp}</span></div>'
+            f'<div class="areas-c">{impacted_area_chips(p, M)}</div></div>'
+            '</article>')
+    src = "validated from task table, PR comments, and impact matrix" if M["live"] else "offline snapshot from task table and impact matrix"
+    return (
+        '<section class="block" id="sec-trace">'
+        '<div class="bhead"><span class="btag" style="background:#2f6db0">4 · Review & Impact Trace</span>'
+        f'<h2>Exchange summary by PR</h2><span class="bsub">{src} · Claude actions, Codex reviews, replies, and impacted areas</span></div>'
+        f'<div class="traceboard">{cards}</div></section>')
+
 def impacts_section(M):
     # per-PR -> functionalities, grouped by subsystem
     fid_info = M["fid_info"]
@@ -490,7 +634,7 @@ def impacts_section(M):
         blocks = '<p class="muted">No impact marks yet — the review flow writes them into <code>pr-impact.json</code>.</p>'
     return (
         '<section class="block" id="sec-impacts">'
-        '<div class="bhead"><span class="btag" style="background:#7a5bd0">4 · Impacts</span>'
+        '<div class="bhead"><span class="btag" style="background:#7a5bd0">5 · Impacts</span>'
         '<h2>App impact</h2><span class="bsub">from <code>Quality/modules-features-matrix/pr-impact.json</code> · each PR → the functionalities its diff touches</span></div>'
         f'<div class="impboard">{blocks}</div></section>')
 
@@ -503,7 +647,7 @@ def render(M):
     stamp = NOW.strftime("%Y-%m-%d %H:%M UTC")
     live_tag = "live" if M["live"] else "offline snapshot"
     body = (summary(M) + tasks_section(M) + prs_section(M)
-            + orchestration_section(M) + impacts_section(M))
+            + orchestration_section(M) + trace_section(M) + impacts_section(M))
     return TEMPLATE.format(font=font, style=STYLE, body=body, stamp=stamp,
                            live_tag=live_tag, js=JS)
 
@@ -615,6 +759,31 @@ table.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:.84rem;
 .ometa{font-size:.68rem;color:var(--ink-3);margin-top:.3rem;}
 .og-guid{font-size:.72rem;color:var(--ink-2);margin-top:.4rem;padding-top:.4rem;border-top:1px solid var(--line-2);font-style:italic;}
 
+/* review trace */
+.traceboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:.8rem;align-items:start;}
+.tracecard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.75rem .85rem;}
+.tracecard.dim{opacity:.28;} .tracecard.hl{border-color:var(--hl-line);box-shadow:0 0 0 2px var(--hl-line);}
+.trtop{display:flex;align-items:center;gap:.4rem;margin-bottom:.45rem;flex-wrap:wrap;}
+.trtop .mini{margin-left:auto;}
+.trtitle{display:block;color:var(--ink);font-size:.86rem;font-weight:700;text-decoration:none;line-height:1.3;}
+.trtitle:hover{color:var(--amber);}
+.timeline{list-style:none;margin:.7rem 0 .65rem;padding:0;display:flex;flex-direction:column;gap:.55rem;}
+.timeline li{display:grid;grid-template-columns:1.45rem 1fr;gap:.45rem;align-items:start;}
+.tnum{display:grid;place-items:center;width:1.35rem;height:1.35rem;border-radius:50%;background:var(--surface-2);
+ border:1px solid var(--line);color:var(--ink-3);font-size:.68rem;font-weight:800;}
+.timeline b{font-size:.76rem;color:var(--ink);margin-right:.35rem;}
+.tkind{font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);
+ background:var(--surface-2);border:1px solid var(--line-2);border-radius:5px;padding:.06rem .3rem;}
+.timeline p{margin:.12rem 0 0;color:var(--ink-2);font-size:.76rem;line-height:1.35;}
+.timeline em{display:block;margin-top:.12rem;color:var(--ink-3);font-size:.64rem;font-style:normal;}
+.areas{border-top:1px solid var(--line-2);padding-top:.55rem;}
+.areas-h{display:flex;justify-content:space-between;align-items:center;color:var(--ink-3);
+ font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem;}
+.areas-h span{letter-spacing:0;color:#5b3fb0;background:#efeaf9;border-radius:6px;padding:.02rem .4rem;font-size:.72rem;}
+.areas-c{display:flex;gap:.3rem;flex-wrap:wrap;}
+.achip{font-size:.7rem;color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);
+ border-radius:6px;padding:.12rem .4rem;}
+
 /* impacts */
 .impboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:.8rem;align-items:start;}
 .impcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.75rem .85rem;}
@@ -637,7 +806,7 @@ JS = """
  var sel=null;
  var all=document.querySelectorAll('[data-pr]');
  function apply(pr){
-  document.querySelectorAll('.trow,.prcard,.ocard,.impcard').forEach(function(el){
+  document.querySelectorAll('.trow,.prcard,.ocard,.tracecard,.impcard').forEach(function(el){
    var m=el.getAttribute('data-pr');
    el.classList.toggle('hl', pr!=null && m===String(pr));
    el.classList.toggle('dim', pr!=null && m!==String(pr));
@@ -653,7 +822,7 @@ JS = """
    }
   });
  });
- document.querySelectorAll('.trow[data-pr],.prcard[data-pr],.ocard[data-pr],.impcard[data-pr]').forEach(function(el){
+ document.querySelectorAll('.trow[data-pr],.prcard[data-pr],.ocard[data-pr],.tracecard[data-pr],.impcard[data-pr]').forEach(function(el){
   var pr=el.getAttribute('data-pr');
   el.addEventListener('mouseenter',function(){hover(pr);});
   el.addEventListener('mouseleave',function(){hover(null);});
