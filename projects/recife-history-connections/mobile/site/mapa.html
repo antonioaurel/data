@@ -240,7 +240,7 @@ var LANG=(function(){try{return localStorage.getItem('lang')==='en'?'en':'pt';}c
 function T(pt,en){ return LANG==='en'?en:pt; }
 var I18N={'subtitle-uf':'Pernambuco','sw-graph':'Graph','sw-map':'Map','sw-matrix':'Matrix','sw-list':'List','nav-inicio':'Home','nav-diagrama':'Diagram','nav-mapa':'Map','nav-matriz':'Matrix','nav-fillrate':'Fill rate','nav-fontes':'Sources','nav-sobre':'About','f-search':'Search place','f-bairro':'Neighborhood','f-cat':'Category','m-places':'places','m-hint':'Tap a point · drag · + / − to zoom','s-min':'Type at least 2 letters.','c-all':'All','c-clear':'Clear','c-apply':'Apply'};
 var I18N_PH={'ph-search':'Place name…','ph-bairro':'Filter neighborhoods…'};
-function applyI18n(){ var lb=document.getElementById('langBtn'); if(lb) lb.textContent=LANG==='en'?'PT':'EN'; if(LANG!=='en') return;
+function applyI18n(){ var lb=document.getElementById('langBtn'); if(lb) lb.textContent=LANG==='en'?'PT':'EN'; document.documentElement.lang=LANG==='en'?'en':'pt-BR'; if(LANG!=='en') return;
   Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'),function(el){ var k=el.getAttribute('data-i18n'); if(I18N[k]!=null) el.textContent=I18N[k]; });
   Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-ph]'),function(el){ var k=el.getAttribute('data-i18n-ph'); if(I18N_PH[k]!=null) el.placeholder=I18N_PH[k]; }); var bl=document.getElementById('bairroLabel'); if(bl) bl.textContent='All'; }
 applyI18n();
