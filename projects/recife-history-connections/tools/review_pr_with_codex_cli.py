@@ -116,8 +116,17 @@ def fetch_pr(root: Path, info: dict[str, Any]) -> str:
     # fetched SHA matches the PR's current head — GitHub's `pull/<n>/head` can lag
     # a branch push by a few seconds, and reviewing a stale head produces
     # phantom findings (the stale-SHA guard).
+    # Update the base's remote-tracking ref explicitly (`+<base>:refs/remotes/...`)
+    # so `codex review --base origin/<base>` always compares against the current
+    # base. A standard clone's fetch refspec already keeps `origin/<base>` current,
+    # but making it explicit removes that dependency and any stale-base risk.
+    base = info["baseRefName"]
     run(
-        ["git", "fetch", "origin", info["baseRefName"], f"+pull/{pr_number}/head:{pr_ref}"],
+        [
+            "git", "fetch", "origin",
+            f"+{base}:refs/remotes/origin/{base}",
+            f"+pull/{pr_number}/head:{pr_ref}",
+        ],
         cwd=root,
     )
     fetched = run(["git", "rev-parse", pr_ref], cwd=root).stdout.strip()
