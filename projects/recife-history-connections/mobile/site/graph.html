@@ -180,7 +180,7 @@ button{font-family:inherit;}
 </div>
 
 <script>
-var G={names:[],t:[],st:[],l:[],ds:[],adj:[]};
+var G={names:[],t:[],st:[],l:[],ds:[],adj:[],name2id:{}};
 var TCOL={'L':'--t-local','P':'--t-personagem','F':'--t-evento'};
 var TNAME=(function(){try{return localStorage.getItem('lang')==='en';}catch(e){return false;}})()?{'L':'Place','P':'Historical figure','F':'Historical fact'}:{'L':'Local','P':'Personagem','F':'Fato Histórico'};
 function tvar(t){ return 'var('+(TCOL[t]||'--t-local')+')'; }
@@ -280,7 +280,9 @@ document.getElementById('zin').onclick=function(){ zoomTo(scale*1.5,W/2,H/2); };
 document.getElementById('zout').onclick=function(){ zoomTo(scale/1.5,W/2,H/2); };
 document.getElementById('zreset').onclick=function(){ layout(); fit(); render(); };
 
-function navigate(i){ focus=i; layout(); fit(); render(); renderPanel(); document.getElementById('infoPanel').scrollTop=0; }
+var _hashLock=false; /* set while we drive the hash ourselves, so the hashchange listener doesn't re-navigate */
+function syncHash(i){ var id=G.name2id[G.names[i]]; if(id==null) return; var h='#node='+encodeURIComponent(id); if(location.hash===h) return; _hashLock=true; location.hash=h; }
+function navigate(i){ focus=i; syncHash(i); layout(); fit(); render(); renderPanel(); document.getElementById('infoPanel').scrollTop=0; }
 
 function renderPanel(){
   var i=focus, col=tvar(G.t[i]);
@@ -350,12 +352,16 @@ Promise.all([
   G.adj=raw.map(function(a){ return a.sort(function(x,y){return deg[y]-deg[x];}); });
   G.st=[]; G.l=[]; G.ds=[];
   G.names.forEach(function(nm){ var c=content[nm]||{}; G.st.push(c.st||''); G.l.push(c.l||''); G.ds.push(c.d||''); });
-  var id2name={}; idx.forEach(function(o){ id2name[o.id]=o.name; });
+  var id2name={}; idx.forEach(function(o){ id2name[o.id]=o.name; G.name2id[o.name]=o.id; });
   var name2i={}; G.names.forEach(function(nm,i){ name2i[nm]=i; });
-  var m=(location.hash||'').match(/node=([^&]+)/), start=null;
-  if(m){ var nm=id2name[decodeURIComponent(m[1])]; if(nm!=null && name2i[nm]!=null) start=name2i[nm]; }
+  function focusFromHash(){ var m=(location.hash||'').match(/node=([^&]+)/); if(!m) return null; var nm=id2name[decodeURIComponent(m[1])]; return (nm!=null && name2i[nm]!=null) ? name2i[nm] : null; }
+  var start=focusFromHash();
   if(start==null) start=name2i['Marco Zero'];
   focus = start!=null?start:0;
+  syncHash(focus);
+  /* browser Back/Forward (and external hash edits) re-open the matching node; the _hashLock guard
+     stops our own syncHash() writes from bouncing back through here as a second navigate(). */
+  window.addEventListener('hashchange',function(){ if(_hashLock){ _hashLock=false; return; } var i=focusFromHash(); if(i!=null && i!==focus) navigate(i); });
   layout(); resize(); fit(); render(); renderPanel();
 }).catch(function(e){ var ip=document.getElementById('infoPanel'); if(ip) ip.innerHTML='<p style=\"padding:24px;text-align:center;color:var(--muted)\">Não foi possível carregar o diagrama.</p>'; });
 </script>
