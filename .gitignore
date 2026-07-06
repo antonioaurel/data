@@ -6,3 +6,6 @@
 
 # Locks temporários de planilha/LibreOffice/Office
 .~lock.*#
+
+# Logs de execução do bridge de review (Codex CLI)
+/.pr-review-logs/
