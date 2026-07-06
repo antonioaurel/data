@@ -75,7 +75,7 @@ def pr_info(repo: str, pr: str) -> dict[str, Any]:
             "--repo",
             repo,
             "--json",
-            "number,title,url,headRefName,baseRefName,author,body",
+            "number,title,url,headRefName,baseRefName,author,body,headRefOid",
         ]
     )
     return json.loads(result.stdout)
@@ -108,7 +108,23 @@ def issue_header(repo: str, number: str | None) -> str:
 def fetch_pr(root: Path, info: dict[str, Any]) -> str:
     pr_number = str(info["number"])
     pr_ref = f"refs/remotes/origin/pr-{pr_number}"
-    run(["git", "fetch", "origin", info["baseRefName"], f"pull/{pr_number}/head:{pr_ref}"], cwd=root)
+    # Force-update the ref (leading '+'): a stale `pr-<n>` ref left from a prior
+    # review round would otherwise make us review an old commit. Then assert the
+    # fetched SHA matches the PR's current head — GitHub's `pull/<n>/head` can lag
+    # a branch push by a few seconds, and reviewing a stale head produces
+    # phantom findings (the stale-SHA guard).
+    run(
+        ["git", "fetch", "origin", info["baseRefName"], f"+pull/{pr_number}/head:{pr_ref}"],
+        cwd=root,
+    )
+    fetched = run(["git", "rev-parse", pr_ref], cwd=root).stdout.strip()
+    expected = info.get("headRefOid")
+    if expected and fetched != expected:
+        raise SystemExit(
+            f"Stale PR head for #{pr_number}: fetched {fetched[:9]} but the PR head is "
+            f"{expected[:9]}. `pull/{pr_number}/head` has not caught up with the branch yet — "
+            "retry in a few seconds so the review runs against the current commit."
+        )
     return pr_ref
 
 
@@ -183,6 +199,32 @@ def codex_review(worktree: Path, base: str, instructions: str) -> str:
 def post_comment(repo: str, pr_number: str, body: str) -> str:
     result = run(["gh", "pr", "comment", pr_number, "--repo", repo, "--body", body])
     return result.stdout.strip()
+
+
+def notify_claude(
+    root: Path,
+    repo: str,
+    pr_number: str,
+    log_dir: str,
+    *,
+    from_pr: bool,
+    github_ping: bool,
+) -> None:
+    script = root / "tools" / "notify_claude_pr_review.py"
+    cmd = [
+        "python3",
+        str(script),
+        pr_number,
+        "--repo",
+        repo,
+        "--log-dir",
+        log_dir,
+    ]
+    if from_pr:
+        cmd.append("--from-pr")
+    if github_ping:
+        cmd.append("--github-ping")
+    run(cmd, cwd=root)
 
 
 def discussion_summary(review: str) -> str:
@@ -311,6 +353,21 @@ def main() -> int:
         action="store_true",
         help="Print the review instead of posting it to GitHub",
     )
+    parser.add_argument(
+        "--notify-claude",
+        action="store_true",
+        help="After posting the Codex review, invoke the Claude handoff script.",
+    )
+    parser.add_argument(
+        "--notify-from-pr",
+        action="store_true",
+        help="When notifying Claude, pass --from-pr so Claude can resume a PR-linked session.",
+    )
+    parser.add_argument(
+        "--notify-github-ping",
+        action="store_true",
+        help="When notifying Claude, also post an @claude ping on the PR.",
+    )
     args = parser.parse_args()
 
     ensure_tools()
@@ -379,6 +436,17 @@ def main() -> int:
                     "Merge guidance:\n\n"
                     f"{merge_guidance(review)}",
                 )
+                if args.notify_claude:
+                    notify_claude(
+                        root,
+                        args.repo,
+                        number,
+                        args.log_dir,
+                        from_pr=args.notify_from_pr,
+                        github_ping=args.notify_github_ping,
+                    )
+                    print(f"Notified Claude about Codex review for #{number}", flush=True)
+                    log_event(root, args.log_dir, number, "Notified Claude about Codex review.")
         except Exception as exc:
             update_dashboard(
                 root,
