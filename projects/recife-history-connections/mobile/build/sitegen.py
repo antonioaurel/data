@@ -71,7 +71,7 @@ def view_switcher(active, base=""):
     """Segmented control over the three projections. JS enhances it (carries the current
     node / list filters via sessionStorage); the static default is plain navigation."""
     tabs = [("list", "Lista", base + "list.html"),
-            ("graph", "Grafo", base + "graph.html"),
+            ("graph", "Diagrama", base + "graph.html"),
             ("matrix", "Matriz", base + "matriz.html")]
     items = []
     for key, label, href in tabs:
@@ -452,22 +452,17 @@ def render_fontes():
     return shell("Fontes — Conexões da História", "fontes", "../data", "fontes", body)
 
 
+# The mobile diagram (graph.html) is a self-contained, standalone interactive page: it
+# inlines its own CSS + canvas renderer and fetches the graph/index/content JSON at runtime,
+# so — unlike the other pages — it does NOT use shell()/app.css/app.js. Because it carries no
+# build-time data, the page is authored as a committed template and emitted verbatim; edit
+# build/diagram_page.html to change it (keep it in sync with what the site ships).
+_DIAGRAM_PAGE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "diagram_page.html")
+
+
 def render_graph():
-    body = (
-        view_switcher("graph") + "\n"
-        "<p><a class='detail-back' href='list.html' data-i18n='back-list'>← Lista</a></p>\n"
-        "<h1 id='graph-title' class='section-h' style='font-size:18px'>Conexões</h1>\n"
-        "<div id='graph-canvas' class='graph-canvas' role='img' aria-live='polite'></div>\n"
-        "<p id='graph-hint' class='mx-intro'></p>\n"
-        "<p class='mx-note'>Visualização condensada — no celular o grafo mostra até 5 conexões por "
-        "vez. A rede completa, item a item, abre melhor no computador. "
-        "<a href='" + DESKTOP_DIAGRAM + "' target='_blank' rel='noopener'>Abrir o diagrama completo "
-        "no computador ↗</a></p>\n"
-        "<div id='graph-panel' class='graph-panel' hidden></div>\n"
-        "<noscript><p class='empty-state'>O grafo precisa de JavaScript. "
-        "<a href='list.html'>Ver a lista</a>.</p></noscript>\n"
-    )
-    return shell("Grafo — Conexões da História", "graph", "../data", "inicio", body)
+    with open(_DIAGRAM_PAGE_PATH, encoding="utf-8") as f:
+        return f.read()
 
 
 def build_site(index, details, matrix, stats, site_dir):
