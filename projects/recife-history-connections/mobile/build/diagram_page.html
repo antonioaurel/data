@@ -281,7 +281,7 @@ document.getElementById('zout').onclick=function(){ zoomTo(scale/1.5,W/2,H/2); }
 document.getElementById('zreset').onclick=function(){ layout(); fit(); render(); };
 
 var _hashLock=false; /* set while we drive the hash ourselves, so the hashchange listener doesn't re-navigate */
-function syncHash(i){ var id=G.name2id[G.names[i]]; if(id==null) return; var h='#node='+encodeURIComponent(id); if(location.hash===h) return; _hashLock=true; location.hash=h; }
+function syncHash(i){ var id=G.name2id[G.names[i]]; if(id==null) return; try{ sessionStorage.setItem('ctxNode', id); }catch(e){} /* share focus with List/Matrix switcher (app.js reads ssGet("ctxNode")) */ var h='#node='+encodeURIComponent(id); if(location.hash===h) return; _hashLock=true; location.hash=h; }
 function navigate(i){ focus=i; syncHash(i); layout(); fit(); render(); renderPanel(); document.getElementById('infoPanel').scrollTop=0; }
 
 function renderPanel(){

@@ -39,7 +39,7 @@ MAP_URL = "../../pages/mapa.html"   # geographic map (Leaflet); lives under desk
 
 # Bottom/top nav sections.
 NAV_ITEMS = [("index.html", "Início", "🏠", "inicio"),
-             ("graph.html#node=" + MARCO_ZERO, "Diagram", "🕸", "diagrama"),
+             ("graph.html#node=" + MARCO_ZERO, "Diagrama", "🕸", "diagrama"),
              ("matriz.html", "Matriz", "▦", "matriz"),
              ("fillrate.html", "Fill rate", "📊", "fillrate"),
              ("fontes.html", "Fontes", "📚", "fontes"),
