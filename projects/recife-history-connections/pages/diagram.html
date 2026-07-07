@@ -424,15 +424,15 @@
 <body>
 
 <header>
-  <a class="back-link" href="index.html">← Início</a>
+  <a data-testid="pc-diagram-nav-back" class="back-link" href="index.html">← Início</a>
   <div class="header-title">Conexões <span>da História</span></div>
-  <nav class="nav-links">
-    <a class="active" href="diagram.html">Diagrama</a>
-    <a href="matrix.html">Matrix</a>
-    <a href="stats.html">Fill Rate</a>
-    <a href="sources.html">Fontes</a>
-    <a href="mapa.html">Mapa</a>
-    <a href="sobre.html">Sobre</a>
+  <nav class="nav-links" data-testid="pc-diagram-nav">
+    <a data-testid="pc-diagram-nav-link-diagram" class="active" href="diagram.html">Diagrama</a>
+    <a data-testid="pc-diagram-nav-link-matrix" href="matrix.html">Matrix</a>
+    <a data-testid="pc-diagram-nav-link-fill-rate" href="stats.html">Fill Rate</a>
+    <a data-testid="pc-diagram-nav-link-sources" href="sources.html">Fontes</a>
+    <a data-testid="pc-diagram-nav-link-map" href="mapa.html">Mapa</a>
+    <a data-testid="pc-diagram-nav-link-about" href="sobre.html">Sobre</a>
   </nav>
   <div class="legend">
     <div class="legend-item">
@@ -453,14 +453,14 @@
 <div class="main">
   <div id="left">
     <div id="diagram-search">
-      <input id="node-search" class="ds-input" type="text" placeholder="Buscar nó…" autocomplete="off" list="node-list">
+      <input id="node-search" data-testid="pc-diagram-sidebar-input-search" class="ds-input" type="text" placeholder="Buscar nó…" autocomplete="off" list="node-list">
       <datalist id="node-list"></datalist>
     </div>
     <div id="bairro-filter">
-      <input id="bairro-search" class="ds-input" type="text" placeholder="Filtrar por bairro…" autocomplete="off" list="bairro-list">
+      <input id="bairro-search" data-testid="pc-diagram-sidebar-input-neighborhood" class="ds-input" type="text" placeholder="Filtrar por bairro…" autocomplete="off" list="bairro-list">
       <datalist id="bairro-list"></datalist>
     </div>
-    <div id="type-filter">
+    <div id="type-filter" data-testid="pc-diagram-sidebar-filter-type">
       <div class="tf-title">Filtros</div>
       <div class="tf-desc">selecione para ver por tipo de nó</div>
       <span class="type-chip" data-type="Local"          onclick="setFilter('Local')"><span class="chip-dot" style="background:#4a90d9"></span>Local</span>
@@ -470,16 +470,16 @@
     <div id="diagram-hint">
       <strong>Como navegar</strong>
       <span>🖱️ Arraste para mover &nbsp;·&nbsp; 🔍 Scroll para dar zoom &nbsp;·&nbsp; Clique num nó para destacar suas conexões</span>
-      <button id="hint-close" title="Fechar">×</button>
+      <button id="hint-close" data-testid="pc-diagram-hint-close" title="Fechar">×</button>
     </div>
     <div id="tooltip"></div>
   </div>
-  <div id="right">
+  <div id="right" data-testid="pc-diagram-panel">
     <div class="panel-placeholder" id="panel-placeholder">
       <div class="ph-icon">◎</div>
       <p>Clique em um nó do diagrama para ver os detalhes e conexões históricas.</p>
     </div>
-    <div id="panel-content"></div>
+    <div id="panel-content" data-testid="pc-diagram-panel-content"></div>
   </div>
 </div>
 
