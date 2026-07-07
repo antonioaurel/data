@@ -119,7 +119,8 @@ button{font-family:inherit;}
 .li .sub{ font-size:12px; color:var(--muted); } .li .ct{ color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
 /* full node page */
 .page{ padding:22px 20px 30px; text-align:center; }
-.page .desc{ text-align:left; font-size:14px; line-height:1.6; margin-top:14px; }
+.page .desc{ text-align:justify; font-size:14px; line-height:1.6; margin-top:14px; }
+.page-img{ display:block; width:100%; max-height:240px; object-fit:cover; border-radius:12px; border:1px solid var(--border); margin:16px 0 0; }
 .toast{ position:absolute; left:50%; bottom:66px; z-index:60; transform:translate(-50%,10px); background:var(--text); color:var(--bg); font-size:12px; font-weight:600; padding:8px 14px; border-radius:9px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:300px; text-align:center; }
 .toast.show{ opacity:.96; transform:translate(-50%,0); }
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
@@ -181,7 +182,7 @@ button{font-family:inherit;}
       <div class="fs-body"><ul class="fs-list" id="searchList"></ul></div>
     </div>
     <div class="fs" id="fsPage" hidden>
-      <div class="fs-head"><button class="fs-back" data-close type="button">←</button><div class="fs-title" data-i18n="d-page">Página do nó</div></div>
+      <div class="fs-head"><button class="fs-back" data-close type="button">←</button><div class="fs-title" id="fsPageTitle">Página do nó</div></div>
       <div class="fs-body"><div class="page" id="pageBody"></div></div>
     </div>
 
@@ -190,7 +191,7 @@ button{font-family:inherit;}
 </div>
 
 <script>
-var G={names:[],t:[],st:[],l:[],ds:[],adj:[],name2id:{}};
+var G={names:[],t:[],st:[],l:[],ds:[],im:[],adj:[],name2id:{}};
 var TCOL={'L':'--t-local','P':'--t-personagem','F':'--t-evento'};
 var TNAME=(function(){try{return localStorage.getItem('lang')==='en';}catch(e){return false;}})()?{'L':'Place','P':'Historical figure','F':'Historical fact'}:{'L':'Local','P':'Personagem','F':'Fato Histórico'};
 function tvar(t){ return 'var('+(TCOL[t]||'--t-local')+')'; }
@@ -353,11 +354,13 @@ function renderPanel(){
 
 /* full node page (same as opening from the list) */
 function openPage(){ var i=focus; var b=document.getElementById('pageBody');
+  document.getElementById('fsPageTitle').textContent=G.names[i];
   var nb=G.adj[i];
   var list=nb.map(function(j){ return '<li data-i="'+j+'"><span class="dot" style="background:'+tvar(G.t[j])+'"></span><span class="tx"><div class="nm">'+esc(G.names[j])+'</div><div class="sub">'+TNAME[G.t[j]]+(G.l[j]?' · '+esc(G.l[j]):'')+'</div></span><span class="chev">›</span></li>'; }).join('');
   b.innerHTML='<span class="type-chip" style="--tc:'+tvar(G.t[i])+'"><span class="dot"></span>'+esc(TNAME[G.t[i]])+(G.st[i]?' · '+esc(G.st[i]):'')+'</span>'+
     '<h2 style="margin:12px 0 4px;font-size:23px;font-weight:700">'+esc(G.names[i])+'</h2>'+
     '<div class="loc" style="font-size:13px;color:var(--muted)">'+((G.t[i]==='L'&&G.l[i])?'<b style="color:var(--text)">'+esc(G.l[i])+'</b> · ':'')+deg(i)+' '+T('conexões','connections')+'</div>'+
+    (G.im[i]?'<img class="page-img" src="'+esc(G.im[i])+'" alt="'+esc(G.names[i])+'" loading="lazy" onerror="this.style.display=\'none\'">':'')+
     (G.ds[i]?'<p class="desc">'+esc(G.ds[i])+'</p>':'<p class="desc" style="color:var(--muted)">'+T('Sem descrição cadastrada.','No description available.')+'</p>')+
     '<div class="assoc-head" style="justify-content:center">'+T('Conexões','Connections')+' <span class="n">'+deg(i)+'</span></div>'+
     '<ul class="assoc">'+list+'</ul>';
@@ -396,8 +399,8 @@ Promise.all([
   g.edges.forEach(function(e){ raw[e[0]].push(e[1]); raw[e[1]].push(e[0]); });
   var deg=raw.map(function(a){return a.length;});
   G.adj=raw.map(function(a){ return a.sort(function(x,y){return deg[y]-deg[x];}); });
-  G.st=[]; G.l=[]; G.ds=[];
-  G.names.forEach(function(nm){ var c=content[nm]||{}; G.st.push(c.st||''); G.l.push(c.l||''); G.ds.push(c.d||''); });
+  G.st=[]; G.l=[]; G.ds=[]; G.im=[];
+  G.names.forEach(function(nm){ var c=content[nm]||{}; G.st.push(c.st||''); G.l.push(c.l||''); G.ds.push(c.d||''); G.im.push(c.img||''); });
   var id2name={}; idx.forEach(function(o){ id2name[o.id]=o.name; G.name2id[o.name]=o.id; });
   var name2i={}; G.names.forEach(function(nm,i){ name2i[nm]=i; });
   function focusFromHash(){ var m=(location.hash||'').match(/node=([^&]+)/); if(!m) return null; var nm=id2name[decodeURIComponent(m[1])]; return (nm!=null && name2i[nm]!=null) ? name2i[nm] : null; }
