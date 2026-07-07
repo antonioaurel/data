@@ -63,7 +63,7 @@ button{font-family:inherit;}
 .fbtn.on{ border-color:var(--accent); }
 
 .map-wrap{ position:relative; flex:1 1 auto; min-height:0; background:var(--map); touch-action:none; }
-.phone.has-sel .map-wrap{ flex:1 1 auto; min-height:0; }
+.phone.has-sel .map-wrap{ flex:1 1 0; min-height:140px; }
 #map{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .map-badge{ position:absolute; left:12px; top:12px; z-index:3; display:flex; align-items:center; gap:7px;
   background:color-mix(in srgb, var(--surface) 82%, transparent); border:1px solid var(--border);
@@ -81,7 +81,7 @@ button{font-family:inherit;}
 .zoom button:active{ background:var(--surface-2); } .zoom button+button{ border-top:1px solid var(--border); } .zoom .zr{ font-size:15px; color:var(--muted); }
 
 /* draggable node-info panel — mirrors the diagram: peek (20%) ⇄ full (60%) */
-.info-panel{ flex:0 0 auto; height:20%; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+.info-panel{ flex:0 1 auto; height:20%; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
   background:var(--surface); border-top:1px solid var(--border); padding:8px 16px 16px; display:none; text-align:center; touch-action:pan-y; }
 .phone.has-sel .info-panel{ display:block; }
 .info-panel.peek{ overflow:hidden; touch-action:none; }
