@@ -212,60 +212,60 @@
 <body>
 
 <header>
-  <a class="back-link" href="index.html">← Início</a>
+  <a data-testid="pc-map-nav-back" class="back-link" href="index.html">← Início</a>
   <div class="header-title">Mapa · <span>Conexões da Historia do Recife</span></div>
-  <nav class="nav-links">
-    <a href="diagram.html">Diagrama</a>
-    <a href="matrix.html">Matrix</a>
-    <a href="stats.html">Fill Rate</a>
-    <a href="sources.html">Fontes</a>
-    <a class="active" href="mapa.html">Mapa</a>
-    <a href="sobre.html">Sobre</a>
+  <nav class="nav-links" data-testid="pc-map-nav">
+    <a data-testid="pc-map-nav-link-diagram" href="diagram.html">Diagrama</a>
+    <a data-testid="pc-map-nav-link-matrix" href="matrix.html">Matrix</a>
+    <a data-testid="pc-map-nav-link-fill-rate" href="stats.html">Fill Rate</a>
+    <a data-testid="pc-map-nav-link-sources" href="sources.html">Fontes</a>
+    <a data-testid="pc-map-nav-link-map" class="active" href="mapa.html">Mapa</a>
+    <a data-testid="pc-map-nav-link-about" href="sobre.html">Sobre</a>
   </nav>
 </header>
 
 <div class="toolbar">
   <span class="tb-label">Buscar</span>
   <div class="search-wrap">
-    <input id="search" class="tb-input" type="text" placeholder="Nome do local… (3+ letras)" autocomplete="off">
-    <div id="suggest" class="suggest hidden"></div>
+    <input id="search" data-testid="pc-map-toolbar-input-search" class="tb-input" type="text" placeholder="Nome do local… (3+ letras)" autocomplete="off">
+    <div id="suggest" data-testid="pc-map-toolbar-suggest" class="suggest hidden"></div>
   </div>
 
   <span class="tb-label">Bairro</span>
-  <select id="bairro" class="tb-select"><option value="">Todos os bairros</option></select>
+  <select id="bairro" data-testid="pc-map-toolbar-select-neighborhood" class="tb-select"><option value="">Todos os bairros</option></select>
 
   <div class="tb-sep"></div>
 
   <div class="time-group" id="time-group">
     <span class="tb-label">Ano</span>
-    <input id="time-range" type="range" min="1500" max="2025" value="2025" step="1">
+    <input id="time-range" data-testid="pc-map-toolbar-slider-time" type="range" min="1500" max="2025" value="2025" step="1">
     <span id="time-label">2025</span>
-    <label class="time-check"><input type="checkbox" id="time-on"> filtrar por ano</label>
+    <label class="time-check"><input type="checkbox" id="time-on" data-testid="pc-map-toolbar-checkbox-time"> filtrar por ano</label>
   </div>
 
-  <div class="toolbar-stats" id="stats">Carregando…</div>
+  <div class="toolbar-stats" id="stats" data-testid="pc-map-toolbar-stats">Carregando…</div>
 </div>
 
 <div class="workspace">
-  <aside id="legend">
+  <aside id="legend" data-testid="pc-map-legend">
     <div class="legend-title">Tipo</div>
     <div id="types"></div>
     <div class="legend-title" style="margin-top:1rem">Categorias</div>
     <div class="legend-actions">
-      <button id="cat-all" type="button">Todas</button>
-      <button id="cat-none" type="button">Nenhuma</button>
+      <button id="cat-all" data-testid="pc-map-legend-button-all" type="button">Todas</button>
+      <button id="cat-none" data-testid="pc-map-legend-button-none" type="button">Nenhuma</button>
     </div>
     <div id="cats"></div>
   </aside>
 
-  <div id="map"></div>
+  <div id="map" data-testid="pc-map-canvas"></div>
 
-  <div id="panel">
+  <div id="panel" data-testid="pc-map-panel">
     <div class="panel-placeholder" id="panel-placeholder">
       <p>Clique em qualquer <strong style="color:#c0b0a0">ponto no mapa</strong> para ver os detalhes do local e suas conexões agrupadas por tipo.</p>
       <p style="font-size:.7rem;color:#5a6a70">O tamanho do ponto reflete o número de conexões; a cor, a categoria do local.</p>
     </div>
-    <div id="panel-content"></div>
+    <div id="panel-content" data-testid="pc-map-panel-content"></div>
   </div>
 </div>
 

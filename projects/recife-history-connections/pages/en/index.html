@@ -333,22 +333,22 @@
 <body>
 
 <!-- Nav -->
-<nav>
-  <a class="nav-logo" href="index.html">Connections of History</a>
-  <a class="nav-link" href="diagram.html">Diagram</a>
-  <a class="nav-link" href="matrix.html">Matrix</a>
-  <a class="nav-link" href="stats.html">Fill Rate</a>
-  <a class="nav-link" href="sources.html">Sources</a>
-  <a class="nav-link" href="../mapa.html">Map</a>
-  <a class="nav-link" href="sobre.html">About</a>
-  <div class="lang-toggle">
-    <a class="lang-btn" href="../index.html">PT</a>
-    <span class="lang-btn active">EN</span>
+<nav data-testid="pc-home-nav">
+  <a data-testid="pc-home-nav-logo" class="nav-logo" href="index.html">Connections of History</a>
+  <a data-testid="pc-home-nav-link-diagram" class="nav-link" href="diagram.html">Diagram</a>
+  <a data-testid="pc-home-nav-link-matrix" class="nav-link" href="matrix.html">Matrix</a>
+  <a data-testid="pc-home-nav-link-fill-rate" class="nav-link" href="stats.html">Fill Rate</a>
+  <a data-testid="pc-home-nav-link-sources" class="nav-link" href="sources.html">Sources</a>
+  <a data-testid="pc-home-nav-link-map" class="nav-link" href="../mapa.html">Map</a>
+  <a data-testid="pc-home-nav-link-about" class="nav-link" href="sobre.html">About</a>
+  <div class="lang-toggle" data-testid="pc-home-nav-toggle-lang">
+    <a class="lang-btn" href="../index.html" data-testid="pc-home-nav-button-pt">PT</a>
+    <span class="lang-btn active" data-testid="pc-home-nav-button-en">EN</span>
   </div>
 </nav>
 
 <!-- Hero -->
-<div class="hero">
+<div class="hero" data-testid="pc-home-hero">
   <div class="g-logo" style="color:#202124;">Connections of Recife's History</div>
 
   <div class="g-dots">
@@ -358,9 +358,9 @@
     <div class="g-dot" style="background:var(--g-green)"></div>
   </div>
 
-  <div class="hero-lang-toggle">
-    <a class="hero-lang-btn" href="../index.html">Português</a>
-    <span class="hero-lang-btn active">English</span>
+  <div class="hero-lang-toggle" data-testid="pc-home-hero-toggle-lang">
+    <a class="hero-lang-btn" href="../index.html" data-testid="pc-home-hero-button-pt">Português</a>
+    <span class="hero-lang-btn active" data-testid="pc-home-hero-button-en">English</span>
   </div>
 
   <p class="subtitle">
@@ -387,10 +387,10 @@
 <!-- Cards -->
 <div class="explore">
   <div class="section-label">Explore</div>
-  <div class="cards-grid">
+  <div class="cards-grid" data-testid="pc-home-cards">
 
     <!-- ── Diagram ── -->
-    <a class="viz-card card-blue" href="diagram.html">
+    <a data-testid="pc-home-cards-card-diagram" class="viz-card card-blue" href="diagram.html">
       <div class="card-stripe s-blue"></div>
       <div class="card-thumb">
         <svg viewBox="0 0 440 248" xmlns="http://www.w3.org/2000/svg">
@@ -444,7 +444,7 @@
     </a>
 
     <!-- ── Matrix ── -->
-    <a class="viz-card card-red" href="matrix.html">
+    <a data-testid="pc-home-cards-card-matrix" class="viz-card card-red" href="matrix.html">
       <div class="card-stripe s-red"></div>
       <div class="card-thumb">
         <svg viewBox="0 0 440 248" xmlns="http://www.w3.org/2000/svg">
@@ -536,7 +536,7 @@
     </a>
 
     <!-- ── Fill Rate / Stats ── -->
-    <a class="viz-card card-yellow" href="stats.html">
+    <a data-testid="pc-home-cards-card-fill-rate" class="viz-card card-yellow" href="stats.html">
       <div class="card-stripe s-yellow"></div>
       <div class="card-thumb">
         <svg viewBox="0 0 440 248" xmlns="http://www.w3.org/2000/svg">
@@ -595,7 +595,7 @@
     </a>
 
     <!-- ── Map ── -->
-    <a class="viz-card card-green" href="mapa.html">
+    <a data-testid="pc-home-cards-card-map" class="viz-card card-green" href="mapa.html">
       <div class="card-stripe s-green"></div>
       <div class="card-thumb">
         <svg viewBox="0 0 440 248" xmlns="http://www.w3.org/2000/svg">

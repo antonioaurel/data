@@ -424,15 +424,15 @@
 <body>
 
 <header>
-  <a class="back-link" href="index.html">← Home</a>
+  <a data-testid="pc-diagram-nav-back" class="back-link" href="index.html">← Home</a>
   <div class="header-title">Connections <span>of History</span></div>
-  <nav class="nav-links">
-    <a class="active" href="diagram.html">Diagram</a>
-    <a href="matrix.html">Matrix</a>
-    <a href="stats.html">Fill Rate</a>
-    <a href="sources.html">Sources</a>
-    <a href="../mapa.html">Map</a>
-    <a href="sobre.html">About</a>
+  <nav class="nav-links" data-testid="pc-diagram-nav">
+    <a data-testid="pc-diagram-nav-link-diagram" class="active" href="diagram.html">Diagram</a>
+    <a data-testid="pc-diagram-nav-link-matrix" href="matrix.html">Matrix</a>
+    <a data-testid="pc-diagram-nav-link-fill-rate" href="stats.html">Fill Rate</a>
+    <a data-testid="pc-diagram-nav-link-sources" href="sources.html">Sources</a>
+    <a data-testid="pc-diagram-nav-link-map" href="../mapa.html">Map</a>
+    <a data-testid="pc-diagram-nav-link-about" href="sobre.html">About</a>
   </nav>
   <div class="legend">
     <div class="legend-item">
@@ -453,14 +453,14 @@
 <div class="main">
   <div id="left">
     <div id="diagram-search">
-      <input id="node-search" class="ds-input" type="text" placeholder="Search node…" autocomplete="off" list="node-list">
+      <input id="node-search" data-testid="pc-diagram-sidebar-input-search" class="ds-input" type="text" placeholder="Search node…" autocomplete="off" list="node-list">
       <datalist id="node-list"></datalist>
     </div>
     <div id="bairro-filter">
-      <input id="bairro-search" class="ds-input" type="text" placeholder="Filter by neighborhood…" autocomplete="off" list="bairro-list">
+      <input id="bairro-search" data-testid="pc-diagram-sidebar-input-neighborhood" class="ds-input" type="text" placeholder="Filter by neighborhood…" autocomplete="off" list="bairro-list">
       <datalist id="bairro-list"></datalist>
     </div>
-    <div id="type-filter">
+    <div id="type-filter" data-testid="pc-diagram-sidebar-filter-type">
       <div class="tf-title">Filters</div>
       <div class="tf-desc">select to view by node type</div>
       <span class="type-chip" data-type="Local"          onclick="setFilter('Local')"><span class="chip-dot" style="background:#4a90d9"></span>Location</span>
@@ -470,16 +470,16 @@
     <div id="diagram-hint">
       <strong>How to navigate</strong>
       <span>🖱️ Drag to move &nbsp;·&nbsp; 🔍 Scroll to zoom &nbsp;·&nbsp; Click a node to highlight its connections</span>
-      <button id="hint-close" title="Close">×</button>
+      <button id="hint-close" data-testid="pc-diagram-hint-close" title="Close">×</button>
     </div>
     <div id="tooltip"></div>
   </div>
-  <div id="right">
+  <div id="right" data-testid="pc-diagram-panel">
     <div class="panel-placeholder" id="panel-placeholder">
       <div class="ph-icon">◎</div>
       <p>Click a node in the diagram to see its details and historical connections.</p>
     </div>
-    <div id="panel-content"></div>
+    <div id="panel-content" data-testid="pc-diagram-panel-content"></div>
   </div>
 </div>
 
