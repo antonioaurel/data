@@ -231,7 +231,11 @@ function sx(x){ return x*scale+tx; } function sy(y){ return y*scale+ty; }
 function rad(i){ return Math.max(4, Math.min(12, 4+Math.sqrt(deg(i))*0.85)); }
 function fit(){ tx=W/2; ty=H/2; scale=Math.min(0.95, (Math.min(W,H)*0.44)/180); }
 function resize(){ var r=cv.getBoundingClientRect(); DPR=Math.min(window.devicePixelRatio||1,2.5);
-  W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); render(); }
+  W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);
+  /* the info panel changes the canvas height as it's dragged (peek<->full); re-centre the focused node on
+     the new size so the graph never drifts out of the shrinking/growing viewport */
+  var fp=pos[focus]; if(fp){ tx=W/2-fp.x*scale; ty=H/2-fp.y*scale; }
+  render(); }
 function render(){
   if(!W || !pos[focus]) return; ctx.clearRect(0,0,W,H);
   ctx.strokeStyle=cssvar('--edge'); ctx.lineWidth=1; ctx.globalAlpha=.5; ctx.beginPath();
