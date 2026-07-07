@@ -63,8 +63,18 @@ button{font-family:inherit;}
 .zoom button{ width:34px; height:34px; background:var(--surface); color:var(--text); border:0; font-size:17px; cursor:pointer; }
 .zoom button+button{ border-top:1px solid var(--border); } .zoom .zr{ font-size:13px; color:var(--muted); }
 
-.info-panel{ flex:0 0 50%; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border); padding:8px 16px 16px; text-align:center; }
-.grab{ width:38px; height:4px; border-radius:2px; background:var(--border); margin:2px auto 12px; }
+.info-panel{ flex:0 0 auto; height:20%; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border); padding:8px 16px 16px; text-align:center; touch-action:pan-y; }
+.info-panel.peek{ overflow:hidden; touch-action:none; }
+.info-panel.full{ overflow-y:auto; }
+.info-panel.peek .panel-full{ display:none; }
+.info-panel.peek .peek-hint{ display:block; }
+.info-panel.full .peek-hint{ display:none; }
+.info-panel.full .panel-full{ display:block; }
+.panel-full{ display:none; }
+.peek-hint{ display:none; font-size:12px; color:var(--muted); margin-top:8px; }
+.panel-grip{ padding:8px 0 4px; margin:-6px 0 2px; cursor:grab; touch-action:none; }
+.panel-grip:active{ cursor:grabbing; }
+.grab{ width:38px; height:4px; border-radius:2px; background:var(--border); margin:0 auto; }
 .type-chip{ display:inline-flex; align-items:center; gap:7px; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
   color:var(--tc); border:1px solid color-mix(in srgb, var(--tc) 45%, transparent); background:color-mix(in srgb, var(--tc) 12%, transparent); border-radius:999px; padding:4px 10px; }
 .type-chip .dot{ width:8px; height:8px; border-radius:50%; background:var(--tc); }
@@ -85,7 +95,7 @@ button{font-family:inherit;}
 .panel-actions{ display:flex; gap:9px; margin-top:16px; }
 .btn{ flex:1; text-align:center; border-radius:10px; padding:11px; font-size:13.5px; font-weight:700; border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer; }
 .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:transparent; }
-.info-panel .panel-actions{ justify-content:center; } .info-panel .panel-actions .btn{ flex:0 1 auto; min-width:240px; }
+.info-panel .panel-actions{ justify-content:center; margin-top:14px; } .info-panel .panel-actions .btn{ flex:0 1 auto; min-width:192px; padding:9px 14px; font-size:12px; }
 
 .bottom-nav{ flex:0 0 auto; background:var(--surface); border-top:1px solid var(--border); }
 .bottom-nav ul{ display:flex; margin:0; padding:0; list-style:none; } .bottom-nav li{ flex:1; }
@@ -109,7 +119,8 @@ button{font-family:inherit;}
 .li .sub{ font-size:12px; color:var(--muted); } .li .ct{ color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
 /* full node page */
 .page{ padding:22px 20px 30px; text-align:center; }
-.page .desc{ text-align:left; font-size:14px; line-height:1.6; margin-top:14px; }
+.page .desc{ text-align:justify; font-size:14px; line-height:1.6; margin-top:14px; }
+.page-img{ display:block; width:100%; max-height:240px; object-fit:cover; border-radius:12px; border:1px solid var(--border); margin:16px 0 0; }
 .toast{ position:absolute; left:50%; bottom:66px; z-index:60; transform:translate(-50%,10px); background:var(--text); color:var(--bg); font-size:12px; font-weight:600; padding:8px 14px; border-radius:9px; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; max-width:300px; text-align:center; }
 .toast.show{ opacity:.96; transform:translate(-50%,0); }
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
@@ -142,7 +153,7 @@ button{font-family:inherit;}
       <div class="app-subtitle" data-i18n="subtitle-uf">Pernambuco</div>
       <div class="crumb">· <span data-i18n="nav-diagrama">Diagrama</span></div></header>
     <nav class="switcher" role="tablist" aria-label="Modo de visualização">
-      <a role="tab" class="sw-tab is-active" href="graph.html#node=LC-0215" aria-selected="true" aria-current="page" data-i18n="sw-graph">Diagrama</a>
+      <a role="tab" class="sw-tab is-active" href="graph.html#node=LC-0006" aria-selected="true" aria-current="page" data-i18n="sw-graph">Diagrama</a>
       <a role="tab" class="sw-tab" href="mapa.html" data-i18n="sw-map">Mapa</a>
       <a role="tab" class="sw-tab" href="matriz.html" data-i18n="sw-matrix">Matriz</a>
       <a role="tab" class="sw-tab" href="list.html" data-i18n="sw-list">Lista</a>
@@ -160,7 +171,7 @@ button{font-family:inherit;}
     <div class="info-panel" id="infoPanel"></div>
 
     <nav class="bottom-nav" aria-label="Seções"><ul>
-      <li><a href="index.html" data-i18n="nav-inicio">Início</a></li><li><a href="graph.html#node=LC-0215" class="active" aria-current="page" data-i18n="nav-diagrama">Diagrama</a></li>
+      <li><a href="index.html" data-i18n="nav-inicio">Início</a></li><li><a href="graph.html#node=LC-0006" class="active" aria-current="page" data-i18n="nav-diagrama">Diagrama</a></li>
       <li><a href="mapa.html" data-i18n="nav-mapa">Mapa</a></li><li><a href="matriz.html" data-i18n="nav-matriz">Matriz</a></li>
       <li><a href="fillrate.html" data-i18n="nav-fillrate">Fill rate</a></li><li><a href="fontes.html" data-i18n="nav-fontes">Fontes</a></li><li><a href="sobre.html" data-i18n="nav-sobre">Sobre</a></li></ul></nav>
 
@@ -171,7 +182,7 @@ button{font-family:inherit;}
       <div class="fs-body"><ul class="fs-list" id="searchList"></ul></div>
     </div>
     <div class="fs" id="fsPage" hidden>
-      <div class="fs-head"><button class="fs-back" data-close type="button">←</button><div class="fs-title" data-i18n="d-page">Página do nó</div></div>
+      <div class="fs-head"><button class="fs-back" data-close type="button">←</button><div class="fs-title" id="fsPageTitle">Página do nó</div></div>
       <div class="fs-body"><div class="page" id="pageBody"></div></div>
     </div>
 
@@ -180,7 +191,7 @@ button{font-family:inherit;}
 </div>
 
 <script>
-var G={names:[],t:[],st:[],l:[],ds:[],adj:[],name2id:{}};
+var G={names:[],t:[],st:[],l:[],ds:[],im:[],adj:[],name2id:{}};
 var TCOL={'L':'--t-local','P':'--t-personagem','F':'--t-evento'};
 var TNAME=(function(){try{return localStorage.getItem('lang')==='en';}catch(e){return false;}})()?{'L':'Place','P':'Historical figure','F':'Historical fact'}:{'L':'Local','P':'Personagem','F':'Fato Histórico'};
 function tvar(t){ return 'var('+(TCOL[t]||'--t-local')+')'; }
@@ -221,7 +232,11 @@ function sx(x){ return x*scale+tx; } function sy(y){ return y*scale+ty; }
 function rad(i){ return Math.max(4, Math.min(12, 4+Math.sqrt(deg(i))*0.85)); }
 function fit(){ tx=W/2; ty=H/2; scale=Math.min(0.95, (Math.min(W,H)*0.44)/180); }
 function resize(){ var r=cv.getBoundingClientRect(); DPR=Math.min(window.devicePixelRatio||1,2.5);
-  W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); render(); }
+  W=r.width; H=r.height; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0);
+  /* the info panel changes the canvas height as it's dragged (peek<->full); re-centre the focused node on
+     the new size so the graph never drifts out of the shrinking/growing viewport */
+  var fp=pos[focus]; if(fp){ tx=W/2-fp.x*scale; ty=H/2-fp.y*scale; }
+  render(); }
 function render(){
   if(!W || !pos[focus]) return; ctx.clearRect(0,0,W,H);
   ctx.strokeStyle=cssvar('--edge'); ctx.lineWidth=1; ctx.globalAlpha=.5; ctx.beginPath();
@@ -282,36 +297,70 @@ document.getElementById('zreset').onclick=function(){ layout(); fit(); render();
 
 var _hashLock=false; /* set while we drive the hash ourselves, so the hashchange listener doesn't re-navigate */
 function syncHash(i){ var id=G.name2id[G.names[i]]; if(id==null) return; try{ sessionStorage.setItem('ctxNode', id); }catch(e){} /* share focus with List/Matrix switcher (app.js reads ssGet("ctxNode")) */ var h='#node='+encodeURIComponent(id); if(location.hash===h) return; _hashLock=true; location.hash=h; }
-function navigate(i){ focus=i; syncHash(i); layout(); fit(); render(); renderPanel(); document.getElementById('infoPanel').scrollTop=0; }
+/* draggable info panel: peek (20% of device) <-> full (60%) */
+var panelState='peek';
+function setPanelState(s){ panelState=s; var p=document.getElementById('infoPanel');
+  p.classList.remove('peek','full'); p.classList.add(s);
+  var ph=document.getElementById('phone').clientHeight||0;
+  p.style.height=Math.round(ph*(s==='full'?0.60:0.20))+'px';
+  p.scrollTop=0; resize(); }
+/* select a node: frame it + its inner-ring neighbours so the first-degree nodes stay visible; panel to peek */
+function focusZoom(){ var inner=shownNb.slice(0,6), R=0;
+  inner.forEach(function(j){ var p=pos[j]; if(p){ var d=Math.hypot(p.x,p.y); if(d>R) R=d; } });
+  if(R<=0) R=95;   /* inner ring radius from layout() */
+  var ns=Math.max(0.4,Math.min(4,(Math.min(W,H)*0.44)/(R+8)));
+  scale=ns; tx=W/2; ty=H/2; render(); }
+function navigate(i){ focus=i; syncHash(i); layout(); renderPanel(); setPanelState('peek'); focusZoom(); }
 
 function renderPanel(){
   var i=focus, col=tvar(G.t[i]);
-  var nb=G.adj[i];
-  var list=nb.map(function(j){ return '<li data-i="'+j+'"><span class="dot" style="background:'+tvar(G.t[j])+'"></span>'+
-    '<span class="tx"><div class="nm">'+esc(G.names[j])+'</div><div class="sub">'+TNAME[G.t[j]]+(G.l[j]?' · '+esc(G.l[j]):'')+'</div></span><span class="chev">›</span></li>'; }).join('');
-  var sub = G.st[i] || TNAME[G.t[i]];
   var locline = (G.t[i]==='L' && G.l[i]) ? '<b>'+esc(G.l[i])+'</b> · ' : '';
   var p=document.getElementById('infoPanel');
-  p.innerHTML='<div class="grab"></div>'+
-    '<span class="type-chip" style="--tc:'+col+'"><span class="dot"></span>'+esc(TNAME[G.t[i]])+(G.st[i]?' · '+esc(G.st[i]):'')+'</span>'+
+  /* peek: only title + drag hint. full: description + "View on map" + total connection count. */
+  p.innerHTML='<div class="panel-grip"><div class="grab"></div></div>'+
     '<h2 id="pTitle">'+esc(G.names[i])+'</h2>'+
-    '<div class="loc">'+locline+'<span class="num">'+deg(i)+'</span> '+T('conexões','connections')+'</div>'+
-    (G.ds[i]?'<p class="desc">'+esc(G.ds[i])+'</p>':'')+
-    '<div class="panel-actions"><button class="btn primary" id="pMap" type="button">'+T('Ver no mapa','View on the map')+'</button></div>'+
-    '<div class="assoc-head">'+T('Conexões','Connections')+' <span class="n">'+deg(i)+'</span><span class="rule"></span></div>'+
-    '<ul class="assoc" id="assocList">'+list+'</ul>';
-  Array.prototype.forEach.call(p.querySelectorAll('#assocList li[data-i]'),function(el){ el.onclick=function(){ navigate(+el.getAttribute('data-i')); }; });
+    '<div class="peek-hint">'+T('arraste para cima para ler','drag up to read')+'</div>'+
+    '<div class="panel-full">'+
+      '<span class="type-chip" style="--tc:'+col+'"><span class="dot"></span>'+esc(TNAME[G.t[i]])+(G.st[i]?' · '+esc(G.st[i]):'')+'</span>'+
+      '<div class="loc">'+locline+'<span class="num">'+deg(i)+'</span> '+T('conexões','connections')+'</div>'+
+      (G.ds[i]?'<p class="desc">'+esc(G.ds[i])+'</p>':'')+
+      '<div class="panel-actions"><button class="btn primary" id="pMap" type="button">'+T('Ver no mapa','View on the map')+'</button></div>'+
+    '</div>';
   document.getElementById('pTitle').onclick=openPage;
   document.getElementById('pMap').onclick=function(){ window.location.href='mapa.html'; };
 }
 
+/* drag the panel: up expands peek->full, down collapses full->peek */
+(function(){ var panel=document.getElementById('infoPanel');
+  var dragging=false, moved=false, startY=0, startH=0, peekH=0, fullH=0;
+  function measure(){ var ph=document.getElementById('phone').clientHeight||0; peekH=Math.round(ph*0.20); fullH=Math.round(ph*0.60); }
+  panel.addEventListener('pointerdown',function(e){ var t=e.target;
+    var onGrip=t.closest&&t.closest('.panel-grip');
+    var interactive=t.closest&&t.closest('#pTitle,button,a');
+    if(interactive&&!onGrip) return;               /* let taps on title/buttons work */
+    if(!onGrip&&panelState!=='peek') return;        /* in full, only the grip drags */
+    measure(); dragging=true; moved=false; startY=e.clientY; startH=panelState==='full'?fullH:peekH;
+    try{panel.setPointerCapture(e.pointerId);}catch(_){} });
+  panel.addEventListener('pointermove',function(e){ if(!dragging) return;
+    var dy=e.clientY-startY; if(Math.abs(dy)>4) moved=true;
+    var h=Math.max(peekH,Math.min(fullH,startH-dy)); panel.style.height=h+'px'; });
+  function end(e){ if(!dragging) return; dragging=false;
+    try{panel.releasePointerCapture(e.pointerId);}catch(_){}
+    if(!moved){ setPanelState(panelState); return; }
+    var cur=parseFloat(panel.style.height)||peekH;
+    setPanelState(cur>(peekH+fullH)/2?'full':'peek'); }
+  panel.addEventListener('pointerup',end); panel.addEventListener('pointercancel',end);
+})();
+
 /* full node page (same as opening from the list) */
 function openPage(){ var i=focus; var b=document.getElementById('pageBody');
+  document.getElementById('fsPageTitle').textContent=G.names[i];
   var nb=G.adj[i];
   var list=nb.map(function(j){ return '<li data-i="'+j+'"><span class="dot" style="background:'+tvar(G.t[j])+'"></span><span class="tx"><div class="nm">'+esc(G.names[j])+'</div><div class="sub">'+TNAME[G.t[j]]+(G.l[j]?' · '+esc(G.l[j]):'')+'</div></span><span class="chev">›</span></li>'; }).join('');
   b.innerHTML='<span class="type-chip" style="--tc:'+tvar(G.t[i])+'"><span class="dot"></span>'+esc(TNAME[G.t[i]])+(G.st[i]?' · '+esc(G.st[i]):'')+'</span>'+
     '<h2 style="margin:12px 0 4px;font-size:23px;font-weight:700">'+esc(G.names[i])+'</h2>'+
     '<div class="loc" style="font-size:13px;color:var(--muted)">'+((G.t[i]==='L'&&G.l[i])?'<b style="color:var(--text)">'+esc(G.l[i])+'</b> · ':'')+deg(i)+' '+T('conexões','connections')+'</div>'+
+    (G.im[i]?'<img class="page-img" src="'+esc(G.im[i])+'" alt="'+esc(G.names[i])+'" loading="lazy" onerror="this.style.display=\'none\'">':'')+
     (G.ds[i]?'<p class="desc">'+esc(G.ds[i])+'</p>':'<p class="desc" style="color:var(--muted)">'+T('Sem descrição cadastrada.','No description available.')+'</p>')+
     '<div class="assoc-head" style="justify-content:center">'+T('Conexões','Connections')+' <span class="n">'+deg(i)+'</span></div>'+
     '<ul class="assoc">'+list+'</ul>';
@@ -336,7 +385,7 @@ document.getElementById('themeBtn').onclick=function(){ var cur=document.documen
   var next=cur==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',next); this.textContent=next==='dark'?'☾':'☀'; try{localStorage.setItem('theme',next);}catch(e){} render(); };
 document.getElementById('langBtn').onclick=function(){ try{var l=localStorage.getItem('lang')==='en'?'pt':'en';localStorage.setItem('lang',l);}catch(e){} location.reload(); };
 
-window.addEventListener('resize',resize);
+window.addEventListener('resize',function(){ setPanelState(panelState); });
 if(window.ResizeObserver){ new ResizeObserver(resize).observe(document.getElementById('diagram')); }
 Promise.all([
   fetch('../../data/graph.json').then(function(r){return r.json();}),
@@ -350,19 +399,19 @@ Promise.all([
   g.edges.forEach(function(e){ raw[e[0]].push(e[1]); raw[e[1]].push(e[0]); });
   var deg=raw.map(function(a){return a.length;});
   G.adj=raw.map(function(a){ return a.sort(function(x,y){return deg[y]-deg[x];}); });
-  G.st=[]; G.l=[]; G.ds=[];
-  G.names.forEach(function(nm){ var c=content[nm]||{}; G.st.push(c.st||''); G.l.push(c.l||''); G.ds.push(c.d||''); });
+  G.st=[]; G.l=[]; G.ds=[]; G.im=[];
+  G.names.forEach(function(nm){ var c=content[nm]||{}; G.st.push(c.st||''); G.l.push(c.l||''); G.ds.push(c.d||''); G.im.push(c.img||''); });
   var id2name={}; idx.forEach(function(o){ id2name[o.id]=o.name; G.name2id[o.name]=o.id; });
   var name2i={}; G.names.forEach(function(nm,i){ name2i[nm]=i; });
   function focusFromHash(){ var m=(location.hash||'').match(/node=([^&]+)/); if(!m) return null; var nm=id2name[decodeURIComponent(m[1])]; return (nm!=null && name2i[nm]!=null) ? name2i[nm] : null; }
   var start=focusFromHash();
-  if(start==null) start=name2i['Marco Zero'];
+  if(start==null){ var d0=id2name['LC-0006']; start=(d0!=null&&name2i[d0]!=null)?name2i[d0]:null; }  /* default: Academia Pernambucana de Letras */
   focus = start!=null?start:0;
   syncHash(focus);
   /* browser Back/Forward (and external hash edits) re-open the matching node; the _hashLock guard
      stops our own syncHash() writes from bouncing back through here as a second navigate(). */
   window.addEventListener('hashchange',function(){ if(_hashLock){ _hashLock=false; return; } var i=focusFromHash(); if(i!=null && i!==focus) navigate(i); });
-  layout(); resize(); fit(); render(); renderPanel();
+  layout(); renderPanel(); setPanelState('peek'); focusZoom();
 }).catch(function(e){ var ip=document.getElementById('infoPanel'); if(ip) ip.innerHTML='<p style=\"padding:24px;text-align:center;color:var(--muted)\">Não foi possível carregar o diagrama.</p>'; });
 </script>
 </body>
