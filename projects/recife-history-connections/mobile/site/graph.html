@@ -152,7 +152,7 @@ button{font-family:inherit;}
       <div class="app-subtitle" data-i18n="subtitle-uf">Pernambuco</div>
       <div class="crumb">· <span data-i18n="nav-diagrama">Diagrama</span></div></header>
     <nav class="switcher" role="tablist" aria-label="Modo de visualização">
-      <a role="tab" class="sw-tab is-active" href="graph.html#node=LC-0215" aria-selected="true" aria-current="page" data-i18n="sw-graph">Diagrama</a>
+      <a role="tab" class="sw-tab is-active" href="graph.html#node=LC-0006" aria-selected="true" aria-current="page" data-i18n="sw-graph">Diagrama</a>
       <a role="tab" class="sw-tab" href="mapa.html" data-i18n="sw-map">Mapa</a>
       <a role="tab" class="sw-tab" href="matriz.html" data-i18n="sw-matrix">Matriz</a>
       <a role="tab" class="sw-tab" href="list.html" data-i18n="sw-list">Lista</a>
@@ -170,7 +170,7 @@ button{font-family:inherit;}
     <div class="info-panel" id="infoPanel"></div>
 
     <nav class="bottom-nav" aria-label="Seções"><ul>
-      <li><a href="index.html" data-i18n="nav-inicio">Início</a></li><li><a href="graph.html#node=LC-0215" class="active" aria-current="page" data-i18n="nav-diagrama">Diagrama</a></li>
+      <li><a href="index.html" data-i18n="nav-inicio">Início</a></li><li><a href="graph.html#node=LC-0006" class="active" aria-current="page" data-i18n="nav-diagrama">Diagrama</a></li>
       <li><a href="mapa.html" data-i18n="nav-mapa">Mapa</a></li><li><a href="matriz.html" data-i18n="nav-matriz">Matriz</a></li>
       <li><a href="fillrate.html" data-i18n="nav-fillrate">Fill rate</a></li><li><a href="fontes.html" data-i18n="nav-fontes">Fontes</a></li><li><a href="sobre.html" data-i18n="nav-sobre">Sobre</a></li></ul></nav>
 
@@ -299,9 +299,13 @@ function setPanelState(s){ panelState=s; var p=document.getElementById('infoPane
   var ph=document.getElementById('phone').clientHeight||0;
   p.style.height=Math.round(ph*(s==='full'?0.60:0.20))+'px';
   p.scrollTop=0; resize(); }
-/* select a node: keep the user's zoom, then auto-zoom x2.25 (= two "+" clicks) centred on it, panel to peek */
-function navigate(i){ focus=i; syncHash(i); layout(); renderPanel(); setPanelState('peek');
-  tx=W/2; ty=H/2; zoomTo(Math.min(4,scale*2.25),W/2,H/2); }
+/* select a node: frame it + its inner-ring neighbours so the first-degree nodes stay visible; panel to peek */
+function focusZoom(){ var inner=shownNb.slice(0,6), R=0;
+  inner.forEach(function(j){ var p=pos[j]; if(p){ var d=Math.hypot(p.x,p.y); if(d>R) R=d; } });
+  if(R<=0) R=95;   /* inner ring radius from layout() */
+  var ns=Math.max(0.4,Math.min(4,(Math.min(W,H)*0.44)/(R+8)));
+  scale=ns; tx=W/2; ty=H/2; render(); }
+function navigate(i){ focus=i; syncHash(i); layout(); renderPanel(); setPanelState('peek'); focusZoom(); }
 
 function renderPanel(){
   var i=focus, col=tvar(G.t[i]);
@@ -394,13 +398,13 @@ Promise.all([
   var name2i={}; G.names.forEach(function(nm,i){ name2i[nm]=i; });
   function focusFromHash(){ var m=(location.hash||'').match(/node=([^&]+)/); if(!m) return null; var nm=id2name[decodeURIComponent(m[1])]; return (nm!=null && name2i[nm]!=null) ? name2i[nm] : null; }
   var start=focusFromHash();
-  if(start==null) start=name2i['Marco Zero'];
+  if(start==null){ var d0=id2name['LC-0006']; start=(d0!=null&&name2i[d0]!=null)?name2i[d0]:null; }  /* default: Academia Pernambucana de Letras */
   focus = start!=null?start:0;
   syncHash(focus);
   /* browser Back/Forward (and external hash edits) re-open the matching node; the _hashLock guard
      stops our own syncHash() writes from bouncing back through here as a second navigate(). */
   window.addEventListener('hashchange',function(){ if(_hashLock){ _hashLock=false; return; } var i=focusFromHash(); if(i!=null && i!==focus) navigate(i); });
-  layout(); renderPanel(); setPanelState('peek'); fit(); render();
+  layout(); renderPanel(); setPanelState('peek'); focusZoom();
 }).catch(function(e){ var ip=document.getElementById('infoPanel'); if(ip) ip.innerHTML='<p style=\"padding:24px;text-align:center;color:var(--muted)\">Não foi possível carregar o diagrama.</p>'; });
 </script>
 </body>
