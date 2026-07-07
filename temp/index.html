@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Validação de PRs — Conexões da História</title>
+<style>
+  :root{
+    --bg:#0f1115; --surface:#171a21; --surface2:#1e222b; --border:#2a2f3a;
+    --text:#e8eaed; --muted:#9aa0ab; --accent:#14b8a6; --accent-ink:#04342c;
+    --amber:#f0b429;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f4f5f7; --surface:#fff; --surface2:#f0f1f4; --border:#e2e4e9;
+           --text:#1a1d23; --muted:#5f6672; --accent:#0f766e; --accent-ink:#e1f5ee; }
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    line-height:1.5; }
+  .wrap{ max-width:640px; margin:0 auto; padding:22px 16px 40px; }
+  header{ text-align:center; padding:8px 0 18px; }
+  h1{ font-size:22px; margin:0 0 6px; letter-spacing:-.01em; }
+  .sub{ color:var(--muted); font-size:14px; margin:0; }
+  .note{ background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+    padding:12px 14px; font-size:13px; color:var(--muted); margin:16px 0 22px; }
+  .note b{ color:var(--text); }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:18px 16px; margin:0 0 16px; }
+  .pill{ display:inline-block; font-size:12px; font-weight:600; color:var(--accent);
+    background:var(--accent-ink); padding:3px 10px; border-radius:999px; margin-bottom:8px; }
+  .card h2{ font-size:17px; margin:2px 0 4px; }
+  .card .plat{ font-size:12px; color:var(--muted); margin:0 0 12px; }
+  ul{ margin:0 0 16px; padding-left:18px; }
+  li{ font-size:14px; margin:6px 0; }
+  li b{ color:var(--text); }
+  a.btn{ display:block; text-align:center; text-decoration:none; font-weight:600; font-size:16px;
+    padding:14px; border-radius:12px; background:var(--accent); color:#fff; }
+  a.btn:active{ opacity:.85; }
+  a.btn.ghost{ background:transparent; color:var(--accent); border:1px solid var(--accent); margin-top:8px; font-size:14px; padding:11px; }
+  footer{ text-align:center; color:var(--muted); font-size:12px; margin-top:26px; line-height:1.7; }
+  code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+    background:var(--surface2); padding:1px 5px; border-radius:5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Validação de PRs</h1>
+    <p class="sub">Conexões da História · previews publicados (githack)</p>
+  </header>
+
+  <div class="note">
+    Abra cada preview <b>no celular</b> e valide a UX antes do merge. Cada link aponta para o
+    <b>commit exato da PR</b> (não o main). #28 e #29 são páginas <b>mobile</b> — melhor em tela de celular.
+  </div>
+
+  <!-- PR #29 -->
+  <div class="card">
+    <span class="pill">PR #29 · mobile</span>
+    <h2>Diagrama — painel de nó + zoom</h2>
+    <p class="plat">graph.html</p>
+    <ul>
+      <li>Ao tocar um nó: painel abre a <b>20%</b> (título + "arraste para cima para ler").</li>
+      <li><b>Arraste para cima</b> → painel a <b>60%</b>: descrição, botão "Ver no mapa" e <b>total de conexões</b>, centralizados.</li>
+      <li><b>Arraste para baixo</b> → minimiza.</li>
+      <li>Ao selecionar o nó: <b>auto-zoom ≈ ×2,25</b> (2 cliques) centrado no nó; o zoom <b>persiste</b> ao trocar de nó.</li>
+      <li>Sem a lista de conexões no painel (só a contagem). Botão "Ver no mapa" <b>~20% menor</b>.</li>
+    </ul>
+    <a class="btn" href="https://raw.githack.com/antonioaurel/data/ca030a7489011a235c66e24d29de159b8b14295c/projects/recife-history-connections/mobile/site/graph.html">Abrir preview do Diagrama</a>
+  </div>
+
+  <!-- PR #28 -->
+  <div class="card">
+    <span class="pill">PR #28 · mobile</span>
+    <h2>Mapa — dropdown + painel</h2>
+    <p class="plat">mapa.html</p>
+    <ul>
+      <li>Dropdown <b>"Categoria"</b> abre <b>inteiro</b>, sem corte.</li>
+      <li>Painel de descrição do local a <b>60%</b>.</li>
+      <li><b>Arraste para cima</b> expande; <b>para baixo</b> minimiza.</li>
+    </ul>
+    <a class="btn" href="https://raw.githack.com/antonioaurel/data/87b65bc54fdaede37c1aedf788b16255b08e7f6d/projects/recife-history-connections/mobile/site/mapa.html">Abrir preview do Mapa</a>
+  </div>
+
+  <!-- PR #27 -->
+  <div class="card">
+    <span class="pill">PR #27 · desktop</span>
+    <h2>data-testid (automação)</h2>
+    <p class="plat">pages/index.html · melhor no desktop</p>
+    <ul>
+      <li><b>Nada visual muda</b> — só foram adicionados <code>data-testid</code> nos 13 pages.</li>
+      <li>Validar que a página renderiza igual e que os hooks existem para os testes automatizados.</li>
+      <li>Convenção: <code>pc-&lt;screen&gt;-&lt;region&gt;-&lt;component&gt;</code>.</li>
+    </ul>
+    <a class="btn" href="https://raw.githack.com/antonioaurel/data/68513ee7c8a18fa05d2dcd8dff5bb26e42d0d877/projects/recife-history-connections/pages/index.html">Abrir preview Desktop</a>
+    <a class="btn ghost" href="https://raw.githack.com/antonioaurel/data/68513ee7c8a18fa05d2dcd8dff5bb26e42d0d877/projects/recife-history-connections/pages/en/index.html">Abrir versão EN</a>
+  </div>
+
+  <footer>
+    Página de validação temporária · <code>temp/index.html</code><br>
+    Reviews do Codex: 0 achados nas 3 · merge só após sua validação + aprovação.
+  </footer>
+</div>
+</body>
+</html>
