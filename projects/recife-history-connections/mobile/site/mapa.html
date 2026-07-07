@@ -63,7 +63,7 @@ button{font-family:inherit;}
 .fbtn.on{ border-color:var(--accent); }
 
 .map-wrap{ position:relative; flex:1 1 auto; min-height:0; background:var(--map); touch-action:none; }
-.phone.has-sel .map-wrap{ flex:1 1 0; min-height:34%; }
+.phone.has-sel .map-wrap{ flex:1 1 auto; min-height:0; }
 #map{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 .map-badge{ position:absolute; left:12px; top:12px; z-index:3; display:flex; align-items:center; gap:7px;
   background:color-mix(in srgb, var(--surface) 82%, transparent); border:1px solid var(--border);
@@ -80,14 +80,20 @@ button{font-family:inherit;}
 .zoom button{ width:38px; height:38px; background:var(--surface); color:var(--text); border:0; font-size:19px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .zoom button:active{ background:var(--surface-2); } .zoom button+button{ border-top:1px solid var(--border); } .zoom .zr{ font-size:15px; color:var(--muted); }
 
-/* half-screen info panel */
-.info-panel{ flex:1 1 auto; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border);
-  padding:8px 16px 16px; display:none; text-align:center; }
-.phone.has-sel .info-panel{ display:block; flex:1 1 0; min-height:0; }
+/* draggable info panel — peek → 60% full (see drag logic below) */
+.info-panel{ flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  background:var(--surface); border-top:1px solid var(--border); padding:0 16px 16px; display:none; text-align:center; }
+.phone.has-sel .info-panel{ display:block; flex:0 0 var(--panel-h,60%); min-height:0; transition:flex-basis .28s cubic-bezier(.4,0,.2,1); }
+.phone.dragging .info-panel{ transition:none; }
 .info-panel .assoc, .info-panel .assoc-head{ text-align:left; }
 .info-panel .panel-actions{ justify-content:center; }
 .info-panel .panel-actions .btn{ flex:0 1 auto; min-width:240px; }
-.grab{ width:38px; height:4px; border-radius:2px; background:var(--border); margin:2px auto 12px; }
+.drag-handle{ position:sticky; top:0; z-index:3; display:block; width:100%; padding:9px 0 8px; margin:0 0 2px; border:0;
+  background:var(--surface); cursor:grab; touch-action:none; -webkit-tap-highlight-color:transparent; }
+.phone.dragging .drag-handle{ cursor:grabbing; }
+.drag-handle:focus-visible{ outline:3px solid var(--focus); outline-offset:-3px; border-radius:8px; }
+.grab{ width:38px; height:4px; border-radius:2px; background:var(--border); margin:0 auto; transition:background .15s, width .15s; }
+.drag-handle:hover .grab, .phone.dragging .grab{ background:var(--muted); width:46px; }
 .type-chip{ display:inline-flex; align-items:center; gap:7px; font-size:10.5px; font-weight:700; letter-spacing:.07em;
   text-transform:uppercase; color:var(--tc); border:1px solid color-mix(in srgb, var(--tc) 45%, transparent);
   background:color-mix(in srgb, var(--tc) 12%, transparent); border-radius:999px; padding:4px 10px; }
@@ -128,7 +134,14 @@ button{font-family:inherit;}
 .fs-search input{ flex:1; border:0; background:transparent; color:var(--text); font-size:15px; outline:none; }
 .fs-search input::placeholder{ color:var(--muted-2); }
 .fs-hint{ flex:0 0 auto; padding:2px 20px 8px; font-size:11px; color:var(--muted-2); }
-.fs-list{ flex:1 1 auto; min-height:0; overflow-y:auto; list-style:none; margin:0; padding:4px 0 28px; }
+.fs-list{ flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  list-style:none; margin:0; padding:4px 0 14px; scroll-padding-bottom:14px; }
+/* category picker: compact rows so all fit; fade cue when more remain below */
+#catList .li{ padding-top:10px; padding-bottom:10px; }
+#fsCat .fs-foot{ position:relative; }
+.fs-fade{ position:absolute; left:0; right:0; bottom:100%; z-index:2; height:34px; pointer-events:none; opacity:0; transition:opacity .18s;
+  background:linear-gradient(to top, var(--surface), transparent); }
+#fsCat.can-scroll .fs-fade{ opacity:1; }
 .li{ display:flex; align-items:center; gap:12px; padding:13px 18px; cursor:pointer; text-align:left; width:100%; background:none; border:0; border-bottom:1px solid color-mix(in srgb, var(--border) 55%, transparent); color:var(--text); }
 .li:hover{ background:var(--surface); }
 .li .dot{ width:11px; height:11px; border-radius:50%; flex:0 0 auto; } .li .tx{ flex:1; min-width:0; }
@@ -229,7 +242,7 @@ button{font-family:inherit;}
       <div class="fs-head"><button class="fs-back" data-close type="button" aria-label="Voltar">←</button><div class="fs-title" data-i18n="f-cat">Categoria</div>
         <button class="link-btn first" id="catAll" type="button" data-i18n="c-all">Todas</button><button class="link-btn" id="catNone" type="button" data-i18n="c-clear">Limpar</button></div>
       <ul class="fs-list" id="catList"></ul>
-      <div class="fs-foot"><button class="btn primary" id="catApply" type="button" data-i18n="c-apply">Aplicar</button></div>
+      <div class="fs-foot"><div class="fs-fade" aria-hidden="true"></div><button class="btn primary" id="catApply" type="button" data-i18n="c-apply">Aplicar</button></div>
     </div>
   </div>
 </div>
@@ -352,7 +365,7 @@ document.getElementById('zreset').onclick=function(){ scale=1; tx=0; ty=0; clamp
 /* selection + half-screen info */
 var TCV={'Igreja':'personagem'};
 function selectPlace(p){ selected=p; assocSet=new Set(p.cn);
-  document.getElementById('phone').classList.add('has-sel'); renderPanel(p);
+  document.getElementById('phone').classList.add('has-sel'); renderPanel(p); panelDrag.reset();
   requestAnimationFrame(function(){ resize(); centerOn(p, Math.max(scale,1.6)); }); }
 function deselect(){ selected=null; assocSet=new Set(); document.getElementById('phone').classList.remove('has-sel');
   requestAnimationFrame(function(){ resize(); }); }
@@ -366,7 +379,7 @@ function renderPanel(p){
     '<span class="chev">›</span></li>'; }).join('') || '<li style="cursor:default;color:var(--muted)">'+T('Sem locais conectados no mapa.','No connected places on the map.')+'</li>';
   var panel=document.getElementById('infoPanel');
   panel.style.setProperty('--tc', col);
-  panel.innerHTML='<div class="grab"></div>'+
+  panel.innerHTML='<div class="drag-handle" id="dragHandle" role="button" tabindex="0" aria-label="'+esc(T('Arrastar painel: para cima expande, para baixo minimiza','Drag panel: up expands, down minimizes'))+'"><div class="grab"></div></div>'+
     '<span class="type-chip" style="--tc:'+col+'"><span class="dot"></span>'+esc(p.st||T('Local','Place'))+'</span>'+
     '<h2>'+esc(p.n)+'</h2>'+
     '<div class="loc"><b>'+esc(p.l||'—')+'</b> · <span class="num">'+p.d+'</span> '+T('conexões','connections')+(p.dm<p.d?' · <span class="num">'+p.dm+'</span> '+T('no mapa','on the map'):'')+'</div>'+
@@ -379,6 +392,32 @@ function renderPanel(p){
     var q=placeByName[decodeURIComponent(el.getAttribute('data-n'))]; if(q) selectPlace(q); }; });
   document.getElementById('pGraph').onclick=function(){ if(p&&p.id) window.location.href='graph.html#node='+encodeURIComponent(p.id); };
 }
+
+/* draggable info panel: peek (minimized) ⇄ 60% (full). Consistent with the diagram's sheet. */
+var panelDrag=(function(){
+  var phone=document.getElementById('phone'), panel=document.getElementById('infoPanel');
+  var PEEK=24, FULL=60, MID=(PEEK+FULL)/2;            /* % of phone height */
+  var cur=FULL, dragging=false, startY=0, startH=FULL, vh=1, pid=null;
+  function clamp(h){ return Math.max(PEEK, Math.min(FULL, h)); }
+  function apply(h){ cur=h; phone.style.setProperty('--panel-h', h.toFixed(2)+'%');
+    var hd=document.getElementById('dragHandle'); if(hd) hd.setAttribute('aria-expanded', String(h>=MID)); }
+  function reset(){ apply(FULL); }
+  function inHandle(e){ return e.target && e.target.closest && e.target.closest('.drag-handle'); }
+  panel.addEventListener('pointerdown',function(e){ if(!inHandle(e)) return;
+    dragging=true; pid=e.pointerId; startY=e.clientY; startH=cur;
+    vh=phone.getBoundingClientRect().height||1; phone.classList.add('dragging');
+    try{ panel.setPointerCapture(e.pointerId); }catch(_){} e.preventDefault(); });
+  panel.addEventListener('pointermove',function(e){ if(!dragging||e.pointerId!==pid) return;
+    apply(clamp(startH-(e.clientY-startY)/vh*100)); e.preventDefault(); });
+  function end(e){ if(!dragging||e.pointerId!==pid) return; dragging=false; pid=null;
+    phone.classList.remove('dragging'); apply(cur<MID?PEEK:FULL); }
+  panel.addEventListener('pointerup',end); panel.addEventListener('pointercancel',end);
+  panel.addEventListener('keydown',function(e){ if(!inHandle(e)) return;
+    if(e.key==='ArrowUp'){ apply(FULL); e.preventDefault(); }
+    else if(e.key==='ArrowDown'){ apply(PEEK); e.preventDefault(); }
+    else if(e.key===' '||e.key==='Enter'){ apply(cur>=MID?PEEK:FULL); e.preventDefault(); } });
+  return { reset:reset };
+})();
 
 /* full-screen panels */
 function openFs(id){ document.getElementById(id).hidden=false; }
@@ -405,10 +444,13 @@ function renderBairros(q){ var list=document.getElementById('bairroList'); q=nor
 document.getElementById('bairroInput').addEventListener('input',function(){ renderBairros(this.value); });
 function syncBairroLabel(){ document.getElementById('bairroLabel').textContent=bairroFilter||T('Todos','All'); document.getElementById('openBairro').classList.toggle('on',!!bairroFilter); }
 
-document.getElementById('openCat').onclick=function(){ openFs('fsCat'); renderCats(); };
+document.getElementById('openCat').onclick=function(){ openFs('fsCat'); renderCats(); requestAnimationFrame(updateCatFade); };
+function updateCatFade(){ var l=document.getElementById('catList'), fs=document.getElementById('fsCat');
+  var more=(l.scrollHeight-l.clientHeight-l.scrollTop)>4; fs.classList.toggle('can-scroll',more); }
+document.getElementById('catList').addEventListener('scroll',updateCatFade);
 function renderCats(){ var list=document.getElementById('catList');
   list.innerHTML=CATS.map(function(c){ return '<button class="li" role="option" aria-selected="'+(!!active[c])+'" data-c="'+encodeURIComponent(c)+'"><span class="dot" style="background:'+catColor(c)+'"></span><span class="tx"><div class="nm">'+esc(c)+'</div></span><span class="ct">'+catCounts[c]+'</span><span class="chk">✓</span></button>'; }).join('');
-  Array.prototype.forEach.call(list.children,function(el){ el.onclick=function(){ var c=decodeURIComponent(el.getAttribute('data-c')); active[c]=!active[c]; el.setAttribute('aria-selected',active[c]); }; }); }
+  Array.prototype.forEach.call(list.children,function(el){ el.onclick=function(){ var c=decodeURIComponent(el.getAttribute('data-c')); active[c]=!active[c]; el.setAttribute('aria-selected',active[c]); }; }); requestAnimationFrame(updateCatFade); }
 document.getElementById('catAll').onclick=function(){ CATS.forEach(function(c){active[c]=true;}); renderCats(); };
 document.getElementById('catNone').onclick=function(){ CATS.forEach(function(c){active[c]=false;}); renderCats(); };
 document.getElementById('catApply').onclick=function(){ syncCat(); updateCount(); render(); closeFs(document.getElementById('fsCat')); };
