@@ -63,8 +63,18 @@ button{font-family:inherit;}
 .zoom button{ width:34px; height:34px; background:var(--surface); color:var(--text); border:0; font-size:17px; cursor:pointer; }
 .zoom button+button{ border-top:1px solid var(--border); } .zoom .zr{ font-size:13px; color:var(--muted); }
 
-.info-panel{ flex:0 0 50%; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border); padding:8px 16px 16px; text-align:center; }
-.grab{ width:38px; height:4px; border-radius:2px; background:var(--border); margin:2px auto 12px; }
+.info-panel{ flex:0 0 auto; height:20%; min-height:0; overflow-y:auto; background:var(--surface); border-top:1px solid var(--border); padding:8px 16px 16px; text-align:center; touch-action:pan-y; }
+.info-panel.peek{ overflow:hidden; touch-action:none; }
+.info-panel.full{ overflow-y:auto; }
+.info-panel.peek .panel-full{ display:none; }
+.info-panel.peek .peek-hint{ display:block; }
+.info-panel.full .peek-hint{ display:none; }
+.info-panel.full .panel-full{ display:block; }
+.panel-full{ display:none; }
+.peek-hint{ display:none; font-size:12px; color:var(--muted); margin-top:8px; }
+.panel-grip{ padding:8px 0 4px; margin:-6px 0 2px; cursor:grab; touch-action:none; }
+.panel-grip:active{ cursor:grabbing; }
+.grab{ width:38px; height:4px; border-radius:2px; background:var(--border); margin:0 auto; }
 .type-chip{ display:inline-flex; align-items:center; gap:7px; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
   color:var(--tc); border:1px solid color-mix(in srgb, var(--tc) 45%, transparent); background:color-mix(in srgb, var(--tc) 12%, transparent); border-radius:999px; padding:4px 10px; }
 .type-chip .dot{ width:8px; height:8px; border-radius:50%; background:var(--tc); }
@@ -85,7 +95,7 @@ button{font-family:inherit;}
 .panel-actions{ display:flex; gap:9px; margin-top:16px; }
 .btn{ flex:1; text-align:center; border-radius:10px; padding:11px; font-size:13.5px; font-weight:700; border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer; }
 .btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:transparent; }
-.info-panel .panel-actions{ justify-content:center; } .info-panel .panel-actions .btn{ flex:0 1 auto; min-width:240px; }
+.info-panel .panel-actions{ justify-content:center; margin-top:14px; } .info-panel .panel-actions .btn{ flex:0 1 auto; min-width:192px; padding:9px 14px; font-size:12px; }
 
 .bottom-nav{ flex:0 0 auto; background:var(--surface); border-top:1px solid var(--border); }
 .bottom-nav ul{ display:flex; margin:0; padding:0; list-style:none; } .bottom-nav li{ flex:1; }
@@ -282,28 +292,56 @@ document.getElementById('zreset').onclick=function(){ layout(); fit(); render();
 
 var _hashLock=false; /* set while we drive the hash ourselves, so the hashchange listener doesn't re-navigate */
 function syncHash(i){ var id=G.name2id[G.names[i]]; if(id==null) return; try{ sessionStorage.setItem('ctxNode', id); }catch(e){} /* share focus with List/Matrix switcher (app.js reads ssGet("ctxNode")) */ var h='#node='+encodeURIComponent(id); if(location.hash===h) return; _hashLock=true; location.hash=h; }
-function navigate(i){ focus=i; syncHash(i); layout(); fit(); render(); renderPanel(); document.getElementById('infoPanel').scrollTop=0; }
+/* draggable info panel: peek (20% of device) <-> full (60%) */
+var panelState='peek';
+function setPanelState(s){ panelState=s; var p=document.getElementById('infoPanel');
+  p.classList.remove('peek','full'); p.classList.add(s);
+  var ph=document.getElementById('phone').clientHeight||0;
+  p.style.height=Math.round(ph*(s==='full'?0.60:0.20))+'px';
+  p.scrollTop=0; resize(); }
+/* select a node: keep the user's zoom, then auto-zoom x2.25 (= two "+" clicks) centred on it, panel to peek */
+function navigate(i){ focus=i; syncHash(i); layout(); renderPanel(); setPanelState('peek');
+  tx=W/2; ty=H/2; zoomTo(Math.min(4,scale*2.25),W/2,H/2); }
 
 function renderPanel(){
   var i=focus, col=tvar(G.t[i]);
-  var nb=G.adj[i];
-  var list=nb.map(function(j){ return '<li data-i="'+j+'"><span class="dot" style="background:'+tvar(G.t[j])+'"></span>'+
-    '<span class="tx"><div class="nm">'+esc(G.names[j])+'</div><div class="sub">'+TNAME[G.t[j]]+(G.l[j]?' · '+esc(G.l[j]):'')+'</div></span><span class="chev">›</span></li>'; }).join('');
-  var sub = G.st[i] || TNAME[G.t[i]];
   var locline = (G.t[i]==='L' && G.l[i]) ? '<b>'+esc(G.l[i])+'</b> · ' : '';
   var p=document.getElementById('infoPanel');
-  p.innerHTML='<div class="grab"></div>'+
-    '<span class="type-chip" style="--tc:'+col+'"><span class="dot"></span>'+esc(TNAME[G.t[i]])+(G.st[i]?' · '+esc(G.st[i]):'')+'</span>'+
+  /* peek: only title + drag hint. full: description + "View on map" + total connection count. */
+  p.innerHTML='<div class="panel-grip"><div class="grab"></div></div>'+
     '<h2 id="pTitle">'+esc(G.names[i])+'</h2>'+
-    '<div class="loc">'+locline+'<span class="num">'+deg(i)+'</span> '+T('conexões','connections')+'</div>'+
-    (G.ds[i]?'<p class="desc">'+esc(G.ds[i])+'</p>':'')+
-    '<div class="panel-actions"><button class="btn primary" id="pMap" type="button">'+T('Ver no mapa','View on the map')+'</button></div>'+
-    '<div class="assoc-head">'+T('Conexões','Connections')+' <span class="n">'+deg(i)+'</span><span class="rule"></span></div>'+
-    '<ul class="assoc" id="assocList">'+list+'</ul>';
-  Array.prototype.forEach.call(p.querySelectorAll('#assocList li[data-i]'),function(el){ el.onclick=function(){ navigate(+el.getAttribute('data-i')); }; });
+    '<div class="peek-hint">'+T('arraste para cima para ler','drag up to read')+'</div>'+
+    '<div class="panel-full">'+
+      '<span class="type-chip" style="--tc:'+col+'"><span class="dot"></span>'+esc(TNAME[G.t[i]])+(G.st[i]?' · '+esc(G.st[i]):'')+'</span>'+
+      '<div class="loc">'+locline+'<span class="num">'+deg(i)+'</span> '+T('conexões','connections')+'</div>'+
+      (G.ds[i]?'<p class="desc">'+esc(G.ds[i])+'</p>':'')+
+      '<div class="panel-actions"><button class="btn primary" id="pMap" type="button">'+T('Ver no mapa','View on the map')+'</button></div>'+
+    '</div>';
   document.getElementById('pTitle').onclick=openPage;
   document.getElementById('pMap').onclick=function(){ window.location.href='mapa.html'; };
 }
+
+/* drag the panel: up expands peek->full, down collapses full->peek */
+(function(){ var panel=document.getElementById('infoPanel');
+  var dragging=false, moved=false, startY=0, startH=0, peekH=0, fullH=0;
+  function measure(){ var ph=document.getElementById('phone').clientHeight||0; peekH=Math.round(ph*0.20); fullH=Math.round(ph*0.60); }
+  panel.addEventListener('pointerdown',function(e){ var t=e.target;
+    var onGrip=t.closest&&t.closest('.panel-grip');
+    var interactive=t.closest&&t.closest('#pTitle,button,a');
+    if(interactive&&!onGrip) return;               /* let taps on title/buttons work */
+    if(!onGrip&&panelState!=='peek') return;        /* in full, only the grip drags */
+    measure(); dragging=true; moved=false; startY=e.clientY; startH=panelState==='full'?fullH:peekH;
+    try{panel.setPointerCapture(e.pointerId);}catch(_){} });
+  panel.addEventListener('pointermove',function(e){ if(!dragging) return;
+    var dy=e.clientY-startY; if(Math.abs(dy)>4) moved=true;
+    var h=Math.max(peekH,Math.min(fullH,startH-dy)); panel.style.height=h+'px'; });
+  function end(e){ if(!dragging) return; dragging=false;
+    try{panel.releasePointerCapture(e.pointerId);}catch(_){}
+    if(!moved){ setPanelState(panelState); return; }
+    var cur=parseFloat(panel.style.height)||peekH;
+    setPanelState(cur>(peekH+fullH)/2?'full':'peek'); }
+  panel.addEventListener('pointerup',end); panel.addEventListener('pointercancel',end);
+})();
 
 /* full node page (same as opening from the list) */
 function openPage(){ var i=focus; var b=document.getElementById('pageBody');
@@ -336,7 +374,7 @@ document.getElementById('themeBtn').onclick=function(){ var cur=document.documen
   var next=cur==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',next); this.textContent=next==='dark'?'☾':'☀'; try{localStorage.setItem('theme',next);}catch(e){} render(); };
 document.getElementById('langBtn').onclick=function(){ try{var l=localStorage.getItem('lang')==='en'?'pt':'en';localStorage.setItem('lang',l);}catch(e){} location.reload(); };
 
-window.addEventListener('resize',resize);
+window.addEventListener('resize',function(){ setPanelState(panelState); });
 if(window.ResizeObserver){ new ResizeObserver(resize).observe(document.getElementById('diagram')); }
 Promise.all([
   fetch('../../data/graph.json').then(function(r){return r.json();}),
@@ -362,7 +400,7 @@ Promise.all([
   /* browser Back/Forward (and external hash edits) re-open the matching node; the _hashLock guard
      stops our own syncHash() writes from bouncing back through here as a second navigate(). */
   window.addEventListener('hashchange',function(){ if(_hashLock){ _hashLock=false; return; } var i=focusFromHash(); if(i!=null && i!==focus) navigate(i); });
-  layout(); resize(); fit(); render(); renderPanel();
+  layout(); renderPanel(); setPanelState('peek'); fit(); render();
 }).catch(function(e){ var ip=document.getElementById('infoPanel'); if(ip) ip.innerHTML='<p style=\"padding:24px;text-align:center;color:var(--muted)\">Não foi possível carregar o diagrama.</p>'; });
 </script>
 </body>
