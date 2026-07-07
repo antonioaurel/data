@@ -481,7 +481,11 @@ document.getElementById('themeBtn').onclick=function(){ var cur=document.documen
   var next=cur==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme',next); this.textContent=next==='dark'?'☾':'☀'; try{localStorage.setItem('theme',next);}catch(e){} render(); };
 document.getElementById('langBtn').onclick=function(){ try{var l=localStorage.getItem('lang')==='en'?'pt':'en';localStorage.setItem('lang',l);}catch(e){} location.reload(); };
 
-window.addEventListener('resize',resize);
+/* on viewport change (rotation, mobile URL bar show/hide) recompute the panel's px height from
+   the current phone height so peek/full stay proportional; otherwise just resize the canvas */
+function onViewport(){ if(document.getElementById('phone').classList.contains('has-sel')) setPanelState(panelState); else resize(); }
+window.addEventListener('resize',onViewport);
+window.addEventListener('orientationchange',onViewport);
 if(window.ResizeObserver){ new ResizeObserver(resize).observe(document.getElementById('mapWrap')); }
 fetch('../../data/map.json').then(function(r){return r.json();}).then(function(data){
   var raw=(data.places||[]).filter(function(p){return p.lat&&p.lon;});
