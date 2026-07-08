@@ -98,11 +98,72 @@ test.describe('POST /api/items', () => {
     expect(res.status()).toBe(400);
   });
 
+  test('rejects an oversized body with 413, not 500', async ({ request }) => {
+    const huge = 'x'.repeat(200 * 1024); // > express.json default 100kb limit
+    const res = await request.post('/api/items', {
+      data: { name: 'big', type: 'Local', notes: huge },
+    });
+    expect(res.status()).toBe(413);
+  });
+
+  test('rejects an explicit id with reserved characters (400)', async ({ request }) => {
+    const res = await request.post('/api/items', {
+      data: { id: 'bad/id here', name: 'x', type: 'Local' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test('rejects a dot-segment id (400)', async ({ request }) => {
+    const res = await request.post('/api/items', {
+      data: { id: '..', name: 'x', type: 'Local' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test('rejects non-finite / blank coordinates (400)', async ({ request }) => {
+    for (const bad of [{ lat: 'Infinity' }, { lon: '' }, { lat: 'abc' }]) {
+      const res = await request.post('/api/items', {
+        data: { name: 'coord', type: 'Local', ...bad },
+      });
+      expect(res.status()).toBe(400);
+    }
+    // valid finite coordinates and explicit null are accepted
+    const ok = await request.post('/api/items', {
+      data: { name: 'coord ok', type: 'Local', lat: -8.05, lon: null },
+    });
+    expect(ok.status()).toBe(201);
+  });
+
   test('rejects a duplicate id with 409', async ({ request }) => {
     const res = await request.post('/api/items', {
       data: { id: 'LC-0002', name: 'Dup', type: 'Local' },
     });
     expect(res.status()).toBe(409);
+  });
+
+  test('an unsafe explicit id (2^53) does not hang auto-id generation (regression)', async ({ request }) => {
+    // 9007199254740992 === 2^53 === MAX_SAFE_INTEGER + 1; must not poison the counter
+    const boundary = await request.post('/api/items', {
+      data: { id: 'LC-9007199254740992', name: 'Boundary id', type: 'Local' },
+    });
+    expect(boundary.status()).toBe(201);
+    const auto = await request.post('/api/items', {
+      data: { name: 'Auto after boundary', type: 'Local' },
+    });
+    expect(auto.status()).toBe(201);
+  });
+
+  test('auto-id after an explicit high id does not collide (regression)', async ({ request }) => {
+    const explicit = await request.post('/api/items', {
+      data: { id: 'LC-9003', name: 'Explicit high id', type: 'Local' },
+    });
+    expect(explicit.status()).toBe(201);
+    // a following auto-id create must not be handed the same id → no false 409
+    const auto = await request.post('/api/items', {
+      data: { name: 'Auto after explicit', type: 'Local' },
+    });
+    expect(auto.status()).toBe(201);
+    expect((await auto.json()).id).not.toBe('LC-9003');
   });
 });
 

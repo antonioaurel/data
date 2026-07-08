@@ -29,6 +29,12 @@ function createApp({ store } = {}) {
     if (err && (err.type === 'entity.parse.failed' || err instanceof SyntaxError)) {
       return res.status(400).json({ error: 'invalid JSON body' });
     }
+    // body-parser (and other) client errors carry a 4xx status — preserve it
+    // instead of masking as 500 (e.g. 413 payload too large, 415 unsupported type).
+    const status = err && (err.status || err.statusCode);
+    if (Number.isInteger(status) && status >= 400 && status < 500) {
+      return res.status(status).json({ error: err.message || 'bad request' });
+    }
     res.status(500).json({ error: 'internal error' });
   });
 
