@@ -788,102 +788,6 @@
           ]
         },
         {
-          "name": "Map",
-          "file": "mapa.html",
-          "features": [
-            {
-              "name": "Place search",
-              "kind": "Input",
-              "resources": [
-                "C:renderSearch",
-                "D:map.json",
-                "L:fs",
-                "N:mapa"
-              ]
-            },
-            {
-              "name": "Neighborhood filter",
-              "kind": "Filter",
-              "resources": [
-                "C:renderBairros",
-                "S:bairroFilter",
-                "D:map.json",
-                "L:fs"
-              ]
-            },
-            {
-              "name": "Category filter",
-              "kind": "Filter",
-              "resources": [
-                "C:renderCats",
-                "C:syncCat",
-                "S:active",
-                "D:map.json",
-                "L:fs"
-              ]
-            },
-            {
-              "name": "Map canvas",
-              "kind": "Viz",
-              "resources": [
-                "C:render",
-                "C:catColor",
-                "D:map.json",
-                "L:map"
-              ]
-            },
-            {
-              "name": "Pan & zoom",
-              "kind": "Filter",
-              "resources": [
-                "C:zoomTo",
-                "C:centerOn",
-                "L:zoom",
-                "L:map"
-              ]
-            },
-            {
-              "name": "Place selection",
-              "kind": "Viz",
-              "resources": [
-                "C:selectPlace",
-                "C:hit",
-                "S:selected",
-                "L:map"
-              ]
-            },
-            {
-              "name": "Detail panel",
-              "kind": "Panel",
-              "resources": [
-                "C:renderPanel",
-                "C:setPanelState",
-                "D:content.json",
-                "S:selected",
-                "L:info-panel"
-              ]
-            },
-            {
-              "name": "View in diagram",
-              "kind": "Link",
-              "resources": [
-                "N:graph",
-                "S:hash",
-                "L:info-panel"
-              ]
-            },
-            {
-              "name": "Visible-count badge",
-              "kind": "Data",
-              "resources": [
-                "C:updateCount",
-                "D:map.json",
-                "L:map-badge"
-              ]
-            }
-          ]
-        },
-        {
           "name": "Matrix",
           "file": "matriz.html",
           "features": [
@@ -1014,6 +918,102 @@
               "resources": [
                 "C:initLang",
                 "S:lang"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Map",
+          "file": "mapa.html",
+          "features": [
+            {
+              "name": "Place search",
+              "kind": "Input",
+              "resources": [
+                "C:renderSearch",
+                "D:map.json",
+                "L:fs",
+                "N:mapa"
+              ]
+            },
+            {
+              "name": "Neighborhood filter",
+              "kind": "Filter",
+              "resources": [
+                "C:renderBairros",
+                "S:bairroFilter",
+                "D:map.json",
+                "L:fs"
+              ]
+            },
+            {
+              "name": "Category filter",
+              "kind": "Filter",
+              "resources": [
+                "C:renderCats",
+                "C:syncCat",
+                "S:active",
+                "D:map.json",
+                "L:fs"
+              ]
+            },
+            {
+              "name": "Map canvas",
+              "kind": "Viz",
+              "resources": [
+                "C:render",
+                "C:catColor",
+                "D:map.json",
+                "L:map"
+              ]
+            },
+            {
+              "name": "Pan & zoom",
+              "kind": "Filter",
+              "resources": [
+                "C:zoomTo",
+                "C:centerOn",
+                "L:zoom",
+                "L:map"
+              ]
+            },
+            {
+              "name": "Place selection",
+              "kind": "Viz",
+              "resources": [
+                "C:selectPlace",
+                "C:hit",
+                "S:selected",
+                "L:map"
+              ]
+            },
+            {
+              "name": "Detail panel",
+              "kind": "Panel",
+              "resources": [
+                "C:renderPanel",
+                "C:setPanelState",
+                "D:content.json",
+                "S:selected",
+                "L:info-panel"
+              ]
+            },
+            {
+              "name": "View in diagram",
+              "kind": "Link",
+              "resources": [
+                "N:graph",
+                "S:hash",
+                "L:info-panel"
+              ]
+            },
+            {
+              "name": "Visible-count badge",
+              "kind": "Data",
+              "resources": [
+                "C:updateCount",
+                "D:map.json",
+                "L:map-badge"
               ]
             }
           ]

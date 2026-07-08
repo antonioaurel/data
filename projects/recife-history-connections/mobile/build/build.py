@@ -241,6 +241,7 @@ def main():
             ("Tipo", 100),
             ("Local", pctf("neighborhood")),
         ],
+        "quality_queue": quality.curation_queue(nodes, edges, aliases),
     }
 
     # ---- static HTML (SSG): Início + list + matrix + graph + fillrate + fontes + sobre + node pages ----
