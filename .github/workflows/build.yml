@@ -10,6 +10,8 @@ on:
       - 'projects/recife-history-connections/data/graph.json'
       - 'projects/recife-history-connections/data/content.json'
       - 'projects/recife-history-connections/build.py'
+      - 'projects/recife-history-connections/mobile/**'
+      - '.github/workflows/build.yml'
   pull_request:
     paths:
       - 'projects/recife-history-connections/data/nodes.csv'
@@ -18,6 +20,8 @@ on:
       - 'projects/recife-history-connections/data/graph.json'
       - 'projects/recife-history-connections/data/content.json'
       - 'projects/recife-history-connections/build.py'
+      - 'projects/recife-history-connections/mobile/**'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
 
 jobs:
@@ -28,6 +32,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: Validate base & check derived files are in sync
+      - name: Validate base & check desktop derived files are in sync
         working-directory: projects/recife-history-connections
         run: python3 build.py --check
+
+      - name: Rebuild mobile artifacts
+        working-directory: projects/recife-history-connections
+        run: python3 mobile/build/build.py
+
+      - name: Verify generated files are committed
+        run: git diff --exit-code -- projects/recife-history-connections
