@@ -6,13 +6,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "test": "playwright test"
+    "dev": "node --watch src/server.js"
   },
   "dependencies": {
     "express": "^4.19.2"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.47.0"
   }
 }
