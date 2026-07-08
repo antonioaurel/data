@@ -1,0 +1,1103 @@
+{
+  "subsystems": [
+    {
+      "id": "desktop",
+      "label": "Desktop",
+      "dot": "#2f6db0",
+      "tag": "Subsystem · PC",
+      "title": "Desktop",
+      "subtitle": "screens ≥ 1024px · /pages/ · viewport routing (≤1023px → Mobile)",
+      "modules": [
+        {
+          "name": "Top Navigation",
+          "file": "shared",
+          "shared": true,
+          "features": [
+            {
+              "name": "Home / Logo",
+              "kind": "Link",
+              "resources": [
+                "N:index",
+                "L:navbar"
+              ]
+            },
+            {
+              "name": "Diagram",
+              "kind": "Link",
+              "resources": [
+                "N:diagram",
+                "L:navbar"
+              ]
+            },
+            {
+              "name": "Matrix",
+              "kind": "Link",
+              "resources": [
+                "N:matrix",
+                "L:navbar"
+              ]
+            },
+            {
+              "name": "Fill Rate",
+              "kind": "Link",
+              "resources": [
+                "N:stats",
+                "L:navbar"
+              ]
+            },
+            {
+              "name": "Sources",
+              "kind": "Link",
+              "resources": [
+                "N:sources",
+                "L:navbar"
+              ]
+            },
+            {
+              "name": "Map",
+              "kind": "Link",
+              "resources": [
+                "N:mapa",
+                "L:navbar"
+              ]
+            },
+            {
+              "name": "Language toggle",
+              "kind": "Filter",
+              "resources": [
+                "S:lang",
+                "L:lang-toggle",
+                "L:navbar"
+              ]
+            },
+            {
+              "name": "Active state",
+              "kind": "Data",
+              "resources": [
+                "L:navbar"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Home",
+          "file": "index.html",
+          "features": [
+            {
+              "name": "Hero",
+              "kind": "Data",
+              "resources": []
+            },
+            {
+              "name": "Language toggle",
+              "kind": "Filter",
+              "resources": [
+                "S:lang",
+                "L:lang-toggle"
+              ]
+            },
+            {
+              "name": "Card · Diagram",
+              "kind": "Link",
+              "resources": [
+                "N:diagram",
+                "L:viz-card"
+              ]
+            },
+            {
+              "name": "Card · Matrix",
+              "kind": "Link",
+              "resources": [
+                "N:matrix",
+                "L:viz-card"
+              ]
+            },
+            {
+              "name": "Card · Fill Rate",
+              "kind": "Link",
+              "resources": [
+                "N:stats",
+                "L:viz-card"
+              ]
+            },
+            {
+              "name": "Card · Map",
+              "kind": "Link",
+              "resources": [
+                "N:mapa",
+                "L:viz-card"
+              ]
+            },
+            {
+              "name": "Card · Sources",
+              "kind": "Link",
+              "resources": [
+                "N:sources",
+                "L:viz-card"
+              ]
+            },
+            {
+              "name": "Footer",
+              "kind": "External",
+              "resources": [
+                "L:footer"
+              ]
+            },
+            {
+              "name": "Viewport routing",
+              "kind": "Data",
+              "resources": [
+                "S:lang"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Diagram",
+          "file": "diagram.html",
+          "features": [
+            {
+              "name": "Node search",
+              "kind": "Input",
+              "resources": [
+                "D:graph.json",
+                "D:content.json",
+                "C:dg-select"
+              ]
+            },
+            {
+              "name": "Type filter",
+              "kind": "Filter",
+              "resources": [
+                "C:dg-filter"
+              ]
+            },
+            {
+              "name": "Graph canvas",
+              "kind": "Viz",
+              "resources": [
+                "D:graph.json",
+                "D:content.json"
+              ]
+            },
+            {
+              "name": "Nav hint",
+              "kind": "Data",
+              "resources": []
+            },
+            {
+              "name": "Detail panel",
+              "kind": "Panel",
+              "resources": [
+                "D:content.json",
+                "C:dg-detail",
+                "L:detail-panel",
+                "L:type-badge"
+              ]
+            },
+            {
+              "name": "Connections list",
+              "kind": "Panel",
+              "resources": [
+                "C:dg-detail",
+                "L:conn-card"
+              ]
+            },
+            {
+              "name": "Connection card",
+              "kind": "Link",
+              "resources": [
+                "C:dg-select",
+                "L:conn-card"
+              ]
+            },
+            {
+              "name": "Back to Home",
+              "kind": "Link",
+              "resources": [
+                "N:index"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Matrix",
+          "file": "matrix.html",
+          "features": [
+            {
+              "name": "Node search",
+              "kind": "Input",
+              "resources": [
+                "D:graph.json",
+                "C:mx-select"
+              ]
+            },
+            {
+              "name": "Highlight filter",
+              "kind": "Input",
+              "resources": [
+                "D:content.json",
+                "C:mx-select"
+              ]
+            },
+            {
+              "name": "Stats",
+              "kind": "Data",
+              "resources": [
+                "D:graph.json"
+              ]
+            },
+            {
+              "name": "Zoom",
+              "kind": "Filter",
+              "resources": [
+                "C:mx-draw"
+              ]
+            },
+            {
+              "name": "Matrix canvas",
+              "kind": "Viz",
+              "resources": [
+                "D:graph.json",
+                "C:mx-draw"
+              ]
+            },
+            {
+              "name": "Minimap",
+              "kind": "Viz",
+              "resources": [
+                "D:graph.json",
+                "C:mx-draw"
+              ]
+            },
+            {
+              "name": "Detail panel",
+              "kind": "Panel",
+              "resources": [
+                "D:graph.json",
+                "D:content.json",
+                "C:mx-select",
+                "L:detail-panel",
+                "L:type-badge"
+              ]
+            },
+            {
+              "name": "Keyboard nav",
+              "kind": "Data",
+              "resources": [
+                "C:mx-select"
+              ]
+            },
+            {
+              "name": "Back to Home",
+              "kind": "Link",
+              "resources": [
+                "N:index"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Fill Rate",
+          "file": "stats.html",
+          "features": [
+            {
+              "name": "Summary cards",
+              "kind": "Data",
+              "resources": [
+                "D:graph.json",
+                "D:content.json"
+              ]
+            },
+            {
+              "name": "Bullet chart",
+              "kind": "Viz",
+              "resources": [
+                "D:graph.json",
+                "D:content.json"
+              ]
+            },
+            {
+              "name": "Problem sections",
+              "kind": "Filter",
+              "resources": [
+                "D:content.json"
+              ]
+            },
+            {
+              "name": "Category badges",
+              "kind": "Data",
+              "resources": [
+                "L:type-badge"
+              ]
+            },
+            {
+              "name": "Back to Home",
+              "kind": "Link",
+              "resources": [
+                "N:index"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Sources",
+          "file": "sources.html",
+          "features": [
+            {
+              "name": "Book card ×3",
+              "kind": "Data",
+              "resources": []
+            },
+            {
+              "name": "Book link",
+              "kind": "External",
+              "resources": []
+            },
+            {
+              "name": "Back to Home",
+              "kind": "Link",
+              "resources": [
+                "N:index"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Map",
+          "file": "mapa.html",
+          "features": [
+            {
+              "name": "Location search",
+              "kind": "Input",
+              "resources": [
+                "D:map.json",
+                "C:mp-select"
+              ]
+            },
+            {
+              "name": "Neighborhood filter",
+              "kind": "Filter",
+              "resources": [
+                "D:map.json",
+                "C:mp-filter"
+              ]
+            },
+            {
+              "name": "Time slider",
+              "kind": "Filter",
+              "resources": [
+                "D:map.json",
+                "C:mp-filter"
+              ]
+            },
+            {
+              "name": "Type filter",
+              "kind": "Filter",
+              "resources": [
+                "D:map.json",
+                "C:mp-filter"
+              ]
+            },
+            {
+              "name": "Category filter",
+              "kind": "Filter",
+              "resources": [
+                "D:map.json",
+                "C:mp-filter"
+              ]
+            },
+            {
+              "name": "Leaflet map",
+              "kind": "Viz",
+              "resources": [
+                "D:map.json"
+              ]
+            },
+            {
+              "name": "Detail panel",
+              "kind": "Panel",
+              "resources": [
+                "D:map.json",
+                "D:content.json",
+                "C:mp-select",
+                "L:detail-panel",
+                "L:type-badge"
+              ]
+            },
+            {
+              "name": "Stats",
+              "kind": "Data",
+              "resources": [
+                "D:map.json"
+              ]
+            },
+            {
+              "name": "Back to Home",
+              "kind": "Link",
+              "resources": [
+                "N:index"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mobile",
+      "label": "Mobile",
+      "dot": "#2f9e57",
+      "tag": "Subsystem · Mobile",
+      "title": "App",
+      "subtitle": "screens ≤ 1023px · /mobile/site/ · PWA (service worker, offline)",
+      "modules": [
+        {
+          "name": "Bottom Bar",
+          "file": "shared",
+          "shared": true,
+          "features": [
+            {
+              "name": "Home",
+              "kind": "Link",
+              "resources": [
+                "N:index",
+                "L:bottom-nav"
+              ]
+            },
+            {
+              "name": "Diagram",
+              "kind": "Link",
+              "resources": [
+                "N:graph",
+                "L:bottom-nav"
+              ]
+            },
+            {
+              "name": "Matrix",
+              "kind": "Link",
+              "resources": [
+                "N:matriz",
+                "L:bottom-nav"
+              ]
+            },
+            {
+              "name": "Fill rate",
+              "kind": "Link",
+              "resources": [
+                "N:fillrate",
+                "L:bottom-nav"
+              ]
+            },
+            {
+              "name": "Sources",
+              "kind": "Link",
+              "resources": [
+                "N:fontes",
+                "L:bottom-nav"
+              ]
+            },
+            {
+              "name": "About",
+              "kind": "Link",
+              "resources": [
+                "N:sobre",
+                "L:bottom-nav"
+              ]
+            },
+            {
+              "name": "Active state",
+              "kind": "Data",
+              "resources": [
+                "L:bottom-nav"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Top Header",
+          "file": "shared",
+          "shared": true,
+          "features": [
+            {
+              "name": "Home / title",
+              "kind": "Link",
+              "resources": [
+                "N:index",
+                "L:app-header"
+              ]
+            },
+            {
+              "name": "Nav tabs",
+              "kind": "Link",
+              "resources": [
+                "L:app-header",
+                "L:top-nav",
+                "N:index",
+                "N:graph",
+                "N:matriz",
+                "N:fillrate",
+                "N:fontes",
+                "N:sobre"
+              ]
+            },
+            {
+              "name": "Language toggle",
+              "kind": "Filter",
+              "resources": [
+                "C:initLang",
+                "S:lang",
+                "L:lang-toggle",
+                "L:app-header"
+              ]
+            },
+            {
+              "name": "Theme toggle",
+              "kind": "Filter",
+              "resources": [
+                "C:initTheme",
+                "S:theme",
+                "L:theme-toggle",
+                "L:app-header"
+              ]
+            },
+            {
+              "name": "Skip link",
+              "kind": "Data",
+              "resources": [
+                "L:skip-link"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "View Switcher",
+          "file": "shared",
+          "shared": true,
+          "features": [
+            {
+              "name": "List tab",
+              "kind": "Link",
+              "resources": [
+                "C:initSwitcher",
+                "S:ctxList",
+                "N:list",
+                "L:switcher"
+              ]
+            },
+            {
+              "name": "Graph tab",
+              "kind": "Link",
+              "resources": [
+                "C:initSwitcher",
+                "S:ctxNode",
+                "N:graph",
+                "L:switcher"
+              ]
+            },
+            {
+              "name": "Matrix tab",
+              "kind": "Link",
+              "resources": [
+                "N:matriz",
+                "L:switcher"
+              ]
+            },
+            {
+              "name": "Context",
+              "kind": "Data",
+              "resources": [
+                "C:initSwitcher",
+                "S:ctxNode",
+                "S:ctxList"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Home",
+          "file": "index.html",
+          "features": [
+            {
+              "name": "Search",
+              "kind": "Input",
+              "resources": [
+                "C:loadSearch",
+                "C:stripAccents",
+                "C:debounce",
+                "C:xhrJSON",
+                "D:search.json"
+              ]
+            },
+            {
+              "name": "Live results",
+              "kind": "Panel",
+              "resources": [
+                "C:loadSearch",
+                "D:search.json",
+                "L:card",
+                "C:typeMeta"
+              ]
+            },
+            {
+              "name": "Type chips",
+              "kind": "Filter",
+              "resources": [
+                "C:typeMeta",
+                "L:chip",
+                "N:list",
+                "S:hash"
+              ]
+            },
+            {
+              "name": "Stats",
+              "kind": "Data",
+              "resources": []
+            },
+            {
+              "name": "Viz cards",
+              "kind": "Link",
+              "resources": [
+                "L:viz-link",
+                "N:graph",
+                "N:matriz",
+                "N:fontes",
+                "N:sobre"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "List",
+          "file": "list.html",
+          "features": [
+            {
+              "name": "Search",
+              "kind": "Input",
+              "resources": [
+                "C:loadSearch",
+                "C:stripAccents",
+                "C:debounce",
+                "C:xhrJSON",
+                "D:search.json",
+                "S:ctxList"
+              ]
+            },
+            {
+              "name": "Type filters",
+              "kind": "Filter",
+              "resources": [
+                "C:typeMeta",
+                "L:chip",
+                "S:ctxList",
+                "L:card"
+              ]
+            },
+            {
+              "name": "Sort",
+              "kind": "Filter",
+              "resources": [
+                "C:sortBy",
+                "S:ctxList"
+              ]
+            },
+            {
+              "name": "Card",
+              "kind": "Link",
+              "resources": [
+                "L:card",
+                "C:typeMeta",
+                "C:getMode"
+              ]
+            },
+            {
+              "name": "Inline expand",
+              "kind": "Filter",
+              "resources": [
+                "C:toggleExpand",
+                "D:node.json",
+                "C:xhrJSON",
+                "C:typeMeta"
+              ]
+            },
+            {
+              "name": "Detail · pane / sheet",
+              "kind": "Panel",
+              "resources": [
+                "C:paneHTML",
+                "D:node.json",
+                "S:ctxNode",
+                "C:xhrJSON",
+                "L:detail-pane",
+                "L:sheet"
+              ]
+            },
+            {
+              "name": "Pair drill-down",
+              "kind": "Data",
+              "resources": [
+                "C:loadPair",
+                "D:pairs.json",
+                "S:ctxList",
+                "C:xhrJSON",
+                "S:hash"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Graph",
+          "file": "graph.html",
+          "features": [
+            {
+              "name": "Ego graph",
+              "kind": "Viz",
+              "resources": [
+                "C:initGraph",
+                "D:node.json",
+                "C:typeColor",
+                "S:ctxNode",
+                "C:xhrJSON",
+                "S:hash"
+              ]
+            },
+            {
+              "name": "Neighbor tap",
+              "kind": "Viz",
+              "resources": [
+                "C:selectNeighbor",
+                "S:ctxNode",
+                "L:gnode"
+              ]
+            },
+            {
+              "name": "Detail panel",
+              "kind": "Panel",
+              "resources": [
+                "C:paneHTML",
+                "C:typeMeta",
+                "L:graph-panel"
+              ]
+            },
+            {
+              "name": "View as list",
+              "kind": "Link",
+              "resources": [
+                "N:node"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Matrix",
+          "file": "matriz.html",
+          "features": [
+            {
+              "name": "Matrix cells",
+              "kind": "Link",
+              "resources": [
+                "N:list",
+                "D:matrix.json",
+                "S:hash"
+              ]
+            },
+            {
+              "name": "Intensity",
+              "kind": "Data",
+              "resources": []
+            }
+          ]
+        },
+        {
+          "name": "Fill rate",
+          "file": "fillrate.html",
+          "features": [
+            {
+              "name": "Bar chart",
+              "kind": "Viz",
+              "resources": []
+            },
+            {
+              "name": "Method text",
+              "kind": "Data",
+              "resources": [
+                "C:initLang"
+              ]
+            },
+            {
+              "name": "Desktop report",
+              "kind": "Link",
+              "resources": [
+                "N:stats-pc"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Sources",
+          "file": "fontes.html",
+          "features": [
+            {
+              "name": "Book cards ×3",
+              "kind": "Data",
+              "resources": []
+            },
+            {
+              "name": "External links",
+              "kind": "External",
+              "resources": []
+            }
+          ]
+        },
+        {
+          "name": "About",
+          "file": "sobre.html",
+          "features": [
+            {
+              "name": "Method",
+              "kind": "Data",
+              "resources": [
+                "C:initLang"
+              ]
+            },
+            {
+              "name": "Author",
+              "kind": "External",
+              "resources": []
+            },
+            {
+              "name": "Related projects",
+              "kind": "Data",
+              "resources": []
+            },
+            {
+              "name": "AI disclaimer",
+              "kind": "Data",
+              "resources": [
+                "C:initLang"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Node Detail",
+          "file": "node/*.html",
+          "features": [
+            {
+              "name": "Back to list",
+              "kind": "Link",
+              "resources": [
+                "N:list",
+                "L:detail-back"
+              ]
+            },
+            {
+              "name": "Header",
+              "kind": "Data",
+              "resources": [
+                "L:detail-head",
+                "C:typeMeta"
+              ]
+            },
+            {
+              "name": "View in graph",
+              "kind": "Link",
+              "resources": [
+                "N:graph",
+                "S:ctxNode",
+                "S:hash"
+              ]
+            },
+            {
+              "name": "Connections",
+              "kind": "Link",
+              "resources": []
+            },
+            {
+              "name": "EN fallback",
+              "kind": "Data",
+              "resources": [
+                "C:initLang",
+                "S:lang"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "platform",
+      "label": "Platform",
+      "dot": "#7a5bd0",
+      "tag": "Subsystem · Cross-cutting",
+      "title": "Platform Behaviors",
+      "subtitle": "span across pages — deserve their own test cases",
+      "modules": [
+        {
+          "name": "Theme",
+          "file": "both",
+          "features": [
+            {
+              "name": "Theme toggle",
+              "kind": "Filter",
+              "resources": [
+                "C:initTheme",
+                "S:theme"
+              ]
+            },
+            {
+              "name": "PC fixed themes",
+              "kind": "Data",
+              "resources": []
+            }
+          ]
+        },
+        {
+          "name": "Language / i18n",
+          "file": "both",
+          "features": [
+            {
+              "name": "PC · /en/ pages",
+              "kind": "Data",
+              "resources": []
+            },
+            {
+              "name": "Mobile · in-place",
+              "kind": "Filter",
+              "resources": [
+                "C:initLang",
+                "S:lang"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Offline / PWA",
+          "file": "mobile",
+          "features": [
+            {
+              "name": "Service worker",
+              "kind": "Data",
+              "resources": [
+                "C:sw"
+              ]
+            },
+            {
+              "name": "Offline bar",
+              "kind": "Data",
+              "resources": [
+                "C:sw"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Responsiveness",
+          "file": "both",
+          "features": [
+            {
+              "name": "Breakpoints",
+              "kind": "Data",
+              "resources": [
+                "C:getMode"
+              ]
+            },
+            {
+              "name": "Viewport routing",
+              "kind": "Data",
+              "resources": [
+                "S:lang"
+              ]
+            }
+          ]
+        }
+      ],
+      "flags": [
+        [
+          "Map is PC-only",
+          "no /en/ version and no Mobile equivalent."
+        ],
+        [
+          "Node / connection counts diverge",
+          "PC reports 564 nós · 756 conexões; Mobile reports 556 nós · 3814 conexões."
+        ],
+        [
+          "Language toggle missing",
+          "on PC pages stats.html and sources.html."
+        ],
+        [
+          "Hard-coded start node",
+          "Mobile bottom-bar “Diagram” opens graph.html#node=LC-0215."
+        ]
+      ]
+    },
+    {
+      "id": "service",
+      "label": "Service",
+      "dot": "#2b8a8a",
+      "tag": "Subsystem · Service & usage",
+      "title": "Service & Usage",
+      "subtitle": "how the app is reached, delivered and operated — entry points + DevOps (impact = a change in how the app is used or served)",
+      "modules": [
+        {
+          "name": "Entry & Navigation",
+          "file": "index.html + projects.json",
+          "features": [
+            {
+              "name": "Approaches menu",
+              "kind": "Link",
+              "resources": [
+                "N:index-root",
+                "D:projects.json",
+                "L:menu-card"
+              ]
+            },
+            {
+              "name": "Project registry",
+              "kind": "Data",
+              "resources": [
+                "D:projects.json"
+              ]
+            },
+            {
+              "name": "Base URL / hosting",
+              "kind": "External",
+              "resources": [
+                "D:projects.json"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "DevOps & Review",
+          "file": "tools/ + dashboard/",
+          "features": [
+            {
+              "name": "PR review bridge",
+              "kind": "External",
+              "resources": [
+                "C:review-bridge",
+                "D:pr-impact.json"
+              ]
+            },
+            {
+              "name": "Ops dashboard",
+              "kind": "Viz",
+              "resources": [
+                "C:gen-dashboard",
+                "D:pr-impact.json",
+                "D:task-evolution"
+              ]
+            },
+            {
+              "name": "Task tracking board",
+              "kind": "Data",
+              "resources": [
+                "D:task-evolution"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
