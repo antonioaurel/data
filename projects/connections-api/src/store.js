@@ -40,9 +40,19 @@ class Store {
     this._maxNum = 0;
     for (const row of this._seed) {
       this.items.set(row.id, { ...row });
-      const m = /^LC-(\d+)$/.exec(row.id || '');
-      if (m) this._maxNum = Math.max(this._maxNum, Number(m[1]));
+      this._bumpCounter(row.id);
     }
+  }
+
+  // Keep the auto-id counter at/above the highest LC-#### id seen, so a later
+  // auto-generated id never collides with an explicitly-created one.
+  _bumpCounter(id) {
+    const m = /^LC-(\d+)$/.exec(id || '');
+    if (!m) return;
+    const num = Number(m[1]);
+    // Only advance while strictly below MAX_SAFE_INTEGER, so `_maxNum += 1` in
+    // nextId() always progresses (past that boundary float increments stall).
+    if (num < Number.MAX_SAFE_INTEGER) this._maxNum = Math.max(this._maxNum, num);
   }
 
   list({ type, neighborhood, city, q, limit, offset } = {}) {
@@ -72,8 +82,16 @@ class Store {
   }
 
   nextId() {
-    this._maxNum += 1;
-    return 'LC-' + String(this._maxNum).padStart(4, '0');
+    // Bounded loop: a poisoned/saturated counter can never spin forever — after
+    // a hard cap we surface 507 instead of hanging the process.
+    for (let tries = 0; tries < 100000; tries += 1) {
+      this._maxNum += 1;
+      const id = 'LC-' + String(this._maxNum).padStart(4, '0');
+      if (!this.items.has(id)) return id;
+    }
+    const e = new Error('could not allocate a new id');
+    e.status = 507;
+    throw e;
   }
 
   create(data) {
@@ -85,6 +103,7 @@ class Store {
     }
     const item = normalize({ ...data, id });
     this.items.set(id, item);
+    this._bumpCounter(id); // an explicit high LC id must advance the counter
     return { ...item };
   }
 

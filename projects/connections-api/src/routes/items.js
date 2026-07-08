@@ -21,8 +21,22 @@ function validate(body, { partial = false } = {}) {
     }
   }
   for (const f of ['lat', 'lon']) {
-    if (f in body && body[f] != null && body[f] !== '' && Number.isNaN(Number(body[f]))) {
-      errors.push(`${f} must be numeric`);
+    // Present and non-null → must be a finite number. Rejects '', whitespace,
+    // 'Infinity', NaN. Use null (or omit) to mean "no coordinate".
+    if (f in body && body[f] !== null) {
+      if (String(body[f]).trim() === '' || !Number.isFinite(Number(body[f]))) {
+        errors.push(`${f} must be a finite number or null`);
+      }
+    }
+  }
+  // An explicit id becomes a URL path segment (GET /api/items/:id); keep it to a
+  // safe charset so items stay reachable and Location headers stay well-formed.
+  if ('id' in body && body.id != null && String(body.id).trim() !== '') {
+    const idStr = String(body.id).trim();
+    if (!/^[A-Za-z0-9._-]+$/.test(idStr)) {
+      errors.push('id may only contain letters, digits, dot, underscore or hyphen');
+    } else if (idStr === '.' || idStr === '..') {
+      errors.push('id must not be a dot segment');
     }
   }
   return errors;
@@ -47,7 +61,7 @@ module.exports = function itemsRouter(store) {
     if (errors.length) return res.status(400).json({ error: 'validation failed', details: errors });
     try {
       const item = store.create(req.body);
-      res.status(201).location(`/api/items/${item.id}`).json(item);
+      res.status(201).location(`/api/items/${encodeURIComponent(item.id)}`).json(item);
     } catch (e) {
       res.status(e.status || 500).json({ error: e.message });
     }
