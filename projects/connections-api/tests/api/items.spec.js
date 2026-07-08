@@ -113,6 +113,27 @@ test.describe('POST /api/items', () => {
     expect(res.status()).toBe(400);
   });
 
+  test('rejects a dot-segment id (400)', async ({ request }) => {
+    const res = await request.post('/api/items', {
+      data: { id: '..', name: 'x', type: 'Local' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test('rejects non-finite / blank coordinates (400)', async ({ request }) => {
+    for (const bad of [{ lat: 'Infinity' }, { lon: '' }, { lat: 'abc' }]) {
+      const res = await request.post('/api/items', {
+        data: { name: 'coord', type: 'Local', ...bad },
+      });
+      expect(res.status()).toBe(400);
+    }
+    // valid finite coordinates and explicit null are accepted
+    const ok = await request.post('/api/items', {
+      data: { name: 'coord ok', type: 'Local', lat: -8.05, lon: null },
+    });
+    expect(ok.status()).toBe(201);
+  });
+
   test('rejects a duplicate id with 409', async ({ request }) => {
     const res = await request.post('/api/items', {
       data: { id: 'LC-0002', name: 'Dup', type: 'Local' },
