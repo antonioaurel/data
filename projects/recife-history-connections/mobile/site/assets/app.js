@@ -4,13 +4,13 @@
 (function () {
   "use strict";
 
-  // Type keys match the routes (#tipos=local,…). "Fato Histórico" shows as "Evento".
+  // Type keys match the routes (#tipos=local,...). "Fato Histórico" shows as "Evento".
   var TYPES = {
-    local:      { label: "Local",                  ico: "📍" },
-    personagem: { label: "Personagens Históricos", ico: "👤" },
-    evento:     { label: "Fatos Históricos",       ico: "📅" }
+    local:      { label: "Local",                  ico: "L" },
+    personagem: { label: "Personagens Históricos", ico: "P" },
+    evento:     { label: "Fatos Históricos",       ico: "E" }
   };
-  var FALLBACK = { label: "Outro", ico: "●" };
+  var FALLBACK = { label: "Outro", ico: "?" };
 
   /* ================================ i18n ================================== */
   // Default PT (never auto-follow the browser); the toggle persists the choice.
