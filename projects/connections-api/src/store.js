@@ -40,9 +40,15 @@ class Store {
     this._maxNum = 0;
     for (const row of this._seed) {
       this.items.set(row.id, { ...row });
-      const m = /^LC-(\d+)$/.exec(row.id || '');
-      if (m) this._maxNum = Math.max(this._maxNum, Number(m[1]));
+      this._bumpCounter(row.id);
     }
+  }
+
+  // Keep the auto-id counter at/above the highest LC-#### id seen, so a later
+  // auto-generated id never collides with an explicitly-created one.
+  _bumpCounter(id) {
+    const m = /^LC-(\d+)$/.exec(id || '');
+    if (m) this._maxNum = Math.max(this._maxNum, Number(m[1]));
   }
 
   list({ type, neighborhood, city, q, limit, offset } = {}) {
@@ -72,8 +78,12 @@ class Store {
   }
 
   nextId() {
-    this._maxNum += 1;
-    return 'LC-' + String(this._maxNum).padStart(4, '0');
+    let id;
+    do {
+      this._maxNum += 1;
+      id = 'LC-' + String(this._maxNum).padStart(4, '0');
+    } while (this.items.has(id)); // defensive: never hand back an existing id
+    return id;
   }
 
   create(data) {
@@ -85,6 +95,7 @@ class Store {
     }
     const item = normalize({ ...data, id });
     this.items.set(id, item);
+    this._bumpCounter(id); // an explicit high LC id must advance the counter
     return { ...item };
   }
 
