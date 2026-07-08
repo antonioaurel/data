@@ -921,6 +921,102 @@
               ]
             }
           ]
+        },
+        {
+          "name": "Map",
+          "file": "mapa.html",
+          "features": [
+            {
+              "name": "Place search",
+              "kind": "Input",
+              "resources": [
+                "C:renderSearch",
+                "D:map.json",
+                "L:fs",
+                "N:mapa"
+              ]
+            },
+            {
+              "name": "Neighborhood filter",
+              "kind": "Filter",
+              "resources": [
+                "C:renderBairros",
+                "S:bairroFilter",
+                "D:map.json",
+                "L:fs"
+              ]
+            },
+            {
+              "name": "Category filter",
+              "kind": "Filter",
+              "resources": [
+                "C:renderCats",
+                "C:syncCat",
+                "S:active",
+                "D:map.json",
+                "L:fs"
+              ]
+            },
+            {
+              "name": "Map canvas",
+              "kind": "Viz",
+              "resources": [
+                "C:render",
+                "C:catColor",
+                "D:map.json",
+                "L:map"
+              ]
+            },
+            {
+              "name": "Pan & zoom",
+              "kind": "Filter",
+              "resources": [
+                "C:zoomTo",
+                "C:centerOn",
+                "L:zoom",
+                "L:map"
+              ]
+            },
+            {
+              "name": "Place selection",
+              "kind": "Viz",
+              "resources": [
+                "C:selectPlace",
+                "C:hit",
+                "S:selected",
+                "L:map"
+              ]
+            },
+            {
+              "name": "Detail panel",
+              "kind": "Panel",
+              "resources": [
+                "C:renderPanel",
+                "C:setPanelState",
+                "D:content.json",
+                "S:selected",
+                "L:info-panel"
+              ]
+            },
+            {
+              "name": "View in diagram",
+              "kind": "Link",
+              "resources": [
+                "N:graph",
+                "S:hash",
+                "L:info-panel"
+              ]
+            },
+            {
+              "name": "Visible-count badge",
+              "kind": "Data",
+              "resources": [
+                "C:updateCount",
+                "D:map.json",
+                "L:map-badge"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1093,6 +1189,80 @@
               "kind": "Data",
               "resources": [
                 "D:task-evolution"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "API",
+          "file": "projects/connections-api/",
+          "features": [
+            {
+              "name": "List & filter",
+              "kind": "Filter",
+              "resources": [
+                "C:store.list",
+                "D:items",
+                "N:GET /api/items"
+              ]
+            },
+            {
+              "name": "Get by id",
+              "kind": "Data",
+              "resources": [
+                "C:store.get",
+                "D:items",
+                "N:GET /api/items/:id"
+              ]
+            },
+            {
+              "name": "Create",
+              "kind": "Input",
+              "resources": [
+                "C:store.create",
+                "C:validate",
+                "D:items",
+                "N:POST /api/items"
+              ]
+            },
+            {
+              "name": "Update (PUT/PATCH)",
+              "kind": "Input",
+              "resources": [
+                "C:store.replace",
+                "C:store.update",
+                "C:validate",
+                "D:items",
+                "N:PUT /api/items/:id",
+                "N:PATCH /api/items/:id"
+              ]
+            },
+            {
+              "name": "Delete",
+              "kind": "Input",
+              "resources": [
+                "C:store.remove",
+                "D:items",
+                "N:DELETE /api/items/:id"
+              ]
+            },
+            {
+              "name": "Reset (seed)",
+              "kind": "Data",
+              "resources": [
+                "C:store.reset",
+                "D:items",
+                "D:nodes.csv",
+                "N:POST /api/_reset"
+              ]
+            },
+            {
+              "name": "Health",
+              "kind": "Data",
+              "resources": [
+                "C:health",
+                "D:items",
+                "N:GET /health"
               ]
             }
           ]
