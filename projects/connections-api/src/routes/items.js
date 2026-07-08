@@ -25,6 +25,11 @@ function validate(body, { partial = false } = {}) {
       errors.push(`${f} must be numeric`);
     }
   }
+  // An explicit id becomes a URL path segment (GET /api/items/:id); keep it to a
+  // safe charset so items stay reachable and Location headers stay well-formed.
+  if ('id' in body && body.id != null && String(body.id).trim() !== '' && !/^[A-Za-z0-9._-]+$/.test(String(body.id).trim())) {
+    errors.push('id may only contain letters, digits, dot, underscore or hyphen');
+  }
   return errors;
 }
 
@@ -47,7 +52,7 @@ module.exports = function itemsRouter(store) {
     if (errors.length) return res.status(400).json({ error: 'validation failed', details: errors });
     try {
       const item = store.create(req.body);
-      res.status(201).location(`/api/items/${item.id}`).json(item);
+      res.status(201).location(`/api/items/${encodeURIComponent(item.id)}`).json(item);
     } catch (e) {
       res.status(e.status || 500).json({ error: e.message });
     }

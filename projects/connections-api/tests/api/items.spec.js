@@ -106,6 +106,13 @@ test.describe('POST /api/items', () => {
     expect(res.status()).toBe(413);
   });
 
+  test('rejects an explicit id with reserved characters (400)', async ({ request }) => {
+    const res = await request.post('/api/items', {
+      data: { id: 'bad/id here', name: 'x', type: 'Local' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
   test('rejects a duplicate id with 409', async ({ request }) => {
     const res = await request.post('/api/items', {
       data: { id: 'LC-0002', name: 'Dup', type: 'Local' },
