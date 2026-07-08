@@ -104,6 +104,19 @@ test.describe('POST /api/items', () => {
     });
     expect(res.status()).toBe(409);
   });
+
+  test('auto-id after an explicit high id does not collide (regression)', async ({ request }) => {
+    const explicit = await request.post('/api/items', {
+      data: { id: 'LC-9003', name: 'Explicit high id', type: 'Local' },
+    });
+    expect(explicit.status()).toBe(201);
+    // a following auto-id create must not be handed the same id → no false 409
+    const auto = await request.post('/api/items', {
+      data: { name: 'Auto after explicit', type: 'Local' },
+    });
+    expect(auto.status()).toBe(201);
+    expect((await auto.json()).id).not.toBe('LC-9003');
+  });
 });
 
 test.describe('PUT /api/items/:id', () => {
