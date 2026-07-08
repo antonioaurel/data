@@ -98,6 +98,14 @@ test.describe('POST /api/items', () => {
     expect(res.status()).toBe(400);
   });
 
+  test('rejects an oversized body with 413, not 500', async ({ request }) => {
+    const huge = 'x'.repeat(200 * 1024); // > express.json default 100kb limit
+    const res = await request.post('/api/items', {
+      data: { name: 'big', type: 'Local', notes: huge },
+    });
+    expect(res.status()).toBe(413);
+  });
+
   test('rejects a duplicate id with 409', async ({ request }) => {
     const res = await request.post('/api/items', {
       data: { id: 'LC-0002', name: 'Dup', type: 'Local' },
