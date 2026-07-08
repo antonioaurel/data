@@ -50,10 +50,9 @@ class Store {
     const m = /^LC-(\d+)$/.exec(id || '');
     if (!m) return;
     const num = Number(m[1]);
-    // Only advance for SAFE integers. A gigantic id (>= 2^53) must not poison
-    // the counter: past MAX_SAFE_INTEGER, `_maxNum += 1` stops progressing and
-    // nextId()'s dedup loop would spin forever, hanging the process.
-    if (Number.isSafeInteger(num)) this._maxNum = Math.max(this._maxNum, num);
+    // Only advance while strictly below MAX_SAFE_INTEGER, so `_maxNum += 1` in
+    // nextId() always progresses (past that boundary float increments stall).
+    if (num < Number.MAX_SAFE_INTEGER) this._maxNum = Math.max(this._maxNum, num);
   }
 
   list({ type, neighborhood, city, q, limit, offset } = {}) {
@@ -83,12 +82,16 @@ class Store {
   }
 
   nextId() {
-    let id;
-    do {
+    // Bounded loop: a poisoned/saturated counter can never spin forever — after
+    // a hard cap we surface 507 instead of hanging the process.
+    for (let tries = 0; tries < 100000; tries += 1) {
       this._maxNum += 1;
-      id = 'LC-' + String(this._maxNum).padStart(4, '0');
-    } while (this.items.has(id)); // defensive: never hand back an existing id
-    return id;
+      const id = 'LC-' + String(this._maxNum).padStart(4, '0');
+      if (!this.items.has(id)) return id;
+    }
+    const e = new Error('could not allocate a new id');
+    e.status = 507;
+    throw e;
   }
 
   create(data) {
