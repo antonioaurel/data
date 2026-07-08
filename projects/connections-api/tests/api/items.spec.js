@@ -141,6 +141,18 @@ test.describe('POST /api/items', () => {
     expect(res.status()).toBe(409);
   });
 
+  test('an unsafe explicit id (2^53) does not hang auto-id generation (regression)', async ({ request }) => {
+    // 9007199254740992 === 2^53 === MAX_SAFE_INTEGER + 1; must not poison the counter
+    const boundary = await request.post('/api/items', {
+      data: { id: 'LC-9007199254740992', name: 'Boundary id', type: 'Local' },
+    });
+    expect(boundary.status()).toBe(201);
+    const auto = await request.post('/api/items', {
+      data: { name: 'Auto after boundary', type: 'Local' },
+    });
+    expect(auto.status()).toBe(201);
+  });
+
   test('auto-id after an explicit high id does not collide (regression)', async ({ request }) => {
     const explicit = await request.post('/api/items', {
       data: { id: 'LC-9003', name: 'Explicit high id', type: 'Local' },

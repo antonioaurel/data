@@ -48,7 +48,12 @@ class Store {
   // auto-generated id never collides with an explicitly-created one.
   _bumpCounter(id) {
     const m = /^LC-(\d+)$/.exec(id || '');
-    if (m) this._maxNum = Math.max(this._maxNum, Number(m[1]));
+    if (!m) return;
+    const num = Number(m[1]);
+    // Only advance for SAFE integers. A gigantic id (>= 2^53) must not poison
+    // the counter: past MAX_SAFE_INTEGER, `_maxNum += 1` stops progressing and
+    // nextId()'s dedup loop would spin forever, hanging the process.
+    if (Number.isSafeInteger(num)) this._maxNum = Math.max(this._maxNum, num);
   }
 
   list({ type, neighborhood, city, q, limit, offset } = {}) {
