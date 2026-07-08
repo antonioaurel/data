@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pull Request Review Flow</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-2: #eef2f7;
+      --text: #18212f;
+      --muted: #5c6b7a;
+      --border: #d9e0e8;
+      --accent: #2563eb;
+      --accent-2: #0f766e;
+      --warn: #b45309;
+      --shadow: 0 16px 40px rgba(24, 33, 47, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .shell { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 34px;
+    }
+    .brand {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .doc-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    header {
+      padding: 34px 0 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      color: var(--accent-2);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 64px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    .lead {
+      max-width: 760px;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 24px 0 36px;
+    }
+    .meta {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 96px;
+    }
+    .meta span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+    .meta strong { font-size: 15px; }
+
+    section { margin: 34px 0; }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+    .section-note {
+      max-width: 760px;
+      color: var(--muted);
+      margin: 0 0 16px;
+    }
+
+    .principle {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--accent);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .principle p { margin: 0 0 12px; }
+    .principle p:last-child { margin-bottom: 0; }
+
+    .flow-panel {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .flow {
+      min-width: 940px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+    .node {
+      position: relative;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 104px;
+    }
+    .node::after {
+      content: "";
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      width: 14px;
+      height: 1px;
+      background: var(--border);
+    }
+    .node:nth-child(6n)::after,
+    .node:last-child::after { display: none; }
+    .node .step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .node h3 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      line-height: 1.25;
+    }
+    .node p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+    .node.claude .step { background: #7c3aed; }
+    .node.codex .step { background: var(--accent); }
+    .node.user .step { background: var(--accent-2); }
+    .node.decision .step { background: var(--warn); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th {
+      background: var(--surface-2);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    tr:last-child td { border-bottom: 0; }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      background: #edf2f7;
+      border: 1px solid #dbe4ee;
+      border-radius: 5px;
+      padding: 2px 5px;
+      font-size: 12.5px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--accent-2);
+    }
+    .status::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .meta-grid, .cards { grid-template-columns: 1fr; }
+      th, td { display: block; width: 100%; }
+      th { border-bottom: 0; }
+      td { padding-top: 0; }
+      tr { display: block; border-bottom: 1px solid var(--border); }
+      tr:last-child { border-bottom: 0; }
+      .flow { min-width: 760px; grid-template-columns: repeat(4, minmax(140px, 1fr)); }
+      .node:nth-child(6n)::after { display: block; }
+      .node:nth-child(4n)::after,
+      .node:last-child::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">Recife History Connections · Engineering Workflow</div>
+      <a class="doc-link" href="pr-review-flow.md">Markdown source</a>
+    </div>
+
+    <header>
+      <div class="eyebrow">Operational Runbook</div>
+      <h1>Pull Request Review Flow</h1>
+      <p class="lead">
+        The current Claude Orchestrator to Codex workflow for pull request review,
+        discussion logging, operator visibility, and merge decision support.
+      </p>
+    </header>
+
+    <div class="meta-grid">
+      <div class="meta"><span>Document type</span><strong>Engineering Workflow</strong></div>
+      <div class="meta"><span>Status</span><strong>Draft</strong></div>
+      <div class="meta"><span>Primary reviewer</span><strong>Codex</strong></div>
+      <div class="meta"><span>Final decision</span><strong>User</strong></div>
+    </div>
+
+    <section>
+      <h2>Collaboration Principle</h2>
+      <div class="principle">
+        <p>
+          Codex is the reviewer, not a subordinate of Claude. Claude implementation
+          agents own implementation work on the pull request. The Claude Orchestrator
+          owns the queue and handoffs. Codex owns independent review judgment.
+        </p>
+        <p>
+          When they disagree, both agents should try to converge on a practical agreement
+          based on evidence from the code, tests, project constraints, and user intent.
+        </p>
+        <p>
+          If no agreement is possible, the user is the final decision maker. The preferred
+          handoff is a concise summary of the disagreement, the risks of each option, and
+          the recommended next step.
+        </p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Flow Diagram</h2>
+      <p class="section-note">
+        Claude implementation agents open PRs and report them to the Orchestrator.
+        The Orchestrator triggers the local Codex review bridge, Codex posts review
+        comments, and Claude iterates on fixes until the PR is ready for the user decision.
+      </p>
+      <div class="flow-panel">
+        <div class="flow" aria-label="Pull request review flow diagram">
+          <div class="node claude"><span class="step">1</span><h3>Claude creates PR</h3><p>Implementation branch is opened as a GitHub pull request.</p></div>
+          <div class="node claude"><span class="step">2</span><h3>Claude reports PR</h3><p>The implementation agent sends the PR number to the Orchestrator queue.</p></div>
+          <div class="node user"><span class="step">3</span><h3>Orchestrator runs bridge</h3><p><code>python3 tools/review_pr_with_codex_cli.py &lt;PR&gt; --notify-claude --notify-from-pr</code></p></div>
+          <div class="node codex"><span class="step">4</span><h3>Read PR metadata</h3><p>The bridge uses <code>gh pr view</code> for title, URL, base, and head.</p></div>
+          <div class="node codex"><span class="step">5</span><h3>Fetch PR branch</h3><p>The PR head is fetched into an isolated remote ref.</p></div>
+          <div class="node codex"><span class="step">6</span><h3>Create worktree</h3><p>A temporary checkout is created under <code>/private/tmp/codex-pr-*</code>.</p></div>
+          <div class="node codex"><span class="step">7</span><h3>Run Codex review</h3><p><code>codex review --base origin/&lt;base&gt;</code> reviews the PR.</p></div>
+          <div class="node codex"><span class="step">8</span><h3>Post review</h3><p>Codex findings are posted as a GitHub PR comment.</p></div>
+          <div class="node codex"><span class="step">9</span><h3>Post completion</h3><p>Completion summary includes discussion points and merge guidance.</p></div>
+          <div class="node codex"><span class="step">10</span><h3>Clean up</h3><p>The temporary worktree is removed after the run.</p></div>
+          <div class="node user"><span class="step">11</span><h3>Orchestrator monitors</h3><p>Terminal output and <code>.pr-review-logs/dashboard.md</code> show status.</p></div>
+          <div class="node claude"><span class="step">12</span><h3>Claude addresses</h3><p>Claude reads review comments and updates the PR branch, then the Orchestrator reruns review.</p></div>
+          <div class="node decision"><span class="step">13</span><h3>User decides</h3><p>The user decides whether to merge or accept remaining risk after Codex is satisfied.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Responsibilities</h2>
+      <table>
+        <thead><tr><th>Step</th><th>Owner</th><th>Files or commands</th></tr></thead>
+        <tbody>
+          <tr><td>Create the PR</td><td>Claude implementation agent</td><td>GitHub pull request</td></tr>
+          <tr><td>Report PR ready for review</td><td>Claude implementation agent</td><td>Orchestrator queue/status</td></tr>
+          <tr><td>Trigger the review</td><td>Claude Orchestrator</td><td><code>python3 tools/review_pr_with_codex_cli.py &lt;PR_NUMBER&gt;</code></td></tr>
+          <tr><td>Read PR metadata</td><td>Codex review bridge</td><td><code>gh pr view</code></td></tr>
+          <tr><td>Fetch PR code</td><td>Codex review bridge</td><td><code>git fetch origin &lt;base&gt; pull/&lt;PR&gt;/head:refs/remotes/origin/pr-&lt;PR&gt;</code></td></tr>
+          <tr><td>Run review</td><td>Codex CLI</td><td><code>codex review --base origin/&lt;base&gt;</code></td></tr>
+          <tr><td>Publish review</td><td>Codex review bridge</td><td><code>gh pr comment</code></td></tr>
+          <tr><td>Monitor progress</td><td>Claude Orchestrator, User</td><td>Terminal output, dashboard, and GitHub PR comments</td></tr>
+          <tr><td>Address findings</td><td>Claude implementation agent</td><td>PR branch</td></tr>
+          <tr><td>Record discussion</td><td>Claude, Codex, User</td><td>GitHub PR comments and local logs</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Orchestrator Contract</h2>
+      <p class="section-note">
+        The Orchestrator is the queue manager. It receives PR numbers from Claude
+        implementation agents, runs Codex review, waits for fixes, reruns review after
+        each fix commit, and stops only when Codex reports no blocking findings or the
+        user explicitly accepts the remaining risk.
+      </p>
+      <pre><code>python3 tools/review_pr_with_codex_cli.py &lt;PR_NUMBER&gt; \
+  --notify-claude \
+  --notify-from-pr</code></pre>
+    </section>
+
+    <section>
+      <h2>Operator Visibility</h2>
+      <div class="cards">
+        <div class="card">
+          <h3><span class="status">Terminal</span></h3>
+          <p>The script prints when the review starts, when comments are posted, and when the review finishes.</p>
+        </div>
+        <div class="card">
+          <h3><span class="status">Dashboard</span></h3>
+          <p><code>.pr-review-logs/dashboard.md</code> shows <code>RUNNING</code>, <code>COMPLETED</code>, or <code>FAILED</code>.</p>
+        </div>
+        <div class="card">
+          <h3><span class="status">PR Comments</span></h3>
+          <p>The pull request remains the canonical audit log for review findings, discussion, and decisions.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Logs and Summaries</h2>
+      <table>
+        <thead><tr><th>Log</th><th>Purpose</th><th>Versioned?</th></tr></thead>
+        <tbody>
+          <tr><td>GitHub PR comments</td><td>Canonical discussion and decision history</td><td>Yes, in GitHub</td></tr>
+          <tr><td><code>.pr-review-logs/pr-&lt;number&gt;.md</code></td><td>Local execution trace for bridge scripts</td><td>No, ignored by git</td></tr>
+          <tr><td><code>.pr-review-logs/dashboard.md</code></td><td>Operator-facing current review status</td><td>No, ignored by git</td></tr>
+          <tr><td><code>.pr-review-logs/pr-&lt;number&gt;-discussion-summary.md</code></td><td>Local running summary source for Claude/Codex discussion</td><td>No, ignored by git</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Current Limitation</h2>
+      <p class="section-note">
+        The Orchestrator still needs to run the review bridge after a Claude
+        implementation agent opens or updates a PR. A future GitHub Action could remove
+        that requirement by triggering the review on
+        <code>pull_request: opened</code>, <code>synchronize</code>, and <code>reopened</code>.
+      </p>
+    </section>
+
+    <footer>
+      Source document: <a href="pr-review-flow.md">docs/pr-review-flow.md</a>.
+      This page is operational documentation, not an ADR.
+    </footer>
+  </div>
+</body>
+</html>

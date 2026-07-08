@@ -20,14 +20,14 @@ try:
 except (OSError, ValueError):
     THUMBS = {}
 
-# type -> (Portuguese label, icon). Keys match the routes (#tipos=local,…).
+# type -> (Portuguese label, stable short marker). Keys match the routes (#tipos=local,...).
 # The .get() fallback keeps rendering safe if an unexpected type ever appears.
 TYPE_META = {
-    "local":      ("Local",                   "📍"),
-    "personagem": ("Personagens Históricos",  "👤"),
-    "evento":     ("Fatos Históricos",        "📅"),
+    "local":      ("Local",                   "L"),
+    "personagem": ("Personagens Históricos",  "P"),
+    "evento":     ("Fatos Históricos",        "E"),
 }
-FALLBACK_META = ("Outro", "●")
+FALLBACK_META = ("Outro", "?")
 CATEGORY_ORDER = ["local", "personagem", "evento"]
 
 # Links out to the existing desktop pages / external map (from mobile/site/ → ../../pages/).
@@ -38,12 +38,12 @@ MARCO_ZERO = "LC-0215"   # symbolic entry point for the graph from Início
 MAP_URL = "../../pages/mapa.html"   # geographic map (Leaflet); lives under desktop pages/
 
 # Bottom/top nav sections.
-NAV_ITEMS = [("index.html", "Início", "🏠", "inicio"),
-             ("graph.html#node=" + MARCO_ZERO, "Diagrama", "🕸", "diagrama"),
-             ("matriz.html", "Matriz", "▦", "matriz"),
-             ("fillrate.html", "Fill rate", "📊", "fillrate"),
-             ("fontes.html", "Fontes", "📚", "fontes"),
-             ("sobre.html", "Sobre", "ℹ", "sobre")]
+NAV_ITEMS = [("index.html", "Início", "inicio"),
+             ("graph.html#node=" + MARCO_ZERO, "Diagrama", "diagrama"),
+             ("matriz.html", "Matriz", "matriz"),
+             ("fillrate.html", "Fill rate", "fillrate"),
+             ("fontes.html", "Fontes", "fontes"),
+             ("sobre.html", "Sobre", "sobre")]
 
 
 def esc(s):
@@ -60,7 +60,7 @@ def badge(t, with_label=True):
 
 def bottom_nav(active, base=""):
     lis = []
-    for href, label, _ico, key in NAV_ITEMS:
+    for href, label, key in NAV_ITEMS:
         cur = " aria-current='page'" if key == active else ""
         lis.append("<li><a href='%s%s'%s data-i18n='nav-%s'>%s</a></li>"
                    % (base, href, cur, key, esc(label)))
@@ -91,7 +91,7 @@ def top_nav(active, base=""):
     links = "".join(
         "<a href='%s%s'%s data-i18n='nav-%s'>%s</a>"
         % (base, href, " aria-current='page'" if key == active else "", key, esc(label))
-        for href, label, _ico, key in NAV_ITEMS)
+        for href, label, key in NAV_ITEMS)
     return "<nav class='top-nav' aria-label='Seções'>%s</nav>" % links
 
 
@@ -408,6 +408,20 @@ def render_fillrate(stats):
         "<span class='fr-pct'>%d%%</span></div>"
         % (" fr-low" if pct < 60 else "", name, esc(name), pct, pct)
         for name, pct in stats.get("fields", []))
+    queue = stats.get("quality_queue", [])
+    qitems = "".join(
+        "<li class='dq-item'><span class='dq-priority'>%s</span>"
+        "<span class='dq-label'>%s</span><strong class='dq-count'>%d</strong></li>"
+        % (esc(item.get("priority")), esc(item.get("label")), item.get("count", 0))
+        for item in queue)
+    qblock = (
+        "<h2 class='section-h'>Fila de curadoria</h2>\n"
+        "<p class='mx-intro'>Itens gerados automaticamente a partir das lacunas e avisos da base.</p>\n"
+        "<ol class='dq-list'>%s</ol>\n" % qitems
+    ) if qitems else (
+        "<h2 class='section-h'>Fila de curadoria</h2>\n"
+        "<p class='mx-intro'>Nenhuma pendência de curadoria detectada nesta geração.</p>\n"
+    )
     body = (
         "<h1 class='section-h' style='font-size:18px' data-i18n='fill-h'>Fill rate</h1>\n"
         "<p class='home-stats'><strong>%d</strong> <span data-i18n='w-nos'>nós</span> · "
@@ -415,13 +429,14 @@ def render_fillrate(stats):
         "<div class='fr'>%s</div>\n"
         "<p class='mx-intro'><span data-i18n='fill-note-a'>Campos em âmbar precisam de curadoria.</span> "
         "<a href='%s' target='_blank' rel='noopener' data-i18n='fill-note-link'>Ver o relatório completo ↗</a></p>\n"
+        "%s"
         "<h2 class='section-h' data-i18n='fill-method-h'>Método de trabalho</h2>\n"
         "<p class='about-p' data-i18n='fill-method-1'>Leitura de fontes, identificação dos locais "
         "associados em um mapa e criação de uma matriz de-para — considerando interação direta, "
         "área, período e consequência.</p>\n"
         "<p class='about-p' data-i18n='fill-method-2'>Limpeza de dados, validação de qualidade e "
         "publicação com correção constante.</p>\n"
-        % (stats.get("n_nodes", 0), stats.get("n_edges", 0), rows, DESKTOP_STATS)
+        % (stats.get("n_nodes", 0), stats.get("n_edges", 0), rows, DESKTOP_STATS, qblock)
     )
     return shell("Fill rate — Conexões da História", "fillrate", "../data", "fillrate", body)
 
