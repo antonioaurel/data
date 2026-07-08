@@ -39,7 +39,7 @@
       "links": {
         "title": "Impact Monitoring Dashboard",
         "items": [
-          { "label": "Architecture", "href": "projects/recife-history-connections/docs/architecture.html", "desc": "System design & key decisions" },
+          { "label": "Architecture", "href": "docs/architecture.html", "desc": "System design & key decisions" },
           { "label": "Monitoring Dashboard", "href": "projects/recife-history-connections/dashboard/dashboard.html", "desc": "Operator view — tasks × PRs × impact" },
           { "label": "Modules & Features", "href": "projects/recife-history-connections/Quality/modules-features-matrix/matrix.html", "desc": "Modules × features coverage matrix" },
           { "label": "PR Impact", "href": "projects/recife-history-connections/Quality/modules-features-matrix/pr-impact.html", "desc": "Which PRs touch which modules" },
