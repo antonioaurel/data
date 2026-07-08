@@ -2,8 +2,8 @@
 
 Mobile-first, progressive-exploration front end for the historical knowledge graph of
 Recife/Pernambuco. Built for entry-level Android on scarce, interruptible data:
-**list-first, lightweight-first, graph and map on demand.** Static HTML/CSS/JS + a Python
-build step, served on GitHub Pages — no runtime backend.
+**list-first, lightweight-first, graph and matrix on demand.** Static HTML/CSS/JS plus a
+Python build step, served on GitHub Pages, with no runtime backend.
 
 The full spec (audience, constraints, performance budget, information architecture,
 phased delivery) lives in [`../docs/implementation-prompt.md`](../docs/implementation-prompt.md).
@@ -15,10 +15,11 @@ This subproject **shares the existing source of truth** — the CSVs in
 the Google Sheet. The mobile build only *reads* them and derives its own JSON; it never
 edits the base.
 
-The app is concentrated on the **three node types that exist in the base** — `Local`→`place`,
-`Personagem`→`person`, `Fato Histórico`→`historical_fact`. The **Map projection is out of
-scope** (no coordinates in the data): no `neighborhoods.json`, no `has_geo`, and the bottom nav
-is Explorar · Favoritos · Sobre.
+The app is concentrated on the **three node types that exist in the base**:
+`Local` -> `local`, `Personagem` -> `personagem`, and `Fato Histórico` -> `evento`.
+The mobile site uses list/detail pages as its primary path, with graph, matrix, fill-rate,
+sources and about screens available from navigation. The geographic map remains a desktop page
+linked from the mobile home because the mobile data layer does not yet include coordinates.
 
 ## Build
 
@@ -38,7 +39,7 @@ Standard library only, deterministic. Outputs (into `mobile/data/`):
 | `matrix.json` | `[{type_a,type_b,count,strength_sum}]` | type×type adjacency (symmetric), **3×3 = 6 rows** |
 | `node/{id}.json` | detail + resolved edges/sources/aliases | fetched on demand per node |
 
-`type` maps `Local→place`, `Personagem→person`, `Fato Histórico→historical_fact`
+`type` maps `Local` -> `local`, `Personagem` -> `personagem`, `Fato Histórico` -> `evento`
 (see `common.TYPE_MAP`); `strength` defaults to `1`.
 
 ## Site (Phase 2)
@@ -58,18 +59,19 @@ Pages fetch data from `../data` (no duplication). Assets are hand-written source
 View locally (from the existing server at repo root):
 `…/recife-history-connections/mobile/site/index.html`
 
-## v3 rework (in progress)
+## Current experience
 
-Following `../docs/implementation-prompt.md` (v3). Built against **real data**
-(567 nós · 3881 conexões · real fill rates) — the spec's 564/756/95%-images numbers are
-stale (confirmed against every source). Done so far: dark theme default + toggle; palette
-local=blue / personagem=red / evento=green (+ teal accent); type keys `local/personagem/evento`;
-all text centered; Inter (self-hosted); graph capped at 5 neighbours on mobile; bottom nav
-**Início · Fill rate · Fontes · Sobre** (Favoritos/Explorar removed); new screens Início
-(intro + real stats + type chips + Visualizações → Grafo/Matriz/Mapa/Diagrama), Fill rate
-(per-field bars, low fields in amber → stats.html), Fontes (3 books), Sobre (author/criador +
-Outros projetos + AI disclaimer). Pending: matrix PC note; i18n PT/EN; route renames
-(lista/grafo/matriz + #tipos=/#par=).
+The mobile app is now a complete static site:
+
+- `index.html`: home, search entry, real stats, type chips and visualization links.
+- `list.html`: full node list with search, type filters, sorting and pair drill-downs.
+- `node/{id}.html`: static detail pages for every node, enhanced with favorites and graph context.
+- `graph.html`: cheap radial ego graph with a small mobile neighbor cap.
+- `matriz.html`: type-pair matrix with lazy drill-down into the list.
+- `fillrate.html`, `fontes.html`, `sobre.html`: data-quality, source and project context pages.
+
+The UI has PT/EN language switching, dark/light theme switching, offline shell caching,
+responsive compact/medium/expanded layouts, and localStorage favorites.
 
 ## Lighthouse (mobile, Moto-G / simulated Slow-4G)
 
@@ -86,9 +88,9 @@ label-in-name issues surfaced by the audit were fixed.
 
 - **Phase 1 — data layer:** done, including `matrix.json`.
 - **Phase 2 — Shell + Home + List:** done (SSG + search/filter/sort/inline-expand).
-- **Phase 3 — Node detail (static pages):** done. `site/node/{id}.html` for every node
-  (description, location, aliases, sources, connections grouped by type). Connection links
-  resolve. Bottom-sheet (in-place detail) still to add.
+- **Phase 3 — Node detail:** done. `site/node/{id}.html` exists for every node
+  (description, location, aliases, sources, connections grouped by type), with compact/medium
+  bottom-sheet detail and expanded right-pane detail on the list.
 - **Phase 5 — Matriz (3×3):** done. `site/matriz.html` renders the type×type table (semantic
   `<table>`, number always shown, neutral sqrt-scaled intensity, cells ≥ 60px with aria-labels).
   Each cell links to `list.html#pair=<a>-<b>`; `app.js` lazy-loads `data/pairs/{a}-{b}.json`
@@ -97,11 +99,9 @@ label-in-name issues surfaced by the audit were fixed.
 - **Phase 6 — Type colors unified with desktop:** done. Single source of truth in
   `app.css :root` (`--type-*` = desktop hues #4a90d9 / #e8833a / #5cb85c, + `--type-other`
   #9b59b6, each with `-bg` tint and AA `-ink`). No type hex outside `:root`; `app.js` reads none.
-- **Phase 9 — Favoritos + Sobre/Fontes:** done. `sobre.html` (project context, methodology,
-  FT source registry from `sources.json`) and `favoritos.html` (localStorage, rendered from
-  `index.json`). Node pages get a ☆ Favoritar toggle; the bottom nav (Explorar · Favoritos ·
-  Sobre) now points to real pages. Fixed the `.js-only` rule so it no longer clobbers each
-  element's display (search/toolbar/fav-btn).
+- **Phase 9 — Sobre/Fontes + favorites:** done. `sobre.html` (project context, methodology),
+  `fontes.html` (source registry and curated references), and localStorage favorite toggles on
+  node pages. Fixed the `.js-only` rule so it no longer clobbers each element's display.
 - **Phase 4 — Grafo (simplified):** done. `graph.html` reads `#node={id}` and renders a
   **radial SVG** (center node + up to 18 neighbors, no force simulation — cheap on weak CPUs,
   zero dependencies). Node color = type (JS reads the `:root` vars); edge width ∝ strength. Tap
@@ -125,11 +125,10 @@ label-in-name issues surfaced by the audit were fixed.
   the pane), instead of navigating. Same URL, no UA sniffing; static default is mobile-first
   single column (SSG-safe). The Grafo is reached from the pane's "Ver conexões" (link), not yet
   a simultaneous third panel.
-- **Phase 3 bottom-sheet:** done. On compact/medium, tapping a list card opens the detail in a
-  bottom sheet (`role=dialog`, `aria-modal`, focus trap, dismiss on ✕/Esc/backdrop, safe-area
-  padding), reusing the same `paneHTML` renderer as the expanded pane; drilling a connection
-  reloads the sheet. Hidden on expanded (the right-hand pane is used there).
-- All 10 phases complete. Optional future: manual compact/expanded override toggle. (Map dropped.)
-- The matrix is built **undirected/symmetric** — the source `relationship_type` values
-  (`local`, `historical_event`, `person`, …) don't encode direction. The `pairs/` drill-down
-  files are deferred to the Matrix phase.
+- **Phase 3 bottom-sheet:** done. On compact/medium, tapping a list card opens detail in a
+  bottom sheet (`role=dialog`, `aria-modal`, focus trap, dismiss on close/Esc/backdrop, safe-area
+  padding), reusing the same `paneHTML` renderer as the expanded pane.
+- All 10 phases complete. Optional future: manual compact/expanded override toggle and a native
+  mobile map if coordinates become part of the mobile data layer.
+- The matrix is built **undirected/symmetric** because the source `relationship_type` values do
+  not encode direction.
