@@ -25,153 +25,17 @@ RTYPE = {
 
 def esc(s): return html.escape(str(s))
 
-# Each functionality: (name, kind, [resources])  resource = "T:label"
-DESKTOP = {
- 'id':'desktop','label':'Desktop','dot':'#2f6db0','tag':'Subsystem · PC','title':'Desktop',
- 'subtitle':'screens ≥ 1024px · /pages/ · viewport routing (≤1023px → Mobile)',
- 'columns':[
-  {'name':'Top Navigation','file':'shared','shared':True,'fns':[
-    ('Home / Logo','Link',['N:index','L:navbar']),
-    ('Diagram','Link',['N:diagram','L:navbar']),
-    ('Matrix','Link',['N:matrix','L:navbar']),
-    ('Fill Rate','Link',['N:stats','L:navbar']),
-    ('Sources','Link',['N:sources','L:navbar']),
-    ('Map','Link',['N:mapa','L:navbar']),
-    ('Language toggle','Filter',['S:lang','L:lang-toggle','L:navbar']),
-    ('Active state','Data',['L:navbar'])]},
-  {'name':'Home','file':'index.html','fns':[
-    ('Hero','Data',[]),
-    ('Language toggle','Filter',['S:lang','L:lang-toggle']),
-    ('Card · Diagram','Link',['N:diagram','L:viz-card']),
-    ('Card · Matrix','Link',['N:matrix','L:viz-card']),
-    ('Card · Fill Rate','Link',['N:stats','L:viz-card']),
-    ('Card · Map','Link',['N:mapa','L:viz-card']),
-    ('Card · Sources','Link',['N:sources','L:viz-card']),
-    ('Footer','External',['L:footer']),
-    ('Viewport routing','Data',['S:lang'])]},
-  {'name':'Diagram','file':'diagram.html','fns':[
-    ('Node search','Input',['D:graph.json','D:content.json','C:dg-select']),
-    ('Type filter','Filter',['C:dg-filter']),
-    ('Graph canvas','Viz',['D:graph.json','D:content.json']),
-    ('Nav hint','Data',[]),
-    ('Detail panel','Panel',['D:content.json','C:dg-detail','L:detail-panel','L:type-badge']),
-    ('Connections list','Panel',['C:dg-detail','L:conn-card']),
-    ('Connection card','Link',['C:dg-select','L:conn-card']),
-    ('Back to Home','Link',['N:index'])]},
-  {'name':'Matrix','file':'matrix.html','fns':[
-    ('Node search','Input',['D:graph.json','C:mx-select']),
-    ('Highlight filter','Input',['D:content.json','C:mx-select']),
-    ('Stats','Data',['D:graph.json']),
-    ('Zoom','Filter',['C:mx-draw']),
-    ('Matrix canvas','Viz',['D:graph.json','C:mx-draw']),
-    ('Minimap','Viz',['D:graph.json','C:mx-draw']),
-    ('Detail panel','Panel',['D:graph.json','D:content.json','C:mx-select','L:detail-panel','L:type-badge']),
-    ('Keyboard nav','Data',['C:mx-select']),
-    ('Back to Home','Link',['N:index'])]},
-  {'name':'Fill Rate','file':'stats.html','fns':[
-    ('Summary cards','Data',['D:graph.json','D:content.json']),
-    ('Bullet chart','Viz',['D:graph.json','D:content.json']),
-    ('Problem sections','Filter',['D:content.json']),
-    ('Category badges','Data',['L:type-badge']),
-    ('Back to Home','Link',['N:index'])]},
-  {'name':'Sources','file':'sources.html','fns':[
-    ('Book card ×3','Data',[]),
-    ('Book link','External',[]),
-    ('Back to Home','Link',['N:index'])]},
-  {'name':'Map','file':'mapa.html','fns':[
-    ('Location search','Input',['D:map.json','C:mp-select']),
-    ('Neighborhood filter','Filter',['D:map.json','C:mp-filter']),
-    ('Time slider','Filter',['D:map.json','C:mp-filter']),
-    ('Type filter','Filter',['D:map.json','C:mp-filter']),
-    ('Category filter','Filter',['D:map.json','C:mp-filter']),
-    ('Leaflet map','Viz',['D:map.json']),
-    ('Detail panel','Panel',['D:map.json','D:content.json','C:mp-select','L:detail-panel','L:type-badge']),
-    ('Stats','Data',['D:map.json']),
-    ('Back to Home','Link',['N:index'])]},
- ]}
-
-MOBILE = {
- 'id':'mobile','label':'Mobile','dot':'#2f9e57','tag':'Subsystem · Mobile','title':'App',
- 'subtitle':'screens ≤ 1023px · /mobile/site/ · PWA (service worker, offline)',
- 'columns':[
-  {'name':'Bottom Bar','file':'shared','shared':True,'fns':[
-    ('Home','Link',['N:index','L:bottom-nav']),
-    ('Diagram','Link',['N:graph','L:bottom-nav']),
-    ('Matrix','Link',['N:matriz','L:bottom-nav']),
-    ('Fill rate','Link',['N:fillrate','L:bottom-nav']),
-    ('Sources','Link',['N:fontes','L:bottom-nav']),
-    ('About','Link',['N:sobre','L:bottom-nav']),
-    ('Active state','Data',['L:bottom-nav'])]},
-  {'name':'Top Header','file':'shared','shared':True,'fns':[
-    ('Home / title','Link',['N:index','L:app-header']),
-    ('Nav tabs','Link',['L:app-header','L:top-nav','N:index','N:graph','N:matriz','N:fillrate','N:fontes','N:sobre']),
-    ('Language toggle','Filter',['C:initLang','S:lang','L:lang-toggle','L:app-header']),
-    ('Theme toggle','Filter',['C:initTheme','S:theme','L:theme-toggle','L:app-header']),
-    ('Skip link','Data',['L:skip-link'])]},
-  {'name':'View Switcher','file':'shared','shared':True,'fns':[
-    ('List tab','Link',['C:initSwitcher','S:ctxList','N:list','L:switcher']),
-    ('Graph tab','Link',['C:initSwitcher','S:ctxNode','N:graph','L:switcher']),
-    ('Matrix tab','Link',['N:matriz','L:switcher']),
-    ('Context','Data',['C:initSwitcher','S:ctxNode','S:ctxList'])]},
-  {'name':'Home','file':'index.html','fns':[
-    ('Search','Input',['C:loadSearch','C:stripAccents','C:debounce','C:xhrJSON','D:search.json']),
-    ('Live results','Panel',['C:loadSearch','D:search.json','L:card','C:typeMeta']),
-    ('Type chips','Filter',['C:typeMeta','L:chip','N:list','S:hash']),
-    ('Stats','Data',[]),
-    ('Viz cards','Link',['L:viz-link','N:graph','N:matriz','N:fontes','N:sobre'])]},
-  {'name':'List','file':'list.html','fns':[
-    ('Search','Input',['C:loadSearch','C:stripAccents','C:debounce','C:xhrJSON','D:search.json','S:ctxList']),
-    ('Type filters','Filter',['C:typeMeta','L:chip','S:ctxList','L:card']),
-    ('Sort','Filter',['C:sortBy','S:ctxList']),
-    ('Card','Link',['L:card','C:typeMeta','C:getMode']),
-    ('Inline expand','Filter',['C:toggleExpand','D:node.json','C:xhrJSON','C:typeMeta']),
-    ('Detail · pane / sheet','Panel',['C:paneHTML','D:node.json','S:ctxNode','C:xhrJSON','L:detail-pane','L:sheet']),
-    ('Pair drill-down','Data',['C:loadPair','D:pairs.json','S:ctxList','C:xhrJSON','S:hash'])]},
-  {'name':'Graph','file':'graph.html','fns':[
-    ('Ego graph','Viz',['C:initGraph','D:node.json','C:typeColor','S:ctxNode','C:xhrJSON','S:hash']),
-    ('Neighbor tap','Viz',['C:selectNeighbor','S:ctxNode','L:gnode']),
-    ('Detail panel','Panel',['C:paneHTML','C:typeMeta','L:graph-panel']),
-    ('View as list','Link',['N:node'])]},
-  {'name':'Matrix','file':'matriz.html','fns':[
-    ('Matrix cells','Link',['N:list','D:matrix.json','S:hash']),
-    ('Intensity','Data',[])]},
-  {'name':'Fill rate','file':'fillrate.html','fns':[
-    ('Bar chart','Viz',[]),
-    ('Method text','Data',['C:initLang']),
-    ('Desktop report','Link',['N:stats-pc'])]},
-  {'name':'Sources','file':'fontes.html','fns':[
-    ('Book cards ×3','Data',[]),
-    ('External links','External',[])]},
-  {'name':'About','file':'sobre.html','fns':[
-    ('Method','Data',['C:initLang']),
-    ('Author','External',[]),
-    ('Related projects','Data',[]),
-    ('AI disclaimer','Data',['C:initLang'])]},
-  {'name':'Node Detail','file':'node/*.html','fns':[
-    ('Back to list','Link',['N:list','L:detail-back']),
-    ('Header','Data',['L:detail-head','C:typeMeta']),
-    ('View in graph','Link',['N:graph','S:ctxNode','S:hash']),
-    ('Connections','Link',[]),
-    ('EN fallback','Data',['C:initLang','S:lang'])]},
- ]}
-
-PLATFORM = {
- 'id':'platform','label':'Platform','dot':'#7a5bd0','tag':'Subsystem · Cross-cutting',
- 'title':'Platform Behaviors','subtitle':'span across pages — deserve their own test cases',
- 'columns':[
-  {'name':'Theme','file':'both','fns':[('Theme toggle','Filter',['C:initTheme','S:theme']),('PC fixed themes','Data',[])]},
-  {'name':'Language / i18n','file':'both','fns':[('PC · /en/ pages','Data',[]),('Mobile · in-place','Filter',['C:initLang','S:lang'])]},
-  {'name':'Offline / PWA','file':'mobile','fns':[('Service worker','Data',['C:sw']),('Offline bar','Data',['C:sw'])]},
-  {'name':'Responsiveness','file':'both','fns':[('Breakpoints','Data',['C:getMode']),('Viewport routing','Data',['S:lang'])]},
- ],
- 'flags':[
-  ('Map is PC-only','no /en/ version and no Mobile equivalent.'),
-  ('Node / connection counts diverge','PC reports 564 nós · 756 conexões; Mobile reports 556 nós · 3814 conexões.'),
-  ('Language toggle missing','on PC pages stats.html and sources.html.'),
-  ('Hard-coded start node','Mobile bottom-bar “Diagram” opens graph.html#node=LC-0215.'),
- ]}
-
-PAGES=[DESKTOP,MOBILE,PLATFORM]
+# Taxonomy lives in modules.json (data) — gen.py is a pure renderer.
+_m=json.load(open('modules.json'))
+def _load_page(s):
+    p={k:s[k] for k in ['id','label','dot','tag','title','subtitle']}
+    p['columns']=[dict([('name',m['name']),('file',m['file'])]
+                  +([('shared',True)] if m.get('shared') else [])
+                  +[('fns',[(f['name'],f['kind'],f['resources']) for f in m['features']])])
+                  for m in s['modules']]
+    if s.get('flags'): p['flags']=[tuple(x) for x in s['flags']]
+    return p
+PAGES=[_load_page(s) for s in _m['subsystems']]
 
 def flat(page):
     out=[]
@@ -612,7 +476,9 @@ PR_MANAGE_JS='''(function(){
    d.prs.push({id:'pr-'+Date.now().toString(36),label:label,title:title}); save(s,d); render(s);
   });
  });
- ['desktop','mobile','platform'].forEach(render);
+ // Render every subsystem table present in the DOM (not a hardcoded list),
+ // so new subsystems (e.g. Service) get their PR columns too.
+ document.querySelectorAll('.prm[data-sub]').forEach(function(t){render(t.getAttribute('data-sub'));});
 })();'''
 
 REF_HTML=f'''<meta charset="utf-8">
