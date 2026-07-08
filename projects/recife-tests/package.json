@@ -1,0 +1,13 @@
+{
+  "name": "recife-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Central test suite for the Recife history-connections work: API (Playwright request), plus placeholders for db (pytest) and ui (Playwright browser).",
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test tests/api"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  }
+}
