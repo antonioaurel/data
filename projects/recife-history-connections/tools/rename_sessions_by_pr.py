@@ -54,7 +54,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 import re
 import shutil
@@ -114,6 +113,34 @@ def validate_taxonomy(taxo: str) -> str | None:
 CLAUDE_APP_BINARY_SUFFIX = "Claude.app/Contents/MacOS/Claude"
 
 
+def _process_table() -> list[tuple[int, str]]:
+    """(pid, executable-path) for every process, from `ps` (macOS `comm` = full path)."""
+    try:
+        r = subprocess.run(["ps", "-A", "-o", "pid=,comm="], capture_output=True, text=True)
+    except OSError:
+        return []
+    table: list[tuple[int, str]] = []
+    for line in r.stdout.splitlines():
+        parts = line.split(None, 1)
+        if len(parts) == 2:
+            try:
+                table.append((int(parts[0]), parts[1]))
+            except ValueError:
+                pass
+    return table
+
+
+def claude_pids() -> set[int]:
+    """PIDs currently owned by a real Claude process (GUI app or claude-code CLI).
+
+    Used to tie session liveness to process IDENTITY: a bare os.kill(pid, 0) only
+    proves *some* process holds the pid, so a stale pid file (process gone, file
+    left behind) or a recycled pid would falsely read as "alive". Matching the pid
+    against actual Claude processes avoids that false abort. See PR #42 review.
+    """
+    return {pid for pid, comm in _process_table() if "claude" in comm.lower()}
+
+
 def desktop_app_running() -> bool:
     """True if the Claude desktop (Electron) GUI process is running.
 
@@ -125,17 +152,17 @@ def desktop_app_running() -> bool:
     Matches on `ps` process paths (macOS `comm` is the full executable path);
     pgrep -f can miss the GUI process depending on cmdline visibility.
     """
-    try:
-        r = subprocess.run(["ps", "-A", "-o", "comm="], capture_output=True, text=True)
-    except OSError:
-        return False  # ps unavailable -> fall back to the CLI-session signal
-    return any(
-        line.strip().endswith(CLAUDE_APP_BINARY_SUFFIX) for line in r.stdout.splitlines()
-    )
+    return any(comm.endswith(CLAUDE_APP_BINARY_SUFFIX) for _, comm in _process_table())
 
 
-def live_cli_session_ids() -> set[str]:
-    """cliSessionIds of sessions whose desktop process is currently alive."""
+def live_cli_session_ids(alive_pids: set[int] | None = None) -> set[str]:
+    """cliSessionIds whose pid file points at a process that is alive AND Claude.
+
+    `alive_pids` (from claude_pids()) is computed once by the caller and passed in
+    to avoid re-scanning the process table per pid file. A pid file whose pid is
+    not a current Claude process is treated as stale/recycled and ignored.
+    """
+    claude = claude_pids() if alive_pids is None else alive_pids
     live: set[str] = set()
     for pid_file in LIVE_PID_DIR.glob("*.json"):
         try:
@@ -143,13 +170,10 @@ def live_cli_session_ids() -> set[str]:
             pid = int(info["pid"])
         except (ValueError, KeyError, OSError, json.JSONDecodeError):
             continue
-        try:
-            os.kill(pid, 0)  # signal 0 = liveness probe, does not touch the process
-        except OSError:
-            continue
-        sid = info.get("sessionId")
-        if sid:
-            live.add(sid)
+        if pid in claude:
+            sid = info.get("sessionId")
+            if sid:
+                live.add(sid)
     return live
 
 
