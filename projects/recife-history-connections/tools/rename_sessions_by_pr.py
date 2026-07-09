@@ -112,14 +112,18 @@ def validate_taxonomy(taxo: str) -> str | None:
 # whose executables end in "Claude Helper" / live under /Contents/Frameworks/.
 CLAUDE_APP_BINARY_SUFFIX = "Claude.app/Contents/MacOS/Claude"
 
-# Claude Code launched via npm/node runs as comm="node" (or "bun"/…), so `comm`
-# alone never names "claude" — the giveaway is the JS entrypoint on the command
-# line: .../@anthropic-ai/claude-code/cli.js (global or local node_modules). Match
-# that specific path so a real Claude Code session is detected while unrelated
-# `node` processes are NOT false-positives. The entrypoint sits early in the argv
-# (right after the node path), so it survives any tail truncation of `command`.
+# Claude Code launched via npm/node runs as comm="node"/"nodejs", so `comm` alone
+# never names "claude" — the giveaway is node EXECUTING the JS entrypoint:
+#     <node> [flags…] …/@anthropic-ai/claude-code/…/cli.js …
+# Anchor on a node interpreter at the START of the command and require the Claude
+# Code package's cli.js to be node's script argument (after optional node flags).
+# This detects a real session but does NOT false-positive on a process that merely
+# REFERENCES the path — e.g. an editor/grep/less opening cli.js, or any unrelated
+# `node`. Matching a bare mention would reintroduce the stale-pid false-abort this
+# code exists to prevent. The entrypoint sits early in the argv, so it survives any
+# tail truncation of `command`. See issue #45 / PR #46 review.
 CLAUDE_CLI_ENTRYPOINT_RE = re.compile(
-    r"@anthropic-ai[/\\]claude-code|claude-code[/\\][^\s]*cli\.js",
+    r"^\S*node(?:js)?(?:\.exe)?\s+(?:-\S+\s+)*\S*@anthropic-ai[/\\]claude-code[/\\]\S*cli\.js",
     re.IGNORECASE,
 )
 
