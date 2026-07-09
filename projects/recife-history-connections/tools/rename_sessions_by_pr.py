@@ -182,6 +182,8 @@ def main() -> int:
                     help="also rename sessions with a live process (they may revert)")
     ap.add_argument("--taxonomy", type=Path, default=DEFAULT_TAXONOMY,
                     help="session-id -> '<Subsystem>/<Module>' map (v2 prefix)")
+    ap.add_argument("--require-closed", action="store_true",
+                    help="abort (write nothing) if the app / any live session is running")
     ap.set_defaults(skip_running=True)
     args = ap.parse_args()
 
@@ -189,11 +191,23 @@ def main() -> int:
         print(f"sessions dir not found: {args.sessions_dir}")
         return 1
 
+    # Reliable "is the app open?" signal: any live CLI-session pid. This is the same
+    # source used for --skip-running, so it agrees with what actually gets written.
+    live = live_cli_session_ids()
+    if args.require_closed and live:
+        print(
+            "⚠️  The Claude app (or a live session) is still running "
+            f"({len(live)} live session(s)).\n"
+            "    Quit it completely (Cmd+Q) and run this again — while it's open, the\n"
+            "    app keeps titles in memory and only re-reads these files at startup."
+        )
+        return 1
+    if not args.skip_running:
+        live = set()
+
     taxonomy: dict[str, Any] = {}
     if args.taxonomy.is_file():
         taxonomy = json.loads(args.taxonomy.read_text()).get("sessions", {})
-
-    live = live_cli_session_ids() if args.skip_running else set()
     backup_dir = BACKUP_ROOT / f"session-titles-{datetime.now():%Y%m%d-%H%M%S}"
 
     files = sorted(args.sessions_dir.glob("*/*/local_*.json"))
