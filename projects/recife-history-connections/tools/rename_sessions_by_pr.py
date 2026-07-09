@@ -113,17 +113,23 @@ def validate_taxonomy(taxo: str) -> str | None:
 CLAUDE_APP_BINARY_SUFFIX = "Claude.app/Contents/MacOS/Claude"
 
 # Claude Code launched via npm/node runs as comm="node"/"nodejs", so `comm` alone
-# never names "claude" — the giveaway is node EXECUTING the JS entrypoint:
-#     <node> [flags…] …/@anthropic-ai/claude-code/…/cli.js …
-# Anchor on a node interpreter at the START of the command and require the Claude
-# Code package's cli.js to be node's script argument (after optional node flags).
+# never names "claude" — the giveaway is node EXECUTING the Claude Code entrypoint.
+# Anchor on a node interpreter at the START of the command (after optional node
+# flags) and require node's script argument to be either:
+#   * the package's JS entrypoint  …/@anthropic-ai/claude-code/…/cli.js, or
+#   * an npm bin shim named `claude` under a bin/.bin dir  …/(.bin|bin)/claude,
+#     which is how npm-installed / npx / `npm exec` launches usually appear.
 # This detects a real session but does NOT false-positive on a process that merely
 # REFERENCES the path — e.g. an editor/grep/less opening cli.js, or any unrelated
-# `node`. Matching a bare mention would reintroduce the stale-pid false-abort this
-# code exists to prevent. The entrypoint sits early in the argv, so it survives any
-# tail truncation of `command`. See issue #45 / PR #46 review.
+# `node` (a different script, even one taking such a path as a plain arg). Matching
+# a bare mention would reintroduce the stale-pid false-abort this code exists to
+# prevent. The entrypoint sits early in the argv, so it survives any tail truncation
+# of `command`. See issue #45 / PR #46 review (rounds 1–2).
 CLAUDE_CLI_ENTRYPOINT_RE = re.compile(
-    r"^\S*node(?:js)?(?:\.exe)?\s+(?:-\S+\s+)*\S*@anthropic-ai[/\\]claude-code[/\\]\S*cli\.js",
+    r"^\S*node(?:js)?(?:\.exe)?\s+(?:-\S+\s+)*\S*"
+    r"(?:@anthropic-ai[/\\]claude-code[/\\]\S*cli\.js"
+    r"|[/\\]\.?bin[/\\]claude(?:\.[A-Za-z0-9]+)?)"
+    r"(?=\s|$)",
     re.IGNORECASE,
 )
 
