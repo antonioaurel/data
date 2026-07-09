@@ -54,10 +54,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 from datetime import datetime
 from typing import Any
 
@@ -106,8 +106,63 @@ def validate_taxonomy(taxo: str) -> str | None:
     return None
 
 
-def live_cli_session_ids() -> set[str]:
-    """cliSessionIds of sessions whose desktop process is currently alive."""
+# Main GUI binary of the desktop app: .../Claude.app/Contents/MacOS/Claude (capital
+# C). Deliberately excludes the lowercase claude-code CLI
+# (.../claude.app/Contents/MacOS/claude) and the "Claude Helper" subprocesses,
+# whose executables end in "Claude Helper" / live under /Contents/Frameworks/.
+CLAUDE_APP_BINARY_SUFFIX = "Claude.app/Contents/MacOS/Claude"
+
+
+def _process_table() -> list[tuple[int, str]]:
+    """(pid, executable-path) for every process, from `ps` (macOS `comm` = full path)."""
+    try:
+        r = subprocess.run(["ps", "-A", "-o", "pid=,comm="], capture_output=True, text=True)
+    except OSError:
+        return []
+    table: list[tuple[int, str]] = []
+    for line in r.stdout.splitlines():
+        parts = line.split(None, 1)
+        if len(parts) == 2:
+            try:
+                table.append((int(parts[0]), parts[1]))
+            except ValueError:
+                pass
+    return table
+
+
+def claude_pids() -> set[int]:
+    """PIDs currently owned by a real Claude process (GUI app or claude-code CLI).
+
+    Used to tie session liveness to process IDENTITY: a bare os.kill(pid, 0) only
+    proves *some* process holds the pid, so a stale pid file (process gone, file
+    left behind) or a recycled pid would falsely read as "alive". Matching the pid
+    against actual Claude processes avoids that false abort. See PR #42 review.
+    """
+    return {pid for pid, comm in _process_table() if "claude" in comm.lower()}
+
+
+def desktop_app_running() -> bool:
+    """True if the Claude desktop (Electron) GUI process is running.
+
+    Checked IN ADDITION to live CLI sessions: the app can be open with no active
+    session (e.g. sitting on the home screen), yet it still holds every session's
+    title in memory and rewrites the files on save — so an app-closed guard that
+    only looks at CLI sessions gives a false guarantee. See PR #42 review.
+
+    Matches on `ps` process paths (macOS `comm` is the full executable path);
+    pgrep -f can miss the GUI process depending on cmdline visibility.
+    """
+    return any(comm.endswith(CLAUDE_APP_BINARY_SUFFIX) for _, comm in _process_table())
+
+
+def live_cli_session_ids(alive_pids: set[int] | None = None) -> set[str]:
+    """cliSessionIds whose pid file points at a process that is alive AND Claude.
+
+    `alive_pids` (from claude_pids()) is computed once by the caller and passed in
+    to avoid re-scanning the process table per pid file. A pid file whose pid is
+    not a current Claude process is treated as stale/recycled and ignored.
+    """
+    claude = claude_pids() if alive_pids is None else alive_pids
     live: set[str] = set()
     for pid_file in LIVE_PID_DIR.glob("*.json"):
         try:
@@ -115,13 +170,10 @@ def live_cli_session_ids() -> set[str]:
             pid = int(info["pid"])
         except (ValueError, KeyError, OSError, json.JSONDecodeError):
             continue
-        try:
-            os.kill(pid, 0)  # signal 0 = liveness probe, does not touch the process
-        except OSError:
-            continue
-        sid = info.get("sessionId")
-        if sid:
-            live.add(sid)
+        if pid in claude:
+            sid = info.get("sessionId")
+            if sid:
+                live.add(sid)
     return live
 
 
@@ -182,6 +234,8 @@ def main() -> int:
                     help="also rename sessions with a live process (they may revert)")
     ap.add_argument("--taxonomy", type=Path, default=DEFAULT_TAXONOMY,
                     help="session-id -> '<Subsystem>/<Module>' map (v2 prefix)")
+    ap.add_argument("--require-closed", action="store_true",
+                    help="abort (write nothing) if the app / any live session is running")
     ap.set_defaults(skip_running=True)
     args = ap.parse_args()
 
@@ -189,11 +243,29 @@ def main() -> int:
         print(f"sessions dir not found: {args.sessions_dir}")
         return 1
 
+    # "Is the app open?" — check the desktop GUI process AND any live CLI session.
+    # The app process is the authoritative signal (it can be open with no active
+    # session); live CLI sessions are a secondary signal and drive --skip-running.
+    live = live_cli_session_ids()
+    if args.require_closed:
+        reasons = []
+        if desktop_app_running():
+            reasons.append("the Claude desktop app")
+        if live:
+            reasons.append(f"{len(live)} live CLI session(s)")
+        if reasons:
+            print(
+                f"⚠️  {' and '.join(reasons)} still running.\n"
+                "    Quit the Claude app completely (Cmd+Q) and run this again — while it's\n"
+                "    open, the app keeps titles in memory and only re-reads these files at startup."
+            )
+            return 1
+    if not args.skip_running:
+        live = set()
+
     taxonomy: dict[str, Any] = {}
     if args.taxonomy.is_file():
         taxonomy = json.loads(args.taxonomy.read_text()).get("sessions", {})
-
-    live = live_cli_session_ids() if args.skip_running else set()
     backup_dir = BACKUP_ROOT / f"session-titles-{datetime.now():%Y%m%d-%H%M%S}"
 
     files = sorted(args.sessions_dir.glob("*/*/local_*.json"))
