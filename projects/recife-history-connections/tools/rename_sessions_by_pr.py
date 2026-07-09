@@ -58,6 +58,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 from datetime import datetime
 from typing import Any
 
@@ -104,6 +105,33 @@ def validate_taxonomy(taxo: str) -> str | None:
     if mod not in VALID_MODULES[sub]:
         return f"unknown module {mod!r} for {sub}"
     return None
+
+
+# Main GUI binary of the desktop app: .../Claude.app/Contents/MacOS/Claude (capital
+# C). Deliberately excludes the lowercase claude-code CLI
+# (.../claude.app/Contents/MacOS/claude) and the "Claude Helper" subprocesses,
+# whose executables end in "Claude Helper" / live under /Contents/Frameworks/.
+CLAUDE_APP_BINARY_SUFFIX = "Claude.app/Contents/MacOS/Claude"
+
+
+def desktop_app_running() -> bool:
+    """True if the Claude desktop (Electron) GUI process is running.
+
+    Checked IN ADDITION to live CLI sessions: the app can be open with no active
+    session (e.g. sitting on the home screen), yet it still holds every session's
+    title in memory and rewrites the files on save — so an app-closed guard that
+    only looks at CLI sessions gives a false guarantee. See PR #42 review.
+
+    Matches on `ps` process paths (macOS `comm` is the full executable path);
+    pgrep -f can miss the GUI process depending on cmdline visibility.
+    """
+    try:
+        r = subprocess.run(["ps", "-A", "-o", "comm="], capture_output=True, text=True)
+    except OSError:
+        return False  # ps unavailable -> fall back to the CLI-session signal
+    return any(
+        line.strip().endswith(CLAUDE_APP_BINARY_SUFFIX) for line in r.stdout.splitlines()
+    )
 
 
 def live_cli_session_ids() -> set[str]:
@@ -191,17 +219,23 @@ def main() -> int:
         print(f"sessions dir not found: {args.sessions_dir}")
         return 1
 
-    # Reliable "is the app open?" signal: any live CLI-session pid. This is the same
-    # source used for --skip-running, so it agrees with what actually gets written.
+    # "Is the app open?" — check the desktop GUI process AND any live CLI session.
+    # The app process is the authoritative signal (it can be open with no active
+    # session); live CLI sessions are a secondary signal and drive --skip-running.
     live = live_cli_session_ids()
-    if args.require_closed and live:
-        print(
-            "⚠️  The Claude app (or a live session) is still running "
-            f"({len(live)} live session(s)).\n"
-            "    Quit it completely (Cmd+Q) and run this again — while it's open, the\n"
-            "    app keeps titles in memory and only re-reads these files at startup."
-        )
-        return 1
+    if args.require_closed:
+        reasons = []
+        if desktop_app_running():
+            reasons.append("the Claude desktop app")
+        if live:
+            reasons.append(f"{len(live)} live CLI session(s)")
+        if reasons:
+            print(
+                f"⚠️  {' and '.join(reasons)} still running.\n"
+                "    Quit the Claude app completely (Cmd+Q) and run this again — while it's\n"
+                "    open, the app keeps titles in memory and only re-reads these files at startup."
+            )
+            return 1
     if not args.skip_running:
         live = set()
 
