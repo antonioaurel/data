@@ -1109,10 +1109,6 @@
       ],
       "flags": [
         [
-          "Map is PC-only",
-          "no /en/ version and no Mobile equivalent."
-        ],
-        [
           "Node / connection counts diverge",
           "PC reports 564 nós · 756 conexões; Mobile reports 556 nós · 3814 conexões."
         ],
