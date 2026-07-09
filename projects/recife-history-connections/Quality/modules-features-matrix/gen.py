@@ -26,7 +26,7 @@ RTYPE = {
 def esc(s): return html.escape(str(s))
 
 # Taxonomy lives in modules.json (data) — gen.py is a pure renderer.
-_m=json.load(open('modules.json'))
+_m=json.load(open('modules.json', encoding='utf-8'))
 def _load_page(s):
     p={k:s[k] for k in ['id','label','dot','tag','title','subtitle']}
     p['columns']=[dict([('name',m['name']),('file',m['file'])]
