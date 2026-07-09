@@ -112,22 +112,56 @@ def validate_taxonomy(taxo: str) -> str | None:
 # whose executables end in "Claude Helper" / live under /Contents/Frameworks/.
 CLAUDE_APP_BINARY_SUFFIX = "Claude.app/Contents/MacOS/Claude"
 
+# Claude Code launched via npm/node runs as comm="node" (or "bun"/…), so `comm`
+# alone never names "claude" — the giveaway is the JS entrypoint on the command
+# line: .../@anthropic-ai/claude-code/cli.js (global or local node_modules). Match
+# that specific path so a real Claude Code session is detected while unrelated
+# `node` processes are NOT false-positives. The entrypoint sits early in the argv
+# (right after the node path), so it survives any tail truncation of `command`.
+CLAUDE_CLI_ENTRYPOINT_RE = re.compile(
+    r"@anthropic-ai[/\\]claude-code|claude-code[/\\][^\s]*cli\.js",
+    re.IGNORECASE,
+)
 
-def _process_table() -> list[tuple[int, str]]:
-    """(pid, executable-path) for every process, from `ps` (macOS `comm` = full path)."""
+
+def _is_claude_process(comm: str, command: str) -> bool:
+    """True if (comm, command) identify a Claude process: the native `claude`
+    binary / GUI app (executable path names "claude"), or a Claude Code CLI
+    launched via npm/node (comm is "node"/"bun", but the command runs cli.js)."""
+    if "claude" in comm.lower():
+        return True
+    return bool(CLAUDE_CLI_ENTRYPOINT_RE.search(command))
+
+
+def _process_table() -> list[tuple[int, str, str]]:
+    """(pid, comm, command) for every process, from `ps`.
+
+    macOS `comm` is the executable's full path; `command` is the full argv. We read
+    them in two `ps` passes and join on pid: each field is the last column so it may
+    contain spaces yet parses unambiguously (split on the first whitespace). Both are
+    needed because npm/node-launched Claude Code shows up as comm=".../node" with
+    command=".../@anthropic-ai/claude-code/cli.js …" — the command is what reveals it.
+    """
+    comms = _ps_field("comm")
+    commands = _ps_field("command")
+    return [(pid, comm, commands.get(pid, "")) for pid, comm in comms.items()]
+
+
+def _ps_field(field: str) -> dict[int, str]:
+    """pid -> value for one `ps` output field (the last column; may contain spaces)."""
     try:
-        r = subprocess.run(["ps", "-A", "-o", "pid=,comm="], capture_output=True, text=True)
+        r = subprocess.run(["ps", "-A", "-o", f"pid=,{field}="], capture_output=True, text=True)
     except OSError:
-        return []
-    table: list[tuple[int, str]] = []
+        return {}
+    out: dict[int, str] = {}
     for line in r.stdout.splitlines():
         parts = line.split(None, 1)
         if len(parts) == 2:
             try:
-                table.append((int(parts[0]), parts[1]))
+                out[int(parts[0])] = parts[1]
             except ValueError:
                 pass
-    return table
+    return out
 
 
 def claude_pids() -> set[int]:
@@ -137,8 +171,11 @@ def claude_pids() -> set[int]:
     proves *some* process holds the pid, so a stale pid file (process gone, file
     left behind) or a recycled pid would falsely read as "alive". Matching the pid
     against actual Claude processes avoids that false abort. See PR #42 review.
+
+    Matches the native `claude` binary AND Claude Code launched via npm/node (which
+    runs as comm="node" and would otherwise escape a comm-only match). See issue #45.
     """
-    return {pid for pid, comm in _process_table() if "claude" in comm.lower()}
+    return {pid for pid, comm, command in _process_table() if _is_claude_process(comm, command)}
 
 
 def desktop_app_running() -> bool:
@@ -152,7 +189,7 @@ def desktop_app_running() -> bool:
     Matches on `ps` process paths (macOS `comm` is the full executable path);
     pgrep -f can miss the GUI process depending on cmdline visibility.
     """
-    return any(comm.endswith(CLAUDE_APP_BINARY_SUFFIX) for _, comm in _process_table())
+    return any(comm.endswith(CLAUDE_APP_BINARY_SUFFIX) for _, comm, _ in _process_table())
 
 
 def live_cli_session_ids(alive_pids: set[int] | None = None) -> set[str]:
