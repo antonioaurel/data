@@ -7,8 +7,9 @@ on:
       - 'index.html'
       - 'projects.json'
       - 'assets/**'
-      - 'projects/recife-history-connections/**'
+      - 'projects/**'
       - 'docs/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:

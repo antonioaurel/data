@@ -54,7 +54,13 @@
       "summary": "Cleaning and validating the Conexões da História base: completeness (fill rate), uniqueness, integrity, and validity of nodes and connections.",
       "approaches": ["quality"],
       "tech": ["Python"],
-      "status": "wip"
+      "status": "wip",
+      "links": {
+        "title": "Base Cleaning",
+        "items": [
+          { "label": "Data Cleaning — Storytelling", "href": "projects/historical-base-cleaning/data-cleaning-story-telling.html", "desc": "Narrative walkthrough of cleaning the base" }
+        ]
+      }
     },
     {
       "title": "Prediction of attendance in events organized through Facebook",
