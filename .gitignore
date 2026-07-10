@@ -9,3 +9,7 @@
 
 # Logs de execução do bridge de review (Codex CLI)
 /.pr-review-logs/
+
+# Mapa de taxonomia do session-renamer — ids de sessão são específicos da máquina,
+# mantido local (formato documentado em tools/session_taxonomy.example.json)
+/projects/recife-history-connections/tools/session_taxonomy.json

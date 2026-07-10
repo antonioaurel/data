@@ -1,0 +1,21 @@
+{
+  "_note": "EXAMPLE / format reference for session_taxonomy.json (which is git-ignored because it holds machine-specific 'local_<uuid>' session ids). Copy this to session_taxonomy.json and fill the 'sessions' map. Maps a Claude Code session id -> '<Subsystem>/<Module>' taxonomy prefix (v2 convention). Vocabulary is from Quality/modules-features-matrix/modules.json (issue #19). Value null = no taxonomy prefix. Sessions absent from the map get only the '#PR<N> - ' / '[no PR] - ' core. rename_sessions_by_pr.py validates the module against the matrix vocab (+ provisional gaps) and warns on typos.",
+  "_vocabulary": {
+    "Desktop": ["Top Navigation", "Home", "Diagram", "Matrix", "Fill Rate", "Sources", "Map"],
+    "Mobile": ["Bottom Bar", "Top Header", "View Switcher", "Home", "List", "Graph", "Matrix", "Fill rate", "Sources", "About", "Node Detail"],
+    "Platform": ["Theme", "Language / i18n", "Offline / PWA", "Responsiveness"],
+    "Service": ["Entry & Navigation", "DevOps & Review"]
+  },
+  "_provisional_gaps": {
+    "Mobile/Map": "modules.json has no Mobile 'Map' module but the mobile map exists (MOB-03/#28).",
+    "Service/API": "connections-api backend has no module in the matrix yet."
+  },
+  "_rules": [
+    "Multi-module session -> pick the primary module.",
+    "Orchestration/process/tooling -> Service/DevOps & Review.",
+    "Cross-cutting (theme, i18n, offline, responsive) -> Platform/<module>."
+  ],
+  "sessions": {
+    "local_00000000-0000-0000-0000-000000000000": "Service/DevOps & Review"
+  }
+}
