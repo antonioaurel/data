@@ -1,35 +1,35 @@
-# 0003 — Aposentar o wide CSV (`lista-geral-do-mapeamento.csv`)
+# 0003 — Retire the wide CSV (`lista-geral-do-mapeamento.csv`)
 
-Status: Aceito
+Status: Accepted
 
-## Contexto
+## Context
 
-O modelo normalizado (nodes/edges/aliases → `graph.json` + `content.json`, ADR-0002) já era
-a fonte. Mas o `build.py` ainda **gerava** um CSV largo herdado
-(`lista-geral-do-mapeamento.csv`, 6 campos + `Interconexão 1..15`) só porque duas páginas
-ainda o liam diretamente: `diagram.html` e `stats.html`. Isso mantinha um terceiro artefato
-derivado (~400 KB) no repositório, versionado e checado pelo CI, sem ninguém editá-lo à mão.
+The normalized model (nodes/edges/aliases → `graph.json` + `content.json`, ADR-0002) was
+already the source. But `build.py` still **generated** an inherited wide CSV
+(`lista-geral-do-mapeamento.csv`, 6 fields + `Interconexão 1..15`) only because two pages
+still read it directly: `diagram.html` and `stats.html`. This kept a third derived artifact
+(~400 KB) in the repository — versioned and checked by CI — that nobody edited by hand.
 
-## Decisão
+## Decision
 
-Migrar as páginas restantes para consumir `graph.json` + `content.json` e **remover** o wide
-CSV do projeto:
+Migrate the remaining pages to consume `graph.json` + `content.json` and **remove** the wide
+CSV from the project:
 
-- `diagram.html` (pt/en): passou a montar nós/arestas a partir dos dois JSON (feito na migração
-  do diagrama).
-- `stats.html` (pt/en): reconstrói localmente a "linha larga" (6 campos + `Interconexão 1..15`,
-  vizinhos ordenados e truncados em 15 — mesma lógica que o `build.py` usava) a partir dos JSON,
-  preservando exatamente os mesmos *fill rates* e listas de problemas.
-- `build.py`: removida a geração de `lista-geral-do-mapeamento.csv` (`wide_csv_text`, `WIDE_OUT`,
-  `WIDE_HEADER`) e a sua verificação no modo `--check`.
-- Arquivo `data/lista-geral-do-mapeamento.csv` deletado do repositório.
+- `diagram.html` (pt/en): now builds nodes/edges from the two JSON files (done during the
+  diagram migration).
+- `stats.html` (pt/en): reconstructs the "wide row" locally (6 fields + `Interconexão 1..15`,
+  neighbors sorted and truncated at 15 — the same logic `build.py` used) from the JSON,
+  preserving exactly the same fill rates and problem lists.
+- `build.py`: removed the generation of `lista-geral-do-mapeamento.csv` (`wide_csv_text`,
+  `WIDE_OUT`, `WIDE_HEADER`) and its verification in `--check` mode.
+- The `data/lista-geral-do-mapeamento.csv` file was deleted from the repository.
 
-## Consequências
+## Consequences
 
-- **Melhora:** uma única representação derivada (os dois JSON); menos ~400 KB versionados; o CI
-  não precisa mais manter um terceiro artefato em sincronia; `build.py` mais simples.
-- **Melhora:** todas as páginas agora leem exatamente a mesma fonte, sem risco de divergência
-  entre o CSV largo e os JSON.
-- **Piora / atenção:** quem tenha ferramentas externas apontando para o wide CSV precisa passar a
-  ler os JSON (ou o próprio Sheet). O formato "uma linha por nó com 15 colunas de conexão" deixa
-  de existir como artefato pronto.
+- **Better:** a single derived representation (the two JSON files); ~400 KB fewer versioned
+  bytes; CI no longer has to keep a third artifact in sync; a simpler `build.py`.
+- **Better:** every page now reads exactly the same source, with no risk of divergence between
+  the wide CSV and the JSON.
+- **Worse / caveat:** anyone with external tools pointing at the wide CSV must switch to reading
+  the JSON (or the Sheet itself). The "one row per node with 15 connection columns" format no
+  longer exists as a ready-made artifact.

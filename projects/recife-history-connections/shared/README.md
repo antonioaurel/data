@@ -1,26 +1,26 @@
-# shared/ — camada compartilhada (ADR 0002)
+# shared/ — shared layer (ADR 0002)
 
-Fonte única de verdade para o que **desktop** (`pages/`) e **mobile** (`mobile/site/`)
-compartilham, para acabar com a duplicação (cores repetidas, dicionários paralelos).
+Single source of truth for what **desktop** (`pages/`) and **mobile** (`mobile/site/`)
+share, to end the duplication (repeated colors, parallel dictionaries).
 
-## O que já existe
-- **`tokens.json`** — cores canônicas por **tipo** (local/personagem/evento/other) e por
-  **categoria** (as 15). Edite aqui.
-- **`build_shared.py`** — gera `tokens.css` a partir do `tokens.json`.
-  - `python3 shared/build_shared.py` → (re)gera `tokens.css`
-  - `python3 shared/build_shared.py --check` → falha se estiver dessincronizado (para o CI)
-- **`tokens.css`** — **gerado** (não editar à mão): expõe `--type-*` e `--cat-*`.
+## What already exists
+- **`tokens.json`** — canonical colors per **type** (local/personagem/evento/other) and per
+  **category** (all 15). Edit here.
+- **`build_shared.py`** — generates `tokens.css` from `tokens.json`.
+  - `python3 shared/build_shared.py` → (re)generates `tokens.css`
+  - `python3 shared/build_shared.py --check` → fails if out of sync (for CI)
+- **`tokens.css`** — **generated** (do not edit by hand): exposes `--type-*` and `--cat-*`.
 
-## Como consumir
-Cada frontend faz `<link rel="stylesheet" href=".../shared/tokens.css">` e usa
-`var(--type-local)`, `var(--cat-igreja)`, … em vez de hardcodar hex. Assim uma cor muda em
-**um lugar só**.
+## How to consume it
+Each frontend does `<link rel="stylesheet" href=".../shared/tokens.css">` and uses
+`var(--type-local)`, `var(--cat-igreja)`, … instead of hardcoding hex. That way a color changes
+in **one place only**.
 
-## Migração (incremental, próximos passos)
-1. Ligar `tokens.css` no mobile (`app.css`) e no desktop (`pages/*.html`) e trocar os hex
-   pelas variáveis. Feito por página, sem big-bang.
-2. Extrair o **dicionário i18n** (strings PT/EN de navegação/labels) para `shared/i18n.json`
-   e um pequeno módulo que ambas as frentes consomem (hoje vive dentro do `app.js`).
-3. Extrair o **modelo de dados do grafo** (carregamento/adjacência) para um módulo comum.
+## Migration (incremental, next steps)
+1. Wire `tokens.css` into mobile (`app.css`) and desktop (`pages/*.html`) and swap the hex values
+   for the variables. Done page by page, no big-bang.
+2. Extract the **i18n dictionary** (PT/EN strings for navigation/labels) into `shared/i18n.json`
+   and a small module both frontends consume (today it lives inside `app.js`).
+3. Extract the **graph data model** (loading/adjacency) into a shared module.
 
-Ver `docs/adr/0002-unificar-a-camada-nao-a-pagina.md` e `0003-i18n-no-modelo-de-dados.md`.
+See `docs/adr/0002-normalized-graph-model.md` and `0003-retire-wide-csv.md`.

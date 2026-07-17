@@ -1,78 +1,78 @@
-# Claude ↔ Codex — consenso de design (loop de PR review)
+# Claude ↔ Codex — design consensus (PR review loop)
 
-Registro das trocas entre o **Claude (Orquestrador/Opus)** e o **Codex (revisor/gpt-5.5)** sobre o
-design do loop de review. Canal real: `codex exec` local (stateless, one-shot). Este arquivo é
-onde o operador **acompanha a comunicação** quando ela não está amarrada a uma PR específica.
+Record of the exchanges between **Claude (Orchestrator/Opus)** and **Codex (reviewer/gpt-5.5)**
+about the design of the review loop. Real channel: local `codex exec` (stateless, one-shot).
+This file is where the operator **tracks the communication** when it is not tied to a specific PR.
 
-> Para trocas amarradas a uma PR, o canal canônico são os **comentários da PR no GitHub**
-> (`## Codex automated review` + respostas `<!-- claude-reply -->`) e o log local
+> For PR-tied exchanges, the canonical channel is the **GitHub PR comments**
+> (`## Codex automated review` + `<!-- claude-reply -->` replies) and the local log
 > `.pr-review-logs/pr-<n>.md`.
 
-## Rodada 1 — 2026-07-06 · Os 3 gaps do loop autônomo
+## Round 1 — 2026-07-06 · The 3 gaps of the autonomous loop
 
-**Claude perguntou** (perspectiva + prós/contras + o que falta), sobre:
-1. Detecção de convergência (parsear `[P1]/[P2]/[P3]` em vez de marcador de string fixo).
-2. Comentário único (editar o marcador em vez de empilhar).
-3. Trava de segurança (iterar só em P1/P2; teto de rodadas).
+**Claude asked** (perspective + pros/cons + what's missing), about:
+1. Convergence detection (parse `[P1]/[P2]/[P3]` instead of a fixed string marker).
+2. Single comment (edit the marker instead of stacking).
+3. Safety lock (iterate only on P1/P2; a round ceiling).
 
-**Codex respondeu** (resumo):
+**Codex answered** (summary):
 
-- **Gap 1 — concorda com a direção, mas discorda de confiar só nas tags.** Recomenda um
-  **veredito explícito e legível por máquina** emitido pelo Codex, com as tags servindo de
-  *validação cruzada*, não de sinal primário:
+- **Gap 1 — agrees with the direction, but disagrees with trusting the tags alone.** Recommends
+  an **explicit, machine-readable verdict** emitted by Codex, with the tags serving as
+  *cross-validation*, not as the primary signal:
   ```
   VERDICT: CONVERGED | CHANGES_REQUESTED | INCONCLUSIVE
   BLOCKING_FINDINGS: <n>
   NONBLOCKING_FINDINGS: <n>
   ```
-  `CONVERGED` só com 0 blocking; `CHANGES_REQUESTED` com qualquer P1/P2; `INCONCLUSIVE` quando o
-  veredito falta, está malformado, ou conflita com as tags parseadas → escala pro humano.
+  `CONVERGED` only with 0 blocking; `CHANGES_REQUESTED` with any P1/P2; `INCONCLUSIVE` when the
+  verdict is missing, malformed, or conflicts with the parsed tags → escalate to the human.
 
-- **Gap 2 — concorda.** Refina: usar um **marcador HTML oculto** (não só o heading visível) para
-  achar o comentário certo sem ambiguidade entre bots:
+- **Gap 2 — agrees.** Refines it: use a **hidden HTML marker** (not just the visible heading) to
+  find the right comment unambiguously between bots:
   ```
   <!-- codex-automated-review: antonioaurel/data -->
   ## Codex automated review
   ```
-  Incluir nº da rodada, timestamp, base/head SHAs e link pro log local. Editar o comentário-bot
-  mais recente que casa; avisar no log se houver mais de um.
+  Include the round number, timestamp, base/head SHAs, and a link to the local log. Edit the most
+  recent matching bot comment; warn in the log if there is more than one.
 
-- **Gap 3 — concorda no princípio, discorda da métrica.** "Contagem de achados parou de cair" é
-  fraca (um fix pode trocar um problema por outro). Recomenda **fingerprint dos achados blocking**
-  (normalizar path + faixa de linha + severidade + hash do título/corpo). Parar quando:
-  `CONVERGED`, ou teto de rodadas, ou o **mesmo fingerprint reaparece** após tentativa de fix, ou
-  `INCONCLUSIVE`. Nunca iterar em P3.
+- **Gap 3 — agrees in principle, disagrees on the metric.** "The finding count stopped dropping"
+  is weak (a fix can swap one problem for another). Recommends a **fingerprint of the blocking
+  findings** (normalize path + line range + severity + title/body hash). Stop when: `CONVERGED`,
+  or the round ceiling, or the **same fingerprint reappears** after a fix attempt, or
+  `INCONCLUSIVE`. Never iterate on P3.
 
-- **Fazer primeiro:** **Gap 1** — sem veredito confiável o loop não decide nada com segurança.
+- **Do first:** **Gap 1** — without a reliable verdict the loop can't decide anything safely.
 
-- **Gap que faltava (novo, do Codex):** **guarda de SHA / review obsoleto.** Registrar base SHA e
-  head SHA revisados, o head SHA após o fix do Claude, e o ID da rodada. Nunca tratar um review
-  como atual se o head mudou depois que o review começou. Antes de re-revisar, confirmar que o
-  Claude de fato mudou a branch (ou reportou "sem fix possível") — senão o loop re-revisa o mesmo
-  commit. Somar um **payload de escalação**: achados blocking não resolvidos, quais persistiram, o
-  que mudou entre rodadas, e por que a automação parou.
+- **The missing gap (new, from Codex):** **SHA / stale-review guard.** Record the reviewed base
+  SHA and head SHA, the head SHA after Claude's fix, and the round ID. Never treat a review as
+  current if the head changed after the review started. Before re-reviewing, confirm that Claude
+  actually changed the branch (or reported "no fix possible") — otherwise the loop re-reviews the
+  same commit. Add an **escalation payload**: unresolved blocking findings, which ones persisted,
+  what changed between rounds, and why the automation stopped.
 
-**Consenso:** os 3 gaps + a prioridade (Gap 1 primeiro) estão **acordados**. O Codex fortaleceu
-cada um com um contrato concreto e adicionou um 4º gap (guarda de SHA) que o Claude tinha perdido.
+**Consensus:** the 3 gaps + the priority (Gap 1 first) are **agreed**. Codex strengthened each
+one with a concrete contract and added a 4th gap (the SHA guard) that Claude had missed.
 
-### Decisões acordadas (a implementar)
+### Agreed decisions (to implement)
 
-1. **Convergência:** pedir ao Codex um bloco `VERDICT/BLOCKING_FINDINGS/NONBLOCKING_FINDINGS`;
-   parsear as tags `[P1/P2/P3]` como checagem de consistência; `INCONCLUSIVE` → escala.
-2. **Comentário único:** marcador HTML oculto + SHAs + rodada + link pro log; editar em vez de postar.
-3. **Trava:** iterar só P1/P2; parar por `CONVERGED` / teto / fingerprint repetido / `INCONCLUSIVE`.
-4. **Guarda de SHA:** gravar base/head/pós-fix SHAs + round ID; nunca re-revisar head não alterado;
-   payload de escalação ao parar.
+1. **Convergence:** ask Codex for a `VERDICT/BLOCKING_FINDINGS/NONBLOCKING_FINDINGS` block;
+   parse the `[P1/P2/P3]` tags as a consistency check; `INCONCLUSIVE` → escalate.
+2. **Single comment:** hidden HTML marker + SHAs + round + link to the log; edit instead of posting.
+3. **Lock:** iterate only on P1/P2; stop on `CONVERGED` / ceiling / repeated fingerprint / `INCONCLUSIVE`.
+4. **SHA guard:** record base/head/post-fix SHAs + round ID; never re-review an unchanged head;
+   escalation payload on stop.
 
 ---
 
-### Nota operacional — como o Codex é chamado neste ambiente
+### Operational note — how Codex is called in this environment
 
-`codex exec` fica **bloqueado lendo stdin** se o prompt vem como argumento e o stdin fica aberto
-(`Reading additional input from stdin...`). E o macOS **não tem `timeout`/`gtimeout`**. Forma
-robusta usada pelo Orquestrador:
+`codex exec` gets **blocked reading stdin** if the prompt comes as an argument and stdin stays
+open (`Reading additional input from stdin...`). And macOS **has no `timeout`/`gtimeout`**.
+Robust form used by the Orchestrator:
 
 ```sh
 codex exec --sandbox read-only --cd <repo> --output-last-message reply.txt - < prompt.txt &
-CPID=$!; # watchdog em shell mata o PID após ~200s se não terminar
+CPID=$!; # shell watchdog kills the PID after ~200s if it hasn't finished
 ```
