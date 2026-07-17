@@ -23,4 +23,5 @@ in **one place only**.
    and a small module both frontends consume (today it lives inside `app.js`).
 3. Extract the **graph data model** (loading/adjacency) into a shared module.
 
-See `docs/adr/0002-normalized-graph-model.md` and `0003-retire-wide-csv.md`.
+See the repo-root ADRs `../../../docs/adr/0002-unificar-a-camada-nao-a-pagina.md`
+(shared layer) and `../../../docs/adr/0003-i18n-no-modelo-de-dados.md` (i18n).
