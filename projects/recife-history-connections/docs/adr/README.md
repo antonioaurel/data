@@ -1,30 +1,30 @@
 # Architecture Decision Records (ADR)
 
-Registro das decisões de arquitetura do projeto. Cada decisão relevante vira um arquivo
-`NNNN-titulo.md` (numeração sequencial, nunca reescrever histórico — uma decisão que muda
-outra cria um **novo** ADR que *supersede* o anterior).
+Record of the project's architecture decisions. Each relevant decision becomes a
+`NNNN-title.md` file (sequential numbering, never rewrite history — a decision that changes
+another creates a **new** ADR that *supersedes* the previous one).
 
-Formato (curto, baseado no modelo de Michael Nygard):
+Format (short, based on Michael Nygard's template):
 
 ```
-# NNNN — Título
-Status: Proposto | Aceito | Substituído por ADR-XXXX
-Contexto: por que a decisão precisou ser tomada
-Decisão: o que foi decidido
-Consequências: o que melhora, o que piora, o que fica pendente
+# NNNN — Title
+Status: Proposed | Accepted | Superseded by ADR-XXXX
+Context: why the decision had to be made
+Decision: what was decided
+Consequences: what gets better, what gets worse, what stays pending
 ```
 
-## Índice
+## Index
 
-| ADR | Título | Status |
+| ADR | Title | Status |
 |---|---|---|
-| [0001](0001-pipeline-de-dados.md) | Pipeline de dados derivados (graph.json + content.json) | Aceito (modelo de origem substituído pelo 0002) |
-| [0002](0002-normalized-graph-model.md) | Normalized graph model (nodes / edges / aliases) as the source | Aceito |
-| [0003](0003-retire-wide-csv.md) | Aposentar o wide CSV (`lista-geral-do-mapeamento.csv`) | Aceito |
+| [0001](0001-pipeline-de-dados.md) | Derived-data pipeline (graph.json + content.json) | Accepted (source model superseded by 0002) |
+| [0002](0002-normalized-graph-model.md) | Normalized graph model (nodes / edges / aliases) as the source | Accepted |
+| [0003](0003-retire-wide-csv.md) | Retire the wide CSV (`lista-geral-do-mapeamento.csv`) | Accepted |
 
-## Decisões ainda a registrar (planejadas)
+## Decisions still to record (planned)
 
-Discutidas mas ainda não implementadas — viram ADR quando forem feitas:
+Discussed but not yet implemented — they become ADRs once done:
 
-- **Extrair CSS/JS compartilhado** para `assets/` (hoje tudo é inline e duplicado por página).
-- **i18n**: unificar PT/EN numa página só com arquivo de textos, em vez de duas cópias.
+- **Extract shared CSS/JS** into `assets/` (today everything is inline and duplicated per page).
+- **i18n**: unify PT/EN into a single page with a text file, instead of two copies.
