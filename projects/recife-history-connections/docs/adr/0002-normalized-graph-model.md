@@ -1,6 +1,6 @@
 # 0002 — Normalized graph model (nodes / edges / aliases) as the source
 
-**Status:** Accepted · 2026-07-01 · supersedes the source model of [0001](0001-pipeline-de-dados.md)
+**Status:** Accepted · 2026-07-01 · supersedes the source model of [0001](0001-derived-data-pipeline.md)
 
 ## Context
 

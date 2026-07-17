@@ -18,7 +18,7 @@ Consequences: what gets better, what gets worse, what stays pending
 
 | ADR | Title | Status |
 |---|---|---|
-| [0001](0001-pipeline-de-dados.md) | Derived-data pipeline (graph.json + content.json) | Accepted (source model superseded by 0002) |
+| [0001](0001-derived-data-pipeline.md) | Derived-data pipeline (graph.json + content.json) | Accepted (source model superseded by 0002) |
 | [0002](0002-normalized-graph-model.md) | Normalized graph model (nodes / edges / aliases) as the source | Accepted |
 | [0003](0003-retire-wide-csv.md) | Retire the wide CSV (`lista-geral-do-mapeamento.csv`) | Accepted |
 
