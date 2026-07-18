@@ -96,15 +96,13 @@
   svg{display:block;max-width:100%}
 
   /* adr cards */
-  .adr{display:grid;gap:12px;margin-top:16px}
-  .adr2{grid-template-columns:1fr 1fr}
-  .adr3{grid-template-columns:repeat(3,1fr)}
-  @media(max-width:860px){.adr2,.adr3{grid-template-columns:1fr}}
-  .adr .card{border:1px solid var(--line);border-radius:12px;padding:13px 15px}
-  .adr .card .t{font-weight:700;font-size:14px;margin-bottom:6px;color:var(--ink)}
-  .adr .card .w{font-size:12.5px;color:var(--ink);line-height:1.45}
-  .adr .card .w b,.adr .card .tr b{color:var(--accent);font-weight:700;margin-right:5px;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em}
-  .adr .card .tr{font-size:12px;color:var(--muted);line-height:1.4;margin-top:6px}
+  .adrlist{margin-top:14px}
+  .adrlist .grp{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:16px 0 6px}
+  .adrlist .grp:first-child{margin-top:0}
+  .adrlist .item{padding:7px 0;border-top:1px solid var(--line)}
+  .adrlist .item .d{font-weight:700;font-size:13.5px;margin-bottom:2px;color:var(--ink)}
+  .adrlist .item .x{font-size:12px;color:var(--muted);line-height:1.4}
+  .adrlist .item .x b{color:var(--accent);text-transform:uppercase;font-size:9.5px;letter-spacing:.04em;margin-right:4px}
 
   /* links */
   .links{display:flex;gap:38px;flex-wrap:wrap;margin-top:24px}
@@ -334,86 +332,46 @@
     </ul>
   </section>
 
-  <!-- 10 ADRs part 1 -->
+  <!-- 10 ADRs -->
   <section class="slide">
     <span class="num-slide">10</span>
-    <p class="eyebrow">Key decisions · ADRs (1 of 2)</p>
-    <h2>Scope and platform</h2>
-    <div class="adr adr2">
-      <div class="card">
-        <div class="t">Analysis, not a rebuilt app</div>
-        <div class="w"><b>Why</b> EVE was a requirements era web system; rebuilding it adds no research value, and its live data source no longer exists.</div>
-        <div class="tr"><b>Tradeoff</b> no production tool for organizers yet; the deliverable is the model plus a working demo.</div>
-      </div>
-      <div class="card">
-        <div class="t">No Facebook Graph API</div>
-        <div class="w"><b>Why</b> the endpoints that imported guest lists and RSVPs were removed in 2018, after Cambridge Analytica; live import is impossible.</div>
-        <div class="tr"><b>Tradeoff</b> input is manual or aggregated counts, not an automatic feed.</div>
-      </div>
-      <div class="card">
-        <div class="t">No backend or database</div>
-        <div class="w"><b>Why</b> with about 20 events, CSVs in git already give storage, history, diff and review for free.</div>
-        <div class="tr"><b>Tradeoff</b> no multi user persistence; the tool keeps history in the browser plus a CSV export.</div>
-      </div>
-      <div class="card">
-        <div class="t">Python for the offline tier</div>
-        <div class="w"><b>Why</b> a natural fit for tabular modeling and backtesting; notebook native, testable, light on dependencies.</div>
-        <div class="tr"><b>Tradeoff</b> two languages (Python offline, JS client), bridged by the coefficient file.</div>
-      </div>
+    <p class="eyebrow">Key decisions · ADRs</p>
+    <h2>Decisions, and why</h2>
+    <div class="adrlist">
+      <div class="grp">Scope and platform</div>
+      <div class="item"><div class="d">Analysis, not a rebuilt app</div><div class="x"><b>Why</b> EVE was a requirements era web system; rebuilding adds no research value and its live data source is gone. <b>Tradeoff</b> no production tool yet; the deliverable is the model plus a demo.</div></div>
+      <div class="item"><div class="d">No Facebook Graph API</div><div class="x"><b>Why</b> the endpoints that imported guest lists and RSVPs were removed in 2018, after Cambridge Analytica; live import is impossible. <b>Tradeoff</b> input is manual or aggregated counts.</div></div>
+      <div class="item"><div class="d">No backend or database</div><div class="x"><b>Why</b> with about 20 events, CSVs in git give storage, history, diff and review for free. <b>Tradeoff</b> no multi user persistence; history lives in the browser plus CSV export.</div></div>
+      <div class="item"><div class="d">Python for the offline tier</div><div class="x"><b>Why</b> a natural fit for tabular modeling and backtesting; notebook native, testable, light on dependencies. <b>Tradeoff</b> two languages, bridged by the coefficient file.</div></div>
+      <div class="grp">Model and interface</div>
+      <div class="item"><div class="d">Learn rates from data</div><div class="x"><b>Why</b> EVE's core weakness was operator guessed proportions; learning them removes subjectivity and enables the recalibration loop. <b>Tradeoff</b> needs data; v1 is in sample on 20 events.</div></div>
+      <div class="item"><div class="d">Static HTML and vanilla JS</div><div class="x"><b>Why</b> the pages are small and must run with no backend; a framework and build add weight for no gain. <b>Tradeoff</b> more manual DOM code, mitigated by the component matrices.</div></div>
+      <div class="item"><div class="d">Coefficient file as the contract</div><div class="x"><b>Why</b> one small versioned artifact decouples the model from both pages; a refit repaints them at once. <b>Tradeoff</b> a key change breaks both consumers, so it is tested as a contract.</div></div>
+      <div class="item"><div class="d">Dashboard is three pane</div><div class="x"><b>Why</b> one command center view of the event list, charts and metrics, in a single light theme. <b>Tradeoff</b> a denser layout that needs screen width.</div></div>
+      <div class="item"><div class="d">Tool is a single page form</div><div class="x"><b>Why</b> all steps visible on one vertical page; Next scrolls and is gated on mandatory fields. <b>Tradeoff</b> a longer page, mitigated by the sticky stepper.</div></div>
     </div>
   </section>
 
-  <!-- 11 ADRs part 2 -->
+  <!-- 11 CURRENT STATE -->
   <section class="slide">
     <span class="num-slide">11</span>
-    <p class="eyebrow">Key decisions · ADRs (2 of 2)</p>
-    <h2>Model and interface</h2>
-    <div class="adr adr3">
-      <div class="card">
-        <div class="t">Learn rates from data</div>
-        <div class="w"><b>Why</b> EVE's core weakness was operator guessed proportions; learning them removes subjectivity and enables the recalibration loop.</div>
-        <div class="tr"><b>Tradeoff</b> needs data; v1 is an in sample calibration on 20 events.</div>
-      </div>
-      <div class="card">
-        <div class="t">Static HTML and vanilla JS</div>
-        <div class="w"><b>Why</b> the pages are small and must run with no backend; a framework and build step add weight for no gain.</div>
-        <div class="tr"><b>Tradeoff</b> more manual DOM code, mitigated by the component matrices.</div>
-      </div>
-      <div class="card">
-        <div class="t">Coefficient file as the contract</div>
-        <div class="w"><b>Why</b> one small versioned artifact decouples the model from both pages; a refit repaints them at once.</div>
-        <div class="tr"><b>Tradeoff</b> a key change breaks both consumers, so it is tested as a contract.</div>
-      </div>
-      <div class="card">
-        <div class="t">Dashboard is three pane</div>
-        <div class="w"><b>Why</b> chosen from options; one command center view of the event list, charts and metrics, in a single light theme.</div>
-        <div class="tr"><b>Tradeoff</b> a denser layout that needs screen width.</div>
-      </div>
-      <div class="card">
-        <div class="t">Tool is a single page form</div>
-        <div class="w"><b>Why</b> all steps visible on one vertical page; Next scrolls to the next and is gated on mandatory fields.</div>
-        <div class="tr"><b>Tradeoff</b> a longer page, mitigated by the sticky stepper.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 12 CURRENT STATE -->
-  <section class="slide">
-    <span class="num-slide">12</span>
     <p class="eyebrow">Current state</p>
     <h2>Built and verified</h2>
+    <p class="lead" style="margin-bottom:14px">In short, this is a working end to end reimplementation of EVE as a data
+      project: real events were digitized, a model was fitted and tested, and it is served through a tool that
+      estimates turnout and a dashboard that shows how well it does. Everything below already runs.</p>
     <ul>
-      <li>Digitized dataset, EVE formula <b>baseline</b>, and <b>learned rates model v1</b> with exported coefficients.</li>
-      <li><b>22 passing tests</b>, and two notebooks (EDA, and model versus baseline).</li>
-      <li>The <b>tool</b> (single page, local history, CSV export), the <b>dashboard</b>, and a <b>glossary</b>.</li>
-      <li>Docs (spec, architecture, system design, flow, test cases) plus component matrices and sync tooling.</li>
-      <li><b>Limitations:</b> in sample metrics, tiny n, only 4 events each for medium and large.</li>
+      <li><b>Data and model:</b> a digitized dataset (20 real events), the EVE formula <b>baseline</b> for comparison, and a <b>learned rates model v1</b> whose coefficients are exported to a single file.</li>
+      <li><b>Quality:</b> <b>22 passing tests</b> (formula, data integrity, pinned metrics) and two notebooks that show the EDA and the model versus the baseline.</li>
+      <li><b>Product:</b> the <b>tool</b> (single page, local history, CSV export), the <b>dashboard</b>, and a <b>glossary</b> explaining every number.</li>
+      <li><b>Docs and hygiene:</b> spec, architecture, system design, flow and test cases, plus component matrices and a check that keeps them in sync.</li>
+      <li><b>Honest limitations:</b> metrics are in sample, n is tiny, and medium and large sizes have only 4 events each.</li>
     </ul>
   </section>
 
-  <!-- 13 NEXT + CLOSING -->
+  <!-- 12 NEXT + CLOSING -->
   <section class="slide">
-    <span class="num-slide">13</span>
+    <span class="num-slide">12</span>
     <p class="eyebrow">Next · closing</p>
     <h2>From seed data to a self improving estimate</h2>
     <ul>
