@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVE — what each info means</title>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#ffffff;--card:#ffffff;--ink:#1c2330;--muted:#6b7583;--line:#e7e9ef;
+    --accent:#2f6df6;--soft:#2f6df610;
+    --c-micro:#2a78d6;--c-small:#008300;--c-medium:#e87ba4;--c-large:#eda100;
+    --font:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.55 var(--font);-webkit-font-smoothing:antialiased}
+  main{max-width:720px;margin:0 auto;padding:30px 20px 70px}
+  a.back{color:var(--muted);text-decoration:none;font-size:12px;font-weight:600}
+  a.back:hover{color:var(--accent)}
+  h1{font-size:20px;letter-spacing:-.01em;margin:12px 0 4px}
+  .sub{color:var(--muted);font-size:12.5px;margin:0 0 26px;max-width:60ch}
+  h2{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);
+    font-weight:700;margin:30px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+  .term{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .term:last-child{border-bottom:none}
+  .term dt{font-weight:650;font-size:12.5px}
+  .term dd{margin:0;color:#404859;font-size:12.5px}
+  .term dd .ex{color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;color:#fff}
+  code{font:600 12px ui-monospace,Menlo,monospace;background:var(--soft);color:var(--accent);border-radius:4px;padding:1px 5px}
+  .sizes{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .sizes span{font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;display:inline-flex;align-items:center;gap:6px}
+  .sw{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .note{background:var(--soft);border:1px solid #dbe6ff;border-radius:9px;padding:12px 14px;font-size:12px;color:#33405c;margin-top:26px}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">← Back to the tool</a>
+  <h1>What each info means</h1>
+  <p class="sub">A plain-language guide to every number in the estimation tool and the
+    results dashboard. The model learns attendance rates from the EVE study data.</p>
+
+  <h2>RSVP responses</h2>
+  <dl>
+    <div class="term"><dt>Confirmed</dt><dd>Guests who answered <strong>Going</strong>. Most likely to attend — but far from all do, especially at big events.</dd></div>
+    <div class="term"><dt>Maybe</dt><dd>Guests who answered <strong>Interested / Maybe</strong>. A minority actually show up.</dd></div>
+    <div class="term"><dt>Declined</dt><dd>Guests who answered <strong>No</strong>. Treated as zero attendance.</dd></div>
+    <div class="term"><dt>No reply</dt><dd>Invited guests who never responded. Individually unlikely to come, but at large events they are the biggest group, so they still add up.</dd></div>
+    <div class="term"><dt>Total invited</dt><dd>The sum of all four responses — everyone who was invited.</dd></div>
+  </dl>
+
+  <h2>Event size</h2>
+  <dl>
+    <div class="term"><dt>Size class</dt><dd>Derived automatically from total invited. Conversion (who actually shows up) drops sharply as events grow, so the model uses a different rate per class.
+      <div class="sizes">
+        <span><span class="sw" style="background:var(--c-micro)"></span>Micro · ≤ 200</span>
+        <span><span class="sw" style="background:var(--c-small)"></span>Small · 201–1500</span>
+        <span><span class="sw" style="background:var(--c-medium)"></span>Medium · 1501–5500</span>
+        <span><span class="sw" style="background:var(--c-large)"></span>Large · ≥ 5501</span>
+      </div>
+    </dd></div>
+    <div class="term"><dt>Type</dt><dd><strong>Physical</strong> (guests must be at a place) or <strong>Virtual</strong> (online). Recorded with the event.</dd></div>
+  </dl>
+
+  <h2>External effects</h2>
+  <dl>
+    <div class="term"><dt>External effect</dt><dd>Something outside the invite that changes turnout — a decisive match, rain, a competing event. You give it a <strong>± %</strong>; the estimate is multiplied by it. <span class="ex">e.g. −20% for a championship final the same night.</span></dd></div>
+  </dl>
+
+  <h2>The estimate</h2>
+  <dl>
+    <div class="term"><dt>Estimate</dt><dd>Predicted number of people present. Computed as <code>Σ (count × rate for that response &amp; size)</code>, then adjusted by any external effects.</dd></div>
+    <div class="term"><dt>Likely range</dt><dd>The estimate ± the average error seen for that size class (±10% micro … ±50% medium). Smaller events are predicted more tightly.</dd></div>
+    <div class="term"><dt>Where the number comes from</dt><dd>The breakdown bars: how many of the estimated attendees come from each response type. Confirmed usually dominates.</dd></div>
+  </dl>
+
+  <h2>History</h2>
+  <dl>
+    <div class="term"><dt>Actual attendance</dt><dd>The real turnout you enter after the event. This is what lets the model be recalibrated.</dd></div>
+    <div class="term"><dt>Error</dt><dd><code>| actual − estimate |</code> — how far the prediction was, in people.</dd></div>
+    <div class="term"><dt>Export CSV</dt><dd>Downloads your saved events so they can be added to the dataset and the model refit.</dd></div>
+  </dl>
+
+  <h2>Dashboard metrics</h2>
+  <dl>
+    <div class="term"><dt>Conversion</dt><dd>Σ attendance ÷ Σ confirmed for a size class — the share of confirmations that turned into presence.</dd></div>
+    <div class="term"><dt>Predicted vs. actual</dt><dd>Each event as a point; on the dashed diagonal, the prediction was perfect. Above = over-predicted, below = under-predicted.</dd></div>
+    <div class="term"><dt>MAE</dt><dd>Mean Absolute Error — the average miss in <strong>people</strong>. Lower is better.</dd></div>
+    <div class="term"><dt>MAPE</dt><dd>Mean Absolute Percentage Error — the average miss as a <strong>percent</strong> of actual turnout.</dd></div>
+    <div class="term"><dt>Mean accuracy</dt><dd><code>100 − MAPE</code> — a single at-a-glance score. ~76% on the current data.</dd></div>
+  </dl>
+
+  <h2>The model</h2>
+  <dl>
+    <div class="term"><dt>Learned rates</dt><dd>Attendance probability per response type and size, estimated from the study data — not guessed by an operator (that was the old EVE's weak point).</dd></div>
+    <div class="term"><dt>In-sample · v1</dt><dd>Fitted and measured on the same small dataset (20 events). It's an honest first calibration; adding your real events (via Export CSV) improves it.</dd></div>
+  </dl>
+
+  <p class="note">Rule of thumb: raw RSVP counts overstate turnout. The tool exists to translate
+    responses into a realistic estimate — and to get better as you log what actually happened.</p>
+</main>
+</body>
+</html>

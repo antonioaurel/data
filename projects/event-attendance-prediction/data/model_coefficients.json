@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "source": "tables 7-10 and 25 of the EVE article (2016); in-sample fit",
+  "response_types": [
+    "confirmed",
+    "maybe",
+    "declined",
+    "no_reply"
+  ],
+  "rates": {
+    "micro": {
+      "confirmed": 0.8499441176589546,
+      "maybe": 0.3813851810008129,
+      "declined": 0.0,
+      "no_reply": 0.035979734056680465
+    },
+    "small": {
+      "confirmed": 0.5535098631851237,
+      "maybe": 0.24836981040358114,
+      "declined": 0.0,
+      "no_reply": 0.02343111418901709
+    },
+    "medium": {
+      "confirmed": 0.13810431406748905,
+      "maybe": 0.061969884517463034,
+      "declined": 0.0,
+      "no_reply": 0.005846215520515381
+    },
+    "large": {
+      "confirmed": 0.1512892505364395,
+      "maybe": 0.06788620216378694,
+      "declined": 0.0,
+      "no_reply": 0.006404358694696881
+    }
+  },
+  "metrics": {
+    "mae": 34.36,
+    "mape_pct": 24.4
+  },
+  "size_ranges": {
+    "micro": [
+      0,
+      200
+    ],
+    "small": [
+      201,
+      1500
+    ],
+    "medium": [
+      1501,
+      5500
+    ],
+    "large": [
+      5501,
+      null
+    ]
+  }
+}

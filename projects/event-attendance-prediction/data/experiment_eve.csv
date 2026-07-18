@@ -1,0 +1,5 @@
+date,invited,new_invited,confirmed_responses,confirmed_present,maybe_responses,maybe_present,declined_responses,declined_present,no_reply_responses,no_reply_present,prop_confirmed,prop_maybe,prop_declined,prop_no_reply,article_prediction,article_attendance
+2013-05-05,420,12,19,9,17,2,11,0,373,6,0.50,0.20,0.00,0.05,21,17
+2013-05-12,73,9,20,14,9,4,6,0,38,4,0.85,0.70,0.00,0.15,21,22
+2013-05-20,77,11,31,23,6,4,3,0,37,2,0.90,0.70,0.00,0.10,23,29
+2013-05-26,69,7,35,32,4,2,2,0,29,3,0.90,0.60,0.00,0.10,32,35
