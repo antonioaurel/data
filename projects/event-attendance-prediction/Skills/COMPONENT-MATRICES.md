@@ -13,6 +13,9 @@ Scope: the two static pages — the estimation tool [`app/index.html`](../app/in
 (F2 three-pane: event list · charts · metrics rail). Kept in sync by hand;
 re-verify against the DOM when either page changes (`scripts/check_matrices.py`).
 
+Shared navigation: the tool, dashboard and glossary link to each other (and to
+the project hub) via a top nav on each page.
+
 ---
 
 ## Vocabulary
