@@ -96,11 +96,15 @@
   svg{display:block;max-width:100%}
 
   /* adr cards */
-  .adr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
-  @media(max-width:860px){.adr{grid-template-columns:1fr 1fr}}
-  .adr .card{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
-  .adr .card .t{font-weight:700;font-size:13.5px;margin-bottom:3px}
-  .adr .card .w{font-size:12.5px;color:var(--muted);line-height:1.4}
+  .adr{display:grid;gap:12px;margin-top:16px}
+  .adr2{grid-template-columns:1fr 1fr}
+  .adr3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.adr2,.adr3{grid-template-columns:1fr}}
+  .adr .card{border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .adr .card .t{font-weight:700;font-size:14px;margin-bottom:6px;color:var(--ink)}
+  .adr .card .w{font-size:12.5px;color:var(--ink);line-height:1.45}
+  .adr .card .w b,.adr .card .tr b{color:var(--accent);font-weight:700;margin-right:5px;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em}
+  .adr .card .tr{font-size:12px;color:var(--muted);line-height:1.4;margin-top:6px}
 
   /* nav */
   .hud{position:fixed;bottom:18px;left:0;right:0;display:flex;justify-content:center;z-index:10;pointer-events:none}
@@ -323,27 +327,72 @@
     </ul>
   </section>
 
-  <!-- 10 ADRs -->
+  <!-- 10 ADRs part 1 -->
   <section class="slide">
     <span class="num-slide">10</span>
-    <p class="eyebrow">Key decisions · ADRs</p>
-    <h2>Decision, and why</h2>
-    <div class="adr">
-      <div class="card"><div class="t">Analysis, not a rebuilt app</div><div class="w">The system layer was requirements era; value is the model.</div></div>
-      <div class="card"><div class="t">No Facebook Graph API</div><div class="w">RSVP import endpoints were removed in 2018; use digitized data.</div></div>
-      <div class="card"><div class="t">No backend or database</div><div class="w">n≈20; CSVs in git are the store, with diff and review.</div></div>
-      <div class="card"><div class="t">Python offline tier</div><div class="w">Tabular modeling, notebook native, testable, light on deps.</div></div>
-      <div class="card"><div class="t">Static HTML and vanilla JS</div><div class="w">Small, self contained, no framework; embeds coefficients.</div></div>
-      <div class="card"><div class="t">Learn rates from data</div><div class="w">Replaces operator guessed proportions, the core fix.</div></div>
-      <div class="card"><div class="t">Coefficient file as contract</div><div class="w">Versioned seam; key changes break both pages.</div></div>
-      <div class="card"><div class="t">Dashboard is three pane</div><div class="w">List, charts, metrics rail; single light theme.</div></div>
-      <div class="card"><div class="t">Tool is a single page form</div><div class="w">Vertical sections; Next gated on mandatory fields.</div></div>
+    <p class="eyebrow">Key decisions · ADRs (1 of 2)</p>
+    <h2>Scope and platform</h2>
+    <div class="adr adr2">
+      <div class="card">
+        <div class="t">Analysis, not a rebuilt app</div>
+        <div class="w"><b>Why</b> EVE was a requirements era web system; rebuilding it adds no research value, and its live data source no longer exists.</div>
+        <div class="tr"><b>Tradeoff</b> no production tool for organizers yet; the deliverable is the model plus a working demo.</div>
+      </div>
+      <div class="card">
+        <div class="t">No Facebook Graph API</div>
+        <div class="w"><b>Why</b> the endpoints that imported guest lists and RSVPs were removed in 2018, after Cambridge Analytica; live import is impossible.</div>
+        <div class="tr"><b>Tradeoff</b> input is manual or aggregated counts, not an automatic feed.</div>
+      </div>
+      <div class="card">
+        <div class="t">No backend or database</div>
+        <div class="w"><b>Why</b> with about 20 events, CSVs in git already give storage, history, diff and review for free.</div>
+        <div class="tr"><b>Tradeoff</b> no multi user persistence; the tool keeps history in the browser plus a CSV export.</div>
+      </div>
+      <div class="card">
+        <div class="t">Python for the offline tier</div>
+        <div class="w"><b>Why</b> a natural fit for tabular modeling and backtesting; notebook native, testable, light on dependencies.</div>
+        <div class="tr"><b>Tradeoff</b> two languages (Python offline, JS client), bridged by the coefficient file.</div>
+      </div>
     </div>
   </section>
 
-  <!-- 11 CURRENT STATE -->
+  <!-- 11 ADRs part 2 -->
   <section class="slide">
     <span class="num-slide">11</span>
+    <p class="eyebrow">Key decisions · ADRs (2 of 2)</p>
+    <h2>Model and interface</h2>
+    <div class="adr adr3">
+      <div class="card">
+        <div class="t">Learn rates from data</div>
+        <div class="w"><b>Why</b> EVE's core weakness was operator guessed proportions; learning them removes subjectivity and enables the recalibration loop.</div>
+        <div class="tr"><b>Tradeoff</b> needs data; v1 is an in sample calibration on 20 events.</div>
+      </div>
+      <div class="card">
+        <div class="t">Static HTML and vanilla JS</div>
+        <div class="w"><b>Why</b> the pages are small and must run with no backend; a framework and build step add weight for no gain.</div>
+        <div class="tr"><b>Tradeoff</b> more manual DOM code, mitigated by the component matrices.</div>
+      </div>
+      <div class="card">
+        <div class="t">Coefficient file as the contract</div>
+        <div class="w"><b>Why</b> one small versioned artifact decouples the model from both pages; a refit repaints them at once.</div>
+        <div class="tr"><b>Tradeoff</b> a key change breaks both consumers, so it is tested as a contract.</div>
+      </div>
+      <div class="card">
+        <div class="t">Dashboard is three pane</div>
+        <div class="w"><b>Why</b> chosen from options; one command center view of the event list, charts and metrics, in a single light theme.</div>
+        <div class="tr"><b>Tradeoff</b> a denser layout that needs screen width.</div>
+      </div>
+      <div class="card">
+        <div class="t">Tool is a single page form</div>
+        <div class="w"><b>Why</b> all steps visible on one vertical page; Next scrolls to the next and is gated on mandatory fields.</div>
+        <div class="tr"><b>Tradeoff</b> a longer page, mitigated by the sticky stepper.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 CURRENT STATE -->
+  <section class="slide">
+    <span class="num-slide">12</span>
     <p class="eyebrow">Current state</p>
     <h2>Built and verified</h2>
     <ul>
@@ -355,9 +404,9 @@
     </ul>
   </section>
 
-  <!-- 12 NEXT + CLOSING -->
+  <!-- 13 NEXT + CLOSING -->
   <section class="slide">
-    <span class="num-slide">12</span>
+    <span class="num-slide">13</span>
     <p class="eyebrow">Next · closing</p>
     <h2>From seed data to a self improving estimate</h2>
     <ul>
