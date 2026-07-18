@@ -106,6 +106,13 @@
   .adr .card .w b,.adr .card .tr b{color:var(--accent);font-weight:700;margin-right:5px;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em}
   .adr .card .tr{font-size:12px;color:var(--muted);line-height:1.4;margin-top:6px}
 
+  /* links */
+  .links{display:flex;gap:38px;flex-wrap:wrap;margin-top:24px}
+  .links .lg-h{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+  .links .row{display:flex;gap:8px;flex-wrap:wrap}
+  .links a{font-size:13px;font-weight:600;color:var(--accent);border:1.5px solid var(--line);border-radius:9px;padding:7px 13px;text-decoration:none;transition:background .15s,border-color .15s}
+  .links a:hover{border-color:var(--accent);background:var(--soft)}
+
   /* nav */
   .hud{position:fixed;bottom:18px;left:0;right:0;display:flex;justify-content:center;z-index:10;pointer-events:none}
   .dots{display:flex;gap:7px;pointer-events:auto}
@@ -417,6 +424,23 @@
     <p class="lead" style="margin-top:20px;font-size:clamp(17px,2vw,22px);color:var(--ink)">
       EVE turns unreliable RSVP counts into a <strong class="accent">calibrated attendance estimate</strong>,
       and gets better every time an organizer logs what actually happened.</p>
+    <div class="links">
+      <div>
+        <div class="lg-h">System · source</div>
+        <div class="row">
+          <a href="https://github.com/antonioaurel/data/tree/event-attendance-prediction/projects/event-attendance-prediction/app" target="_blank" rel="noopener">Tool ↗</a>
+          <a href="https://github.com/antonioaurel/data/tree/event-attendance-prediction/projects/event-attendance-prediction/reports" target="_blank" rel="noopener">Dashboard ↗</a>
+          <a href="https://github.com/antonioaurel/data/tree/event-attendance-prediction/projects/event-attendance-prediction" target="_blank" rel="noopener">Repository ↗</a>
+        </div>
+      </div>
+      <div>
+        <div class="lg-h">Design</div>
+        <div class="row">
+          <a href="https://claude.ai/code/artifact/9aa176a8-5839-4330-acbb-92630172393e" target="_blank" rel="noopener">Wireframes and flows ↗</a>
+          <a href="https://claude.ai/code/artifact/8dada3f0-9dc1-41eb-9322-54427806f7ab" target="_blank" rel="noopener">Dashboard layouts ↗</a>
+        </div>
+      </div>
+    </div>
   </section>
 
 </div>
