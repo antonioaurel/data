@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVE — presentation</title>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#ffffff;--ink:#1c2330;--muted:#6b7583;--line:#e7e9ef;--soft:#2f6df610;
+    --accent:#2f6df6;
+    --c-micro:#2a78d6;--c-small:#008300;--c-medium:#e87ba4;--c-large:#eda100;
+    --font:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+  .deck{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;height:100vh;scroll-behavior:smooth}
+  .deck::-webkit-scrollbar{display:none}
+  .slide{flex:0 0 100vw;height:100vh;scroll-snap-align:start;display:flex;flex-direction:column;
+    justify-content:center;padding:6vh 8vw;position:relative}
+  .eyebrow{font:700 12px/1 var(--font);letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  h1{font-size:clamp(30px,5.2vw,58px);font-weight:700;letter-spacing:-.025em;margin:0 0 14px;max-width:20ch}
+  h2{font-size:clamp(24px,3.6vw,38px);font-weight:700;letter-spacing:-.02em;margin:0 0 18px;max-width:22ch}
+  .lead{font-size:clamp(16px,1.7vw,20px);color:var(--muted);max-width:60ch;margin:0}
+  ul{margin:14px 0 0;padding:0;list-style:none;max-width:64ch}
+  li{position:relative;padding:8px 0 8px 22px;font-size:clamp(15px,1.5vw,18px)}
+  li::before{content:"";position:absolute;left:0;top:16px;width:9px;height:9px;border-radius:2px;background:var(--accent)}
+  li b{font-weight:700}
+  .big-num{font-size:clamp(40px,7vw,86px);font-weight:800;letter-spacing:-.03em;line-height:1}
+  strong.accent{color:var(--accent)}
+  .cols{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+  @media(max-width:820px){.cols{grid-template-columns:1fr;gap:24px}}
+
+  /* metric row */
+  .metrics{display:flex;gap:28px;flex-wrap:wrap;margin-top:22px}
+  .metric .n{font-size:clamp(30px,4vw,46px);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .metric .l{font-size:13px;color:var(--muted);margin-top:2px;max-width:20ch}
+
+  /* adr cards */
+  .adr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+  @media(max-width:820px){.adr{grid-template-columns:1fr 1fr}}
+  .adr .card{border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .adr .card .t{font-weight:700;font-size:14px;margin-bottom:4px}
+  .adr .card .w{font-size:13px;color:var(--muted);line-height:1.4}
+
+  /* arch boxes */
+  .arch{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:24px}
+  .box{border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;min-width:150px}
+  .box.j{border-color:var(--accent);background:var(--soft)}
+  .box .bt{font-weight:700;font-size:14px}
+  .box .bs{font-size:12.5px;color:var(--muted);margin-top:3px;font-family:ui-monospace,Menlo,monospace}
+  .arrow{color:var(--muted);font-size:22px}
+
+  /* loop */
+  .loop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px;font-size:14px}
+  .loop .n{border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:600}
+  .loop .n.hl{border-color:var(--accent);color:var(--accent);background:var(--soft)}
+
+  svg{display:block;max-width:100%}
+  .sw{width:11px;height:11px;border-radius:3px;display:inline-block;vertical-align:baseline;margin-right:6px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:12px}
+
+  /* nav */
+  .hud{position:fixed;bottom:18px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:14px;z-index:10;pointer-events:none}
+  .dots{display:flex;gap:7px;pointer-events:auto}
+  .dots b{width:8px;height:8px;border-radius:50%;background:var(--line);cursor:pointer;display:block;transition:background .15s}
+  .dots b.on{background:var(--accent)}
+  .count{position:fixed;bottom:16px;right:20px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .hint{position:fixed;bottom:16px;left:20px;font-size:12px;color:var(--muted)}
+  .num-slide{position:absolute;top:5vh;right:8vw;font-size:13px;color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 TITLE -->
+  <section class="slide">
+    <p class="eyebrow">Event attendance prediction</p>
+    <h1>EVE — estimating <strong class="accent">real attendance</strong> for Facebook events</h1>
+    <p class="lead">A modern reimplementation of a 2016 master's system as a data & modeling project —
+      turning unreliable RSVP counts into a calibrated turnout estimate.</p>
+  </section>
+
+  <!-- 2 AGENDA -->
+  <section class="slide">
+    <span class="num-slide">02</span>
+    <p class="eyebrow">Agenda</p>
+    <h2>What we'll cover</h2>
+    <ul>
+      <li>Motivation — the RSVP-to-turnout gap</li>
+      <li>What it's based on · what it proposes</li>
+      <li>The opportunity · results so far</li>
+      <li>Test architecture · system architecture</li>
+      <li>Key decisions (ADRs) · current state</li>
+    </ul>
+  </section>
+
+  <!-- 3 MOTIVATION -->
+  <section class="slide">
+    <span class="num-slide">03</span>
+    <div class="cols">
+      <div>
+        <p class="eyebrow">Motivation</p>
+        <h2>Raw RSVP overstates who actually shows up</h2>
+        <ul>
+          <li>Facebook events collect <b>Going / Interested</b> — but real attendance is a <b>fraction</b>, and the gap widens with size.</li>
+          <li>Organizers plan staff, security, food, restrooms from <b>unreliable signals</b>.</li>
+          <li>Over- or under-provisioning is <b>costly</b> — a decision-support gap.</li>
+        </ul>
+      </div>
+      <div>
+        <svg viewBox="0 0 320 220" aria-label="Funnel: invited to confirmed to actual">
+          <rect x="30" y="20" width="260" height="42" rx="6" fill="var(--soft)" stroke="var(--line)"/>
+          <rect x="70" y="90" width="180" height="42" rx="6" fill="var(--soft)" stroke="var(--line)"/>
+          <rect x="120" y="160" width="80" height="42" rx="6" fill="var(--accent)"/>
+          <text x="160" y="46" text-anchor="middle" font-size="13" font-family="var(--font)" fill="#1c2330">Invited</text>
+          <text x="160" y="116" text-anchor="middle" font-size="13" font-family="var(--font)" fill="#1c2330">Confirmed</text>
+          <text x="160" y="186" text-anchor="middle" font-size="13" font-family="var(--font)" fill="#fff">Actual</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 BASIS -->
+  <section class="slide">
+    <span class="num-slide">04</span>
+    <p class="eyebrow">What it's based on</p>
+    <h2>A 2016 master's system + real digitized data</h2>
+    <ul>
+      <li>The author's article <b>"EVE — Estimation of Variables to Events"</b> (C.E.S.A.R, Recife).</li>
+      <li><b>20 events</b> digitized from the article: 16 public events by size (tables 7–10) + a <b>4-rehearsal field experiment</b> (May 2013, a Recife percussion group).</li>
+      <li>The article's own arithmetic inconsistencies are <b>preserved and asserted in tests</b>, not silently "fixed".</li>
+    </ul>
+  </section>
+
+  <!-- 5 PROPOSAL -->
+  <section class="slide">
+    <span class="num-slide">05</span>
+    <p class="eyebrow">What the system proposes</p>
+    <h2>Learn attendance rates — don't guess them</h2>
+    <ul>
+      <li>EVE's old weakness: an <b>operator guessed</b> the attendance proportion per response type.</li>
+      <li>Now: <b>learn conversion rates</b> per response type × size class from data.</li>
+      <li>Output: an estimate, a likely range, and a <b>decomposition</b> — adjustable by <b>external effects</b> (rival match, rain… as ± %).</li>
+    </ul>
+    <p class="lead" style="margin-top:20px;font-family:ui-monospace,Menlo,monospace;font-size:15px;color:var(--ink)">
+      attendance ≈ Σ ( count<sub>type</sub> × rate[size][type] ) × effects</p>
+  </section>
+
+  <!-- 6 OPPORTUNITY -->
+  <section class="slide">
+    <span class="num-slide">06</span>
+    <p class="eyebrow">The opportunity</p>
+    <h2>Better planning — and a model that improves with use</h2>
+    <ul>
+      <li>Better <b>resource planning & ROI</b>; fewer over/under-provisioning mistakes.</li>
+      <li>A <b>recalibration loop</b>: log real attendance → export → refit → improved rates embedded back.</li>
+    </ul>
+    <div class="loop">
+      <span class="n hl">Use tool</span><span class="arrow">→</span>
+      <span class="n">Log real attendance</span><span class="arrow">→</span>
+      <span class="n">Export CSV</span><span class="arrow">→</span>
+      <span class="n">Refit model</span><span class="arrow">→</span>
+      <span class="n">New rates</span><span class="arrow">↩</span>
+    </div>
+  </section>
+
+  <!-- 7 RESULTS -->
+  <section class="slide">
+    <span class="num-slide">07</span>
+    <p class="eyebrow">Results so far · in-sample, honest</p>
+    <h2>Ties a hand-tuned baseline — with no operator input</h2>
+    <div class="cols">
+      <div>
+        <div class="metrics">
+          <div class="metric"><div class="n">~76%</div><div class="l">mean accuracy (100 − MAPE)</div></div>
+          <div class="metric"><div class="n">3.25</div><div class="l">experiment MAE vs baseline 3.0</div></div>
+          <div class="metric"><div class="n">22</div><div class="l">passing tests</div></div>
+        </div>
+        <ul>
+          <li>Conversion collapses with size: micro <b>~89%</b> of confirmed attend, large <b>~22%</b>.</li>
+          <li>Overall MAE 34 / MAPE 24% across 20 events (heterogeneous medium/large).</li>
+        </ul>
+      </div>
+      <div>
+        <svg viewBox="0 0 300 190" aria-label="Conversion by size">
+          <line x1="34" y1="20" x2="34" y2="160" stroke="var(--line)"/>
+          <line x1="34" y1="160" x2="290" y2="160" stroke="var(--axis,#cdd2dd)"/>
+          <g font-size="12" font-family="var(--font)" fill="#6b7583" text-anchor="middle">
+            <rect x="50" y="35" width="42" height="125" rx="4" fill="var(--c-micro)"/><text x="71" y="176">Micro</text><text x="71" y="28" fill="#1c2330" font-weight="700">89%</text>
+            <rect x="112" y="65" width="42" height="95" rx="4" fill="var(--c-small)"/><text x="133" y="176">Small</text><text x="133" y="58" fill="#1c2330" font-weight="700">68%</text>
+            <rect x="174" y="130" width="42" height="30" rx="4" fill="var(--c-medium)"/><text x="195" y="176">Med</text><text x="195" y="123" fill="#1c2330" font-weight="700">22%</text>
+            <rect x="236" y="130" width="42" height="30" rx="4" fill="var(--c-large)"/><text x="257" y="176">Large</text><text x="257" y="123" fill="#1c2330" font-weight="700">22%</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 TEST ARCH -->
+  <section class="slide">
+    <span class="num-slide">08</span>
+    <p class="eyebrow">Test architecture</p>
+    <h2>Automated tests + a matrices spine</h2>
+    <ul>
+      <li><b>pytest (22):</b> formula units · <b>data-integrity</b> (schema, sums, and the article's known inconsistencies) · model (rate order, bounds) · <b>regression</b> pinning exact metrics.</li>
+      <li><b>Component matrices</b> as the test/risk spine: an <b>operation flow</b> (each step = a scenario) + module-feature, cross-dependence, reuse, and identification (selector) matrices.</li>
+      <li><b>Manual UI cases</b> for tool & dashboard, mapped to <b>data-testid</b> roots.</li>
+      <li><b>Docs stay in sync:</b> a check script + <b>pre-commit hook</b> + a /sync-matrices skill.</li>
+    </ul>
+  </section>
+
+  <!-- 9 ARCHITECTURE -->
+  <section class="slide">
+    <span class="num-slide">09</span>
+    <p class="eyebrow">Architecture</p>
+    <h2>Two tiers meeting at one file</h2>
+    <div class="arch">
+      <div class="box"><div class="bt">Offline · Python</div><div class="bs">data/*.csv → model.py</div></div>
+      <span class="arrow">→</span>
+      <div class="box j"><div class="bt">Contract</div><div class="bs">model_coefficients.json</div></div>
+      <span class="arrow">→</span>
+      <div class="box"><div class="bt">Client · static</div><div class="bs">app/ · reports/</div></div>
+    </div>
+    <ul>
+      <li>No server, no database, no build step.</li>
+      <li>The <b>coefficient JSON is the shared contract</b> — both pages embed it and run standalone.</li>
+    </ul>
+  </section>
+
+  <!-- 10 ADRs -->
+  <section class="slide">
+    <span class="num-slide">10</span>
+    <p class="eyebrow">Key decisions · ADRs</p>
+    <h2>Decision → why</h2>
+    <div class="adr">
+      <div class="card"><div class="t">Analysis, not a rebuilt app</div><div class="w">The system layer was requirements-era; value is the model.</div></div>
+      <div class="card"><div class="t">No Facebook Graph API</div><div class="w">RSVP-import endpoints removed in 2018; use digitized/manual data.</div></div>
+      <div class="card"><div class="t">No backend / DB</div><div class="w">n≈20; CSVs in git are the store, with diff & review.</div></div>
+      <div class="card"><div class="t">Python offline tier</div><div class="w">Tabular modeling, notebook-native, testable, dependency-light.</div></div>
+      <div class="card"><div class="t">Static HTML + vanilla JS</div><div class="w">Small, self-contained, no framework/build; embeds coefficients.</div></div>
+      <div class="card"><div class="t">Learn rates from data</div><div class="w">Replaces operator-guessed proportions — the core fix.</div></div>
+      <div class="card"><div class="t">Coefficient JSON contract</div><div class="w">Versioned seam; key changes break both pages — test as a contract.</div></div>
+      <div class="card"><div class="t">Dashboard = three-pane (F2)</div><div class="w">List · charts · metrics rail; single light theme.</div></div>
+      <div class="card"><div class="t">Tool = single-page form</div><div class="w">Vertical sections, Next gated on mandatory fields.</div></div>
+    </div>
+  </section>
+
+  <!-- 11 CURRENT STATE -->
+  <section class="slide">
+    <span class="num-slide">11</span>
+    <p class="eyebrow">Current state</p>
+    <h2>Built and verified</h2>
+    <ul>
+      <li>Digitized dataset · EVE-formula <b>baseline</b> · <b>learned-rates model v1</b> + exported coefficients.</li>
+      <li><b>22 passing tests</b> · two notebooks (EDA + model-vs-baseline).</li>
+      <li>The <b>tool</b> (single-page, white/Avenir, local history + CSV export) · the <b>F2 dashboard</b> (white) · a <b>glossary</b>.</li>
+      <li>Docs: SPEC, ARCHITECTURE, SYSTEM-DESIGN, FLOW, TEST-CASES + component matrices & sync tooling.</li>
+      <li><b>Limitations:</b> in-sample metrics, tiny n, only 4 events each for medium/large.</li>
+    </ul>
+  </section>
+
+  <!-- 12 NEXT + CLOSING -->
+  <section class="slide">
+    <span class="num-slide">12</span>
+    <p class="eyebrow">Next · closing</p>
+    <h2>From seed data to a self-improving estimate</h2>
+    <ul>
+      <li><b>Simulated data</b> calibrated on the seed rates to strengthen medium/large.</li>
+      <li>Wire <b>data-testid</b>s to automate the UI test cases.</li>
+      <li>Grow the <b>recalibration loop</b> with real logged events.</li>
+    </ul>
+    <p class="lead" style="margin-top:22px;font-size:clamp(17px,2vw,22px);color:var(--ink)">
+      EVE turns unreliable RSVP counts into a <strong class="accent">calibrated attendance estimate</strong> —
+      and gets better every time an organizer logs what actually happened.</p>
+  </section>
+
+</div>
+
+<div class="hud"><div class="dots" id="dots"></div></div>
+<div class="hint">← → to navigate</div>
+<div class="count" id="count"></div>
+
+<script>
+  const deck = document.getElementById("deck");
+  const slides = [...deck.children];
+  const dots = document.getElementById("dots");
+  const count = document.getElementById("count");
+  slides.forEach((_, i) => {
+    const b = document.createElement("b");
+    b.addEventListener("click", () => go(i));
+    dots.appendChild(b);
+  });
+  let cur = 0;
+  function clamp(i){ return Math.max(0, Math.min(slides.length - 1, i)); }
+  function go(i){ cur = clamp(i); slides[cur].scrollIntoView({behavior:"smooth", inline:"start"}); update(); }
+  function update(){
+    [...dots.children].forEach((d, i) => d.classList.toggle("on", i === cur));
+    count.textContent = `${cur + 1} / ${slides.length}`;
+  }
+  addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); go(cur + 1); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(cur - 1); }
+    if (e.key === "Home") go(0);
+    if (e.key === "End") go(slides.length - 1);
+  });
+  let t; deck.addEventListener("scroll", () => {
+    clearTimeout(t);
+    t = setTimeout(() => { cur = clamp(Math.round(deck.scrollLeft / innerWidth)); update(); }, 80);
+  });
+  update();
+</script>
+</body>
+</html>
