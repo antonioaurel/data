@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVE — results dashboard</title>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#ffffff;--card:#ffffff;--rail:#f6f7fa;--ink:#1c2330;--muted:#6b7583;--line:#e7e9ef;
+    --accent:#2f6df6;--soft:#2f6df610;--ok:#1a7f37;
+    --seq:#2a78d6;
+    --c-micro:#2a78d6;--c-small:#008300;--c-medium:#e87ba4;--c-large:#eda100;
+    --grid:#eceef3;--axis:#cdd2dd;
+    --font:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden;
+    font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+  .topbar{height:50px;display:flex;align-items:center;gap:14px;padding:0 18px;
+    background:var(--card);border-bottom:1px solid var(--line)}
+  .topbar a{color:var(--muted);text-decoration:none;font-weight:600;font-size:13.5px}
+  .topbar a:hover{color:var(--accent)}
+  .topbar h1{font-size:14px;margin:0;font-weight:650;letter-spacing:-.01em}
+  .topbar .sub{color:var(--muted);font-size:11.5px}
+  .spacer{flex:1}
+
+  .app{display:flex;height:calc(100% - 50px)}
+  aside{overflow-y:auto;flex:none}
+  .left{width:310px;background:var(--rail);border-right:1px solid var(--line);padding:12px}
+  .right{width:290px;background:var(--rail);border-left:1px solid var(--line);padding:14px}
+  .center{flex:1;overflow-y:auto;padding:16px 18px;min-width:0}
+
+  .rail-h{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+    font-weight:700;margin:0 0 10px}
+  .filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .chip{font:inherit;font-size:12.5px;font-weight:600;border:1.5px solid var(--line);border-radius:999px;
+    background:var(--card);color:var(--muted);padding:4px 11px;cursor:pointer}
+  .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--soft)}
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* event list */
+  .ev-group{margin-bottom:10px}
+  .ev-group h4{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);
+    margin:8px 4px 5px;font-weight:700;display:flex;align-items:center;gap:6px}
+  .ev{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;
+    padding:8px 9px;border:1px solid transparent;border-radius:8px;cursor:pointer;background:var(--card);margin-bottom:4px}
+  .ev:hover{border-color:var(--line)}
+  .ev[aria-selected="true"]{border-color:var(--accent);background:var(--soft)}
+  .ev .dot{width:9px;height:9px;border-radius:3px}
+  .ev .id{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ev .id small{color:var(--muted);font-weight:500}
+  .ev .err{font-variant-numeric:tabular-nums;font-size:12.5px;text-align:right}
+  .ev .err b{font-weight:700}
+
+  /* center */
+  .detail{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;
+    margin-bottom:14px;display:flex;align-items:center;gap:16px;font-size:13.5px}
+  .detail .big{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .detail .muted{color:var(--muted)}
+  .detail button{margin-left:auto;font:inherit;font-size:12.5px;border:1px solid var(--line);
+    background:var(--bg);color:var(--muted);border-radius:7px;padding:5px 10px;cursor:pointer}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+  .kpi .n{font-size:20px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:1px}
+
+  .panels{display:grid;grid-template-columns:1fr 1.15fr;gap:14px}
+  @media(max-width:1150px){.panels{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px}
+  .panel h2{font-size:13px;margin:0 0 1px}
+  .panel .cap{font-size:12px;color:var(--muted);margin:0 0 10px}
+  svg{display:block;width:100%;height:auto}
+  svg text{font:10.5px var(--font);fill:var(--muted)}
+  svg .vlab{font-weight:600;fill:var(--ink);font-variant-numeric:tabular-nums}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* right rail cards */
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 14px;margin-bottom:12px}
+  .mcard h3{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 9px;font-weight:700}
+  .meter{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .meter .val{font-size:26px;font-weight:700;letter-spacing:-.02em}
+  .meter .track{width:100%;height:9px;border-radius:5px;background:var(--soft);overflow:hidden}
+  .meter .fill{height:100%;background:var(--accent);border-radius:5px}
+  .mrow{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-top:1px solid var(--line)}
+  .mrow:first-of-type{border-top:none}
+  .mrow .k{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+  .mrow .v{font-variant-numeric:tabular-nums;font-weight:600}
+  .src{font-size:11.5px;color:var(--muted);line-height:1.45}
+
+  #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;
+    padding:6px 9px;border-radius:7px;opacity:0;transition:opacity .1s;z-index:20;font-variant-numeric:tabular-nums;max-width:230px}
+  [hidden]{display:none !important}
+
+  @media(max-width:900px){
+    body{overflow:auto}
+    .app{flex-direction:column;height:auto}
+    aside{width:auto;overflow:visible}
+    .left,.right{border:none;border-bottom:1px solid var(--line)}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="../">← Project</a>
+    <h1>Results dashboard</h1>
+    <span class="sub">learned-rates model (v1) · 20 events digitized from the EVE article</span>
+    <span class="spacer"></span>
+    <a href="../app/glossary.html">What do these mean?</a>
+  </div>
+
+  <div class="app">
+    <!-- LEFT: event list -->
+    <aside class="left">
+      <p class="rail-h">Events <span id="evCount"></span></p>
+      <div class="filters" role="group" aria-label="filter by size">
+        <button class="chip" data-f="all" aria-pressed="true">All</button>
+        <button class="chip" data-f="micro" aria-pressed="false">Micro</button>
+        <button class="chip" data-f="small" aria-pressed="false">Small</button>
+        <button class="chip" data-f="medium" aria-pressed="false">Medium</button>
+        <button class="chip" data-f="large" aria-pressed="false">Large</button>
+      </div>
+      <div id="eventList"></div>
+    </aside>
+
+    <!-- CENTER: KPIs + charts -->
+    <main class="center">
+      <div class="detail" id="detail" hidden></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="panels">
+        <div class="panel">
+          <h2>Conversion by size</h2>
+          <p class="cap">Σ attendance / Σ confirmed per size class</p>
+          <div id="chartConv"></div>
+        </div>
+        <div class="panel">
+          <h2>Predicted vs. actual</h2>
+          <p class="cap">log scale — on the diagonal, a perfect prediction. Click a point or list item to focus.</p>
+          <div id="chartScatter"></div>
+          <div class="legend" id="legScatter"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT: metrics rail -->
+    <aside class="right">
+      <div class="mcard">
+        <h3>Mean accuracy</h3>
+        <div class="meter">
+          <div class="val" id="accVal">—</div>
+          <div class="track"><div class="fill" id="accFill"></div></div>
+          <div class="src" id="accNote"></div>
+        </div>
+      </div>
+      <div class="mcard">
+        <h3>Error (selection)</h3>
+        <div id="errRows"></div>
+      </div>
+      <div class="mcard">
+        <h3>Events by size</h3>
+        <div id="sizeRows"></div>
+      </div>
+      <div class="mcard">
+        <h3>Model</h3>
+        <p class="src" id="modelSrc"></p>
+      </div>
+    </aside>
+  </div>
+
+  <div id="tip" role="tooltip"></div>
+
+<script>
+/* Data generated by `python src/model.py` (in-sample evaluation).
+   To update: run the script and replace ROWS / CONV / META below. */
+const ROWS = [
+  {set:"size",id:"large-1",size:"large",predicted:302.2,actual:167},
+  {set:"size",id:"large-2",size:"large",predicted:287.3,actual:240},
+  {set:"size",id:"large-3",size:"large",predicted:234.5,actual:351},
+  {set:"size",id:"large-4",size:"large",predicted:359.0,actual:425},
+  {set:"size",id:"medium-1",size:"medium",predicted:102.2,actual:182},
+  {set:"size",id:"medium-2",size:"medium",predicted:74.2,actual:93},
+  {set:"size",id:"medium-3",size:"medium",predicted:138.6,actual:82},
+  {set:"size",id:"medium-4",size:"medium",predicted:103.0,actual:61},
+  {set:"size",id:"small-1",size:"small",predicted:140.6,actual:120},
+  {set:"size",id:"small-2",size:"small",predicted:77.2,actual:90},
+  {set:"size",id:"small-3",size:"small",predicted:149.3,actual:190},
+  {set:"size",id:"small-4",size:"small",predicted:195.9,actual:163},
+  {set:"size",id:"micro-1",size:"micro",predicted:64.5,actual:64},
+  {set:"size",id:"micro-2",size:"micro",predicted:89.9,actual:90},
+  {set:"size",id:"micro-3",size:"micro",predicted:74.3,actual:72},
+  {set:"size",id:"micro-4",size:"micro",predicted:76.3,actual:79},
+  {set:"experiment",id:"2013-05-05",size:"small",predicted:23.5,actual:17},
+  {set:"experiment",id:"2013-05-12",size:"micro",predicted:21.8,actual:22},
+  {set:"experiment",id:"2013-05-20",size:"micro",predicted:30.0,actual:29},
+  {set:"experiment",id:"2013-05-26",size:"micro",predicted:32.3,actual:37},
+];
+const CONV = { micro:0.894, small:0.682, medium:0.217, large:0.220 };
+const META = { version:1, mae:34.36, mape_pct:24.4,
+  source:"tables 7–10 and 25 of the EVE article (2016); in-sample fit" };
+const SIZES = ["micro","small","medium","large"];
+const NAME = { micro:"Micro", small:"Small", medium:"Medium", large:"Large" };
+const cvar = (p)=>getComputedStyle(document.documentElement).getPropertyValue("--c-"+p).trim();
+
+const $ = (id)=>document.getElementById(id);
+const tip = $("tip");
+function showTip(ev,html){tip.innerHTML=html;tip.style.opacity=1;
+  tip.style.left=Math.min(ev.clientX+13,innerWidth-240)+"px";tip.style.top=(ev.clientY+13)+"px";}
+function hideTip(){tip.style.opacity=0;}
+
+let filter="all", selected=null;
+const visible = ()=>ROWS.filter(r=>filter==="all"||r.size===filter);
+
+/* ---------- left: event list ---------- */
+function renderList(){
+  const rows=visible();
+  $("evCount").textContent=`(${rows.length})`;
+  const bySize={};
+  rows.forEach(r=>{(bySize[r.size]=bySize[r.size]||[]).push(r);});
+  $("eventList").innerHTML=SIZES.filter(s=>bySize[s]).map(s=>`
+    <div class="ev-group"><h4><span class="sw" style="background:${cvar(s)}"></span>${NAME[s]}</h4>
+      ${bySize[s].map(r=>{
+        const err=r.predicted-r.actual, pct=100*Math.abs(err)/r.actual;
+        return `<div class="ev" data-id="${r.id}" role="option" aria-selected="${selected===r.id}">
+          <span class="dot" style="background:${cvar(r.size)}"></span>
+          <span class="id">${r.id} <small>${r.set==="experiment"?"· field":""}</small></span>
+          <span class="err"><b>${pct.toFixed(0)}%</b><br><span class="muted" style="font-size:11px">${r.predicted.toFixed(0)}/${r.actual}</span></span>
+        </div>`;}).join("")}
+    </div>`).join("");
+  $("eventList").querySelectorAll(".ev").forEach(el=>
+    el.addEventListener("click",()=>select(el.dataset.id)));
+}
+
+function select(id){
+  selected = selected===id ? null : id;
+  renderList(); renderScatter(); renderDetail(); renderErr();
+}
+
+function renderDetail(){
+  const d=$("detail");
+  const r=ROWS.find(x=>x.id===selected);
+  if(!r){d.hidden=true;return;}
+  const err=r.predicted-r.actual, pct=100*Math.abs(err)/r.actual;
+  d.hidden=false;
+  d.innerHTML=`<span class="dot sw" style="background:${cvar(r.size)}"></span>
+    <span><strong>${r.id}</strong> <span class="muted">· ${NAME[r.size]} · ${r.set==="experiment"?"field experiment":"table 7–10"}</span></span>
+    <span class="big">${r.predicted.toFixed(1)}</span><span class="muted">predicted</span>
+    <span class="big">${r.actual}</span><span class="muted">actual</span>
+    <span class="muted">error ${err>0?"+":""}${err.toFixed(1)} (${pct.toFixed(0)}%)</span>
+    <button id="clearSel">Clear</button>`;
+  $("clearSel").addEventListener("click",()=>select(selected));
+}
+
+/* ---------- KPIs ---------- */
+function renderKpis(){
+  const rs=visible();
+  const mae=rs.reduce((s,r)=>s+Math.abs(r.predicted-r.actual),0)/rs.length;
+  const mape=100*rs.reduce((s,r)=>s+Math.abs(r.predicted-r.actual)/r.actual,0)/rs.length;
+  const exp=rs.filter(r=>r.set==="experiment");
+  const maeExp=exp.length?exp.reduce((s,r)=>s+Math.abs(r.predicted-r.actual),0)/exp.length:null;
+  $("kpis").innerHTML=`
+    <div class="kpi"><div class="n">${rs.length}</div><div class="l">events${filter==="all"?"":" · "+NAME[filter]}</div></div>
+    <div class="kpi"><div class="n">${mae.toFixed(1)}</div><div class="l">MAE (people)</div></div>
+    <div class="kpi"><div class="n">${mape.toFixed(1)}%</div><div class="l">MAPE</div></div>
+    <div class="kpi"><div class="n">${maeExp==null?"—":maeExp.toFixed(2)}</div><div class="l">MAE · field experiment</div></div>`;
+}
+
+/* ---------- conversion bars ---------- */
+function renderConv(){
+  const W=400,H=210,padL=40,padB=24,padT=12,padR=12;
+  const iw=W-padL-padR, ih=H-padT-padB;
+  const active=SIZES.filter(s=>filter==="all"||s===filter);
+  const bw=Math.min(54,(iw/active.length)*0.5);
+  const x=(i)=>padL+(iw/active.length)*(i+0.5);
+  const y=(v)=>padT+ih*(1-v);
+  let g="";
+  for(const t of [0,0.5,1]) g+=`<line x1="${padL}" x2="${W-padR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"/>
+    <text x="${padL-6}" y="${y(t)+4}" text-anchor="end">${t*100}%</text>`;
+  let bars="";
+  active.forEach((s,i)=>{const v=CONV[s],bx=x(i)-bw/2,by=y(v),bh=ih-(by-padT);
+    bars+=`<path d="M${bx},${by+4} a4,4 0 0 1 4,-4 h${bw-8} a4,4 0 0 1 4,4 v${bh-4} h${-bw} z"
+        fill="${cvar(s)}" data-s="${s}" tabindex="0" role="img" aria-label="${NAME[s]}: ${(v*100).toFixed(1)}%"/>
+      <text class="vlab" x="${x(i)}" y="${by-6}" text-anchor="middle">${(v*100).toFixed(0)}%</text>
+      <text x="${x(i)}" y="${H-7}" text-anchor="middle">${NAME[s]}</text>`;});
+  $("chartConv").innerHTML=`<svg viewBox="0 0 ${W} ${H}" aria-label="Conversion by size">${g}
+    <line x1="${padL}" x2="${W-padR}" y1="${y(0)}" y2="${y(0)}" stroke="var(--axis)" stroke-width="1.5"/>${bars}</svg>`;
+  $("chartConv").querySelectorAll("[data-s]").forEach(el=>{const s=el.dataset.s;
+    el.addEventListener("mousemove",e=>showTip(e,`<strong>${NAME[s]}</strong><br>conversion ${(CONV[s]*100).toFixed(1)}%`));
+    el.addEventListener("mouseleave",hideTip);});
+}
+
+/* ---------- scatter ---------- */
+const SHAPE={micro:"circle",small:"square",medium:"triangle",large:"diamond"};
+function mark(shape,cx,cy,s,fill,strong){
+  const ring=`stroke="var(--card)" stroke-width="${strong?3:2}"`;
+  if(shape==="circle") return `<circle cx="${cx}" cy="${cy}" r="${s}" fill="${fill}" ${ring}/>`;
+  if(shape==="square") return `<rect x="${cx-s}" y="${cy-s}" width="${2*s}" height="${2*s}" rx="1.5" fill="${fill}" ${ring}/>`;
+  if(shape==="triangle") return `<path d="M${cx},${cy-s-1} L${cx+s+1},${cy+s} L${cx-s-1},${cy+s} Z" fill="${fill}" ${ring}/>`;
+  return `<path d="M${cx},${cy-s-1.5} L${cx+s+1.5},${cy} L${cx},${cy+s+1.5} L${cx-s-1.5},${cy} Z" fill="${fill}" ${ring}/>`;
+}
+function renderScatter(){
+  const W=470,H=300,padL=42,padB=28,padT=12,padR=12;
+  const iw=W-padL-padR, ih=H-padT-padB;
+  const lmin=Math.log10(10),lmax=Math.log10(600);
+  const sx=(v)=>padL+iw*(Math.log10(v)-lmin)/(lmax-lmin);
+  const sy=(v)=>padT+ih*(1-(Math.log10(v)-lmin)/(lmax-lmin));
+  const ticks=[10,30,100,300,600];
+  let g="";
+  for(const t of ticks) g+=`<line x1="${sx(t)}" x2="${sx(t)}" y1="${padT}" y2="${padT+ih}" stroke="var(--grid)"/>
+    <text x="${sx(t)}" y="${H-8}" text-anchor="middle">${t}</text>
+    <line x1="${padL}" x2="${padL+iw}" y1="${sy(t)}" y2="${sy(t)}" stroke="var(--grid)"/>
+    <text x="${padL-6}" y="${sy(t)+4}" text-anchor="end">${t}</text>`;
+  g+=`<line x1="${sx(10)}" y1="${sy(10)}" x2="${sx(600)}" y2="${sy(600)}" stroke="var(--axis)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  const rows=visible();
+  const pts=rows.map(r=>{const strong=selected===r.id;
+    return `<g data-id="${r.id}" tabindex="0" role="img" aria-label="${r.id}: predicted ${r.predicted}, actual ${r.actual}" opacity="${selected&&!strong?0.4:1}">
+      ${mark(SHAPE[r.size],sx(r.actual),sy(r.predicted),strong?7:5,cvar(r.size),strong)}</g>`;}).join("");
+  $("chartScatter").innerHTML=`<svg viewBox="0 0 ${W} ${H}" aria-label="Predicted vs actual, log scale">${g}${pts}</svg>`;
+  $("legScatter").innerHTML=SIZES.map(s=>`<span><span class="sw" style="background:${cvar(s)}"></span>${NAME[s]}</span>`).join("")+
+    `<span class="muted">x: actual · y: predicted · dashed = perfect</span>`;
+  $("chartScatter").querySelectorAll("[data-id]").forEach(el=>{const r=ROWS.find(x=>x.id===el.dataset.id);
+    el.addEventListener("mousemove",e=>showTip(e,`<strong>${r.id}</strong> (${NAME[r.size]})<br>predicted ${r.predicted} · actual ${r.actual}<br>error ${(r.predicted-r.actual).toFixed(1)}`));
+    el.addEventListener("mouseleave",hideTip);
+    el.addEventListener("click",()=>select(r.id));});
+}
+
+/* ---------- right rail ---------- */
+function renderMeter(){
+  const rs=visible();
+  const acc=100-100*rs.reduce((s,r)=>s+Math.abs(r.predicted-r.actual)/r.actual,0)/rs.length;
+  $("accVal").textContent=acc.toFixed(0)+"%";
+  $("accFill").style.width=Math.max(0,Math.min(100,acc))+"%";
+  $("accNote").textContent=`mean accuracy (100 − MAPE) over ${rs.length} events`;
+}
+function renderErr(){
+  const r=ROWS.find(x=>x.id===selected);
+  if(!r){$("errRows").innerHTML=`<p class="src">Select an event to see its error breakdown.</p>`;return;}
+  const err=r.predicted-r.actual, pct=100*Math.abs(err)/r.actual;
+  $("errRows").innerHTML=`
+    <div class="mrow"><span class="k">Predicted</span><span class="v">${r.predicted.toFixed(1)}</span></div>
+    <div class="mrow"><span class="k">Actual</span><span class="v">${r.actual}</span></div>
+    <div class="mrow"><span class="k">Absolute error</span><span class="v">${Math.abs(err).toFixed(1)}</span></div>
+    <div class="mrow"><span class="k">Percent error</span><span class="v">${pct.toFixed(1)}%</span></div>`;
+}
+function renderSizeRows(){
+  const counts={};ROWS.forEach(r=>counts[r.size]=(counts[r.size]||0)+1);
+  $("sizeRows").innerHTML=SIZES.map(s=>`
+    <div class="mrow"><span class="k"><span class="sw" style="background:${cvar(s)}"></span>${NAME[s]}</span>
+      <span class="v">${counts[s]||0}</span></div>`).join("");
+}
+function renderModel(){
+  $("modelSrc").innerHTML=`Version ${META.version} · in-sample<br>
+    overall MAE ${META.mae.toFixed(1)} · MAPE ${META.mape_pct}%<br>
+    <span style="opacity:.8">${META.source}</span>`;
+}
+
+/* ---------- filters + boot ---------- */
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+  filter=c.dataset.f;
+  document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c?"true":"false"));
+  if(selected && !visible().some(r=>r.id===selected)) selected=null;
+  renderAll();
+}));
+
+function renderAll(){renderList();renderKpis();renderConv();renderScatter();
+  renderDetail();renderMeter();renderErr();renderSizeRows();renderModel();}
+renderAll();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",renderAll);
+</script>
+</body>
+</html>
