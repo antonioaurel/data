@@ -20,6 +20,11 @@
   a.back:hover{color:var(--accent)}
   .glosslink{float:right;font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;margin-top:2px}
   .glosslink:hover{text-decoration:underline}
+  .pagenav{display:flex;gap:12px;align-items:center;font-size:12px;font-weight:600;flex-wrap:wrap}
+  .pagenav a{color:var(--muted);text-decoration:none}
+  .pagenav a:hover{color:var(--accent)}
+  .pagenav .cur{color:var(--accent)}
+  .pagenav .sp{color:var(--line);font-weight:400}
   h1{font-size:clamp(17px,3.2vw,21px);letter-spacing:-.01em;margin:14px 0 4px}
   .sub{color:var(--muted);font-size:12.5px;margin:0 0 20px}
 
@@ -96,8 +101,12 @@
 </head>
 <body>
 <main>
-  <a class="back" href="../">← Project</a>
-  <a class="glosslink" href="glossary.html">What do these mean?</a>
+  <nav class="pagenav">
+    <a href="../">← Project</a><span class="sp">/</span>
+    <span class="cur">Tool</span>
+    <a href="../reports/">Dashboard</a>
+    <a href="glossary.html">Glossary</a>
+  </nav>
   <h1>Attendance estimate</h1>
   <p class="sub">Fill each step and press Next to move down; the estimate updates at the end.
     Rates are learned from the EVE data (v1).</p>
