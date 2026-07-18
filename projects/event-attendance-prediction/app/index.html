@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVE — attendance estimate</title>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#ffffff;--card:#ffffff;--ink:#1c2330;--muted:#6b7583;--line:#e7e9ef;
+    --accent:#2f6df6;--accent-ink:#fff;--soft:#2f6df610;--ok:#1a7f37;
+    --font:"Avenir Next","Avenir","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:13px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+  main{max-width:640px;margin:0 auto;padding:28px 20px 90px}
+  a.back{color:var(--muted);text-decoration:none;font-size:12px;font-weight:600}
+  a.back:hover{color:var(--accent)}
+  .glosslink{float:right;font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;margin-top:2px}
+  .glosslink:hover{text-decoration:underline}
+  h1{font-size:clamp(17px,3.2vw,21px);letter-spacing:-.01em;margin:14px 0 4px}
+  .sub{color:var(--muted);font-size:12.5px;margin:0 0 20px}
+
+  /* stepper — clickable progress */
+  .steps{display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:5;
+    background:var(--bg);padding:12px 0;margin-bottom:6px}
+  .step{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+    background:var(--card);color:var(--muted);font-size:11.5px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer}
+  .step.done{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .step-line{height:2px;background:var(--line);flex:1}
+  .step-line.done{background:var(--accent)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:22px;margin-bottom:14px;scroll-margin-top:56px}
+  .step-title{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 12px}
+
+  label{display:block;font-size:12px;font-weight:600;margin:13px 0 5px}
+  label .req{color:var(--accent)}
+  input[type=text],input[type=date],input[type=number]{
+    width:100%;padding:8px 11px;border:1.5px solid var(--line);border-radius:8px;
+    background:#fafbfc;color:var(--ink);font:inherit;font-size:13.5px}
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  @media(max-width:480px){.grid2{grid-template-columns:1fr}}
+  .radio-row{display:flex;gap:10px;margin-top:4px}
+  .radio-row label{display:flex;align-items:center;gap:7px;margin:0;font-weight:500;
+    border:1.5px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+  .radio-row label:has(input:checked){border-color:var(--accent);background:var(--soft)}
+
+  .badge{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);
+    background:var(--soft);border-radius:999px;padding:3px 11px}
+  .hint{color:var(--muted);font-size:12px;margin-top:8px}
+
+  .effect-row{display:flex;gap:8px;margin-top:8px}
+  .effect-row input[type=text]{flex:1}
+  .effect-row input[type=number]{width:92px}
+  .effect-row button{flex:none}
+  .btn{font:inherit;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;
+    padding:8px 16px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.primary:hover{opacity:.9;color:var(--accent-ink)}
+  .btn.sm{padding:5px 11px;font-size:12px}
+  .btn[disabled]{opacity:.42;cursor:not-allowed;border-color:var(--line)}
+  .btn[disabled]:hover{border-color:var(--line);color:var(--accent-ink)}
+  .btn.primary[disabled]:hover{color:var(--accent-ink)}
+  .nav{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+
+  .result-num{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+  .result-empty{font-size:15px;color:var(--muted);font-weight:600}
+  .result-range{color:var(--muted);font-size:13px;margin-top:2px}
+  .decomp{margin-top:16px}
+  .decomp .row{display:grid;grid-template-columns:120px 1fr 52px;gap:10px;align-items:center;
+    font-size:12.5px;margin-top:7px}
+  .decomp .bar{height:12px;border-radius:4px;background:var(--soft);overflow:hidden}
+  .decomp .bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+  .decomp .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+
+  h2{font-size:14.5px;margin:30px 0 10px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);font-weight:700;padding:8px 10px;border-bottom:1.5px solid var(--line)}
+  td{padding:8px 10px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  td input[type=number]{width:74px;padding:5px 7px}
+  .table-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+  .muted{color:var(--muted)}
+  .hist-actions{display:flex;gap:10px;margin-top:12px}
+  .empty{color:var(--muted);font-size:12.5px;padding:16px 10px}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="../">← Project</a>
+  <a class="glosslink" href="glossary.html">What do these mean?</a>
+  <h1>Attendance estimate</h1>
+  <p class="sub">Fill each step and press Next to move down; the estimate updates at the end.
+    Rates are learned from the EVE data (v1).</p>
+
+  <div class="steps" aria-hidden="true">
+    <div class="step" id="dot1" data-to="sec1">1</div><div class="step-line" id="ln1"></div>
+    <div class="step" id="dot2" data-to="sec2">2</div><div class="step-line" id="ln2"></div>
+    <div class="step" id="dot3" data-to="sec3">3</div><div class="step-line" id="ln3"></div>
+    <div class="step" id="dot4" data-to="sec4">4</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <section class="card" id="sec1">
+    <p class="step-title">1 · Event</p>
+    <label for="name">Event name <span class="req">*</span></label>
+    <input type="text" id="name" placeholder="Sunday rehearsal" autocomplete="off">
+    <div class="grid2">
+      <div>
+        <label for="date">Date</label>
+        <input type="date" id="date">
+      </div>
+      <div>
+        <label>Type</label>
+        <div class="radio-row">
+          <label><input type="radio" name="type" value="physical" checked> Physical</label>
+          <label><input type="radio" name="type" value="virtual"> Virtual</label>
+        </div>
+      </div>
+    </div>
+    <div class="nav"><button class="btn primary" data-next="sec2" id="next1" disabled>Next</button></div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card" id="sec2">
+    <p class="step-title">2 · RSVP responses <span class="req">*</span></p>
+    <div class="grid2">
+      <div><label for="confirmed">Confirmed</label><input type="number" id="confirmed" min="0" value="0"></div>
+      <div><label for="maybe">Maybe</label><input type="number" id="maybe" min="0" value="0"></div>
+      <div><label for="declined">Declined</label><input type="number" id="declined" min="0" value="0"></div>
+      <div><label for="no_reply">No reply</label><input type="number" id="no_reply" min="0" value="0"></div>
+    </div>
+    <p class="hint">Total invited: <strong id="total">0</strong> ·
+      size <span class="badge" id="size">—</span></p>
+    <div class="nav"><button class="btn primary" data-next="sec3" id="next2" disabled>Next</button></div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="card" id="sec3">
+    <p class="step-title">3 · External effects <span class="muted" style="text-transform:none;letter-spacing:0">— optional</span></p>
+    <p class="hint" style="margin-top:0">Events that pull public away (or draw it in) —
+      a decisive match, rain, a competing event. Percentage of the estimate.</p>
+    <div id="effects"></div>
+    <button class="btn sm" id="addEff" type="button" style="margin-top:12px">+ add effect</button>
+    <div class="nav"><button class="btn primary" id="compute" data-next="sec4">Compute estimate</button></div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="card" id="sec4">
+    <p class="step-title">4 · Result</p>
+    <div class="result-empty" id="resEmpty">Fill steps 1–2, then press <strong>Compute estimate</strong>.</div>
+    <div class="result-num" id="resNum" hidden>—</div>
+    <div class="result-range" id="resRange"></div>
+    <div class="decomp" id="decomp"></div>
+    <p class="hint" id="resMeta"></p>
+    <div class="nav">
+      <button class="btn" id="newEvent">New event</button>
+      <button class="btn primary" id="save" disabled>Save to history</button>
+    </div>
+  </section>
+
+  <h2>History</h2>
+  <div class="table-wrap">
+    <table id="histTable">
+      <thead><tr>
+        <th>Event</th><th>Date</th><th>Size</th><th>Estimate</th>
+        <th>Actual attendance</th><th>Error</th><th></th>
+      </tr></thead>
+      <tbody id="histBody"></tbody>
+    </table>
+    <p class="empty" id="histEmpty">No events saved yet. History lives in this
+      browser (localStorage); export CSV to version it in the repository.</p>
+  </div>
+  <div class="hist-actions">
+    <button class="btn sm" id="exportCsv">Export CSV</button>
+    <button class="btn sm" id="clearHist">Clear history</button>
+  </div>
+</main>
+
+<script>
+/* Coefficients v1 — generated by `python src/model.py`
+   (source: data/model_coefficients.json). To update, run the script and
+   replace the block below. */
+const RATES = {
+  micro:  { confirmed: 0.8499, maybe: 0.3814, declined: 0.0, no_reply: 0.0360 },
+  small:  { confirmed: 0.5535, maybe: 0.2484, declined: 0.0, no_reply: 0.0234 },
+  medium: { confirmed: 0.1381, maybe: 0.0620, declined: 0.0, no_reply: 0.0058 },
+  large:  { confirmed: 0.1513, maybe: 0.0679, declined: 0.0, no_reply: 0.0064 },
+};
+/* ± range per size: mean percentage error observed in the in-sample evaluation */
+const RANGE_PCT = { micro: 10, small: 25, medium: 50, large: 40 };
+const TYPES = ["confirmed", "maybe", "declined", "no_reply"];
+const LABEL = { confirmed: "Confirmed", maybe: "Maybe", declined: "Declined", no_reply: "No reply" };
+const LS_KEY = "eve-history-v1";
+
+const $ = (id) => document.getElementById(id);
+
+function sizeOf(total) {
+  if (total <= 200) return "micro";
+  if (total <= 1500) return "small";
+  if (total <= 5500) return "medium";
+  return "large";
+}
+const totalCounts = () => TYPES.reduce((s, t) => s + (+$(t).value || 0), 0);
+
+/* ---------- validity + progress ---------- */
+function step1ok() { return $("name").value.trim() !== ""; }
+function step2ok() { return totalCounts() > 0; }
+let computed = false;
+
+function refresh() {
+  const s1 = step1ok(), s2 = step2ok();
+  $("next1").disabled = !s1;
+  $("next2").disabled = !s2;
+
+  const total = totalCounts();
+  $("total").textContent = total;
+  $("size").textContent = total ? sizeOf(total) : "—";
+
+  const done = [s1, s2, computed, computed];
+  for (let i = 1; i <= 4; i++) {
+    $("dot" + i).classList.toggle("done", done[i - 1]);
+    if (i < 4) $("ln" + i).classList.toggle("done", done[i - 1]);
+  }
+}
+
+/* scroll helpers */
+function scrollTo(id) { $(id).scrollIntoView({ behavior: "smooth", block: "start" }); }
+document.querySelectorAll("[data-next]").forEach((b) =>
+  b.addEventListener("click", () => {
+    if (b.id === "compute") compute();
+    scrollTo(b.dataset.next);
+  }));
+document.querySelectorAll(".step[data-to]").forEach((d) =>
+  d.addEventListener("click", () => scrollTo(d.dataset.to)));
+
+$("name").addEventListener("input", refresh);
+TYPES.forEach((t) => $(t).addEventListener("input", refresh));
+
+/* ---------- effects ---------- */
+function addEffect(desc = "", pct = "") {
+  const row = document.createElement("div");
+  row.className = "effect-row";
+  row.innerHTML = `
+    <input type="text" placeholder="description (e.g. championship final)" value="${desc}">
+    <input type="number" placeholder="±%" min="-100" max="100" value="${pct}">
+    <button class="btn sm" type="button" aria-label="remove effect">×</button>`;
+  row.querySelector("button").addEventListener("click", () => row.remove());
+  $("effects").appendChild(row);
+}
+$("addEff").addEventListener("click", () => addEffect());
+
+function effects() {
+  return [...document.querySelectorAll(".effect-row")]
+    .map((r) => ({ desc: r.children[0].value.trim(), pct: +r.children[1].value || 0 }))
+    .filter((e) => e.pct !== 0);
+}
+
+/* ---------- compute ---------- */
+let last = null;
+function compute() {
+  if (!step2ok()) return;
+  const counts = Object.fromEntries(TYPES.map((t) => [t, +$(t).value || 0]));
+  const total = totalCounts();
+  const size = sizeOf(total);
+  const effs = effects();
+
+  const parts = TYPES.map((t) => ({ t, v: counts[t] * RATES[size][t] }));
+  let est = parts.reduce((s, p) => s + p.v, 0);
+  effs.forEach((e) => { est *= 1 + e.pct / 100; });
+
+  const range = RANGE_PCT[size] / 100;
+  const lo = Math.max(0, Math.round(est * (1 - range)));
+  const hi = Math.round(est * (1 + range));
+  const estR = Math.round(est);
+
+  $("resEmpty").hidden = true;
+  $("resNum").hidden = false;
+  $("resNum").textContent = `≈ ${estR} people`;
+  $("resRange").textContent = `likely range: ${lo}–${hi} (±${RANGE_PCT[size]}%, error observed for size ${size})`;
+
+  const maxV = Math.max(...parts.map((p) => p.v), 1);
+  $("decomp").innerHTML = "<strong style='font-size:12px'>Where the number comes from</strong>" +
+    parts.map((p) => `
+      <div class="row">
+        <span>${LABEL[p.t]}</span>
+        <span class="bar"><i style="width:${(100 * p.v / maxV).toFixed(1)}%"></i></span>
+        <span class="val">${p.v.toFixed(1)}</span>
+      </div>`).join("");
+
+  $("resMeta").textContent = effs.length
+    ? "Effects applied: " + effs.map((e) => `${e.desc || "effect"} (${e.pct > 0 ? "+" : ""}${e.pct}%)`).join(" · ")
+    : "No external effects applied.";
+
+  last = {
+    name: $("name").value.trim() || "Unnamed event",
+    date: $("date").value || new Date().toISOString().slice(0, 10),
+    type: document.querySelector("input[name=type]:checked").value,
+    size, counts, effects: effs, estimate: estR, range: [lo, hi], attendance: null,
+  };
+  computed = true;
+  $("save").disabled = false;
+  refresh();
+}
+
+/* ---------- history (localStorage) ---------- */
+const history = () => JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+const setHistory = (h) => { localStorage.setItem(LS_KEY, JSON.stringify(h)); renderHistory(); };
+
+function renderHistory() {
+  const h = history();
+  $("histEmpty").hidden = h.length > 0;
+  $("histBody").innerHTML = h.map((e, i) => {
+    const err = e.attendance == null ? "" : Math.abs(e.attendance - e.estimate);
+    return `<tr>
+      <td>${e.name}</td><td>${e.date}</td><td>${e.size}</td>
+      <td>${e.estimate} <span class="muted">(${e.range[0]}–${e.range[1]})</span></td>
+      <td>${e.attendance != null ? e.attendance :
+        `<input type="number" min="0" placeholder="—" data-reg="${i}" aria-label="actual attendance">`}</td>
+      <td>${err}</td>
+      <td><button class="btn sm" data-del="${i}" aria-label="delete">×</button></td>
+    </tr>`;
+  }).join("");
+  document.querySelectorAll("[data-reg]").forEach((inp) =>
+    inp.addEventListener("change", () => {
+      const h2 = history(); h2[+inp.dataset.reg].attendance = +inp.value; setHistory(h2);
+    }));
+  document.querySelectorAll("[data-del]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const h2 = history(); h2.splice(+b.dataset.del, 1); setHistory(h2);
+    }));
+}
+
+$("save").addEventListener("click", () => {
+  if (!last) return;
+  setHistory([...history(), last]);
+  $("save").textContent = "Saved ✓";
+  setTimeout(() => { $("save").textContent = "Save to history"; }, 1600);
+});
+
+$("newEvent").addEventListener("click", () => {
+  $("name").value = "";
+  TYPES.forEach((t) => { $(t).value = 0; });
+  $("effects").innerHTML = "";
+  document.querySelector("input[name=type][value=physical]").checked = true;
+  $("date").value = "";
+  $("resEmpty").hidden = false;
+  $("resNum").hidden = true;
+  $("resRange").textContent = ""; $("decomp").innerHTML = ""; $("resMeta").textContent = "";
+  last = null; computed = false; $("save").disabled = true;
+  refresh();
+  scrollTo("sec1");
+});
+
+$("exportCsv").addEventListener("click", () => {
+  const h = history();
+  if (!h.length) return;
+  const head = "name,date,type,size,confirmed,maybe,declined,no_reply,effects_pct,estimate,attendance";
+  const rows = h.map((e) => [
+    JSON.stringify(e.name), e.date, e.type, e.size,
+    e.counts.confirmed, e.counts.maybe, e.counts.declined, e.counts.no_reply,
+    JSON.stringify(e.effects.map((x) => x.pct).join(";")),
+    e.estimate, e.attendance ?? "",
+  ].join(","));
+  const blob = new Blob([head + "\n" + rows.join("\n") + "\n"], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "eve-history.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+$("clearHist").addEventListener("click", () => {
+  if (confirm("Delete all history in this browser?")) setHistory([]);
+});
+
+refresh();
+renderHistory();
+</script>
+</body>
+</html>

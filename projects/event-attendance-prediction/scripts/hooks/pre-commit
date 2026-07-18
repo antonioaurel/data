@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Keep the event-attendance-prediction component matrices fresh.
+# Blocks a commit that changes the UI pages without touching the matrices doc.
+# Bypass (rarely): git commit --no-verify
+set -euo pipefail
+
+PROJ="projects/event-attendance-prediction"
+DOC="$PROJ/Skills/COMPONENT-MATRICES.md"
+
+staged="$(git diff --cached --name-only)"
+ui="$(printf '%s\n' "$staged" | grep -E "^$PROJ/(app|reports)/" || true)"
+doc_staged="$(printf '%s\n' "$staged" | grep -Fx "$DOC" || true)"
+
+if [ -n "$ui" ] && [ -z "$doc_staged" ]; then
+  echo "✋ pre-commit: UI changed but the component matrices were not updated."
+  echo "   Changed UI files:"
+  printf '%s\n' "$ui" | sed 's/^/     /'
+  echo
+  python3 "$PROJ/scripts/check_matrices.py" || true
+  echo
+  echo "   → run  /sync-matrices  (or edit $DOC), then stage the doc."
+  echo "   → to bypass this check:  git commit --no-verify"
+  exit 1
+fi
+exit 0
