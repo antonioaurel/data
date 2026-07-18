@@ -33,11 +33,21 @@
   .sizes span{font-size:11.5px;border:1px solid var(--line);border-radius:7px;padding:4px 9px;display:inline-flex;align-items:center;gap:6px}
   .sw{width:9px;height:9px;border-radius:3px;display:inline-block}
   .note{background:var(--soft);border:1px solid #dbe6ff;border-radius:9px;padding:12px 14px;font-size:12px;color:#33405c;margin-top:26px}
+  .pagenav{display:flex;gap:12px;align-items:center;font-size:12px;font-weight:600;flex-wrap:wrap;margin-bottom:4px}
+  .pagenav a{color:var(--muted);text-decoration:none}
+  .pagenav a:hover{color:var(--accent)}
+  .pagenav .cur{color:var(--accent)}
+  .pagenav .sp{color:var(--line);font-weight:400}
 </style>
 </head>
 <body>
 <main>
-  <a class="back" href="index.html">← Back to the tool</a>
+  <nav class="pagenav">
+    <a href="../">← Project</a><span class="sp">/</span>
+    <a href="index.html">Tool</a>
+    <a href="../reports/">Dashboard</a>
+    <span class="cur">Glossary</span>
+  </nav>
   <h1>What each info means</h1>
   <p class="sub">A plain-language guide to every number in the estimation tool and the
     results dashboard. The model learns attendance rates from the EVE study data.</p>
