@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Control and Documentation — Connections of Recife's History</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --g-blue:   #4285F4;
+      --g-red:    #EA4335;
+      --g-yellow: #FBBC05;
+      --g-green:  #34A853;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #ffffff;
+      color: #202124;
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.15), 0 2px 6px rgba(60,64,67,0.1);
+      padding: 0 1.5rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-logo {
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: #5f6368;
+      text-decoration: none;
+      margin-right: auto;
+      letter-spacing: 0.1px;
+    }
+    .nav-logo strong { color: #202124; font-weight: 700; }
+    .nav-link {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #5f6368;
+      text-decoration: none;
+      padding: 0.3rem 0.5rem;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-link:hover { background: #f1f3f4; color: var(--g-blue); }
+    .nav-link.active { color: #202124; font-weight: 700; }
+
+    /* ── Language toggle ── */
+    .lang-toggle {
+      display: inline-flex;
+      border: 1px solid #dadce0;
+      border-radius: 20px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .lang-btn {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.25rem 0.9rem;
+      text-decoration: none;
+      color: #5f6368;
+      background: transparent;
+      transition: background 0.15s, color 0.15s;
+      line-height: 1.6;
+    }
+    .lang-btn:hover { background: #f1f3f4; }
+    .lang-btn.active { background: #1a73e8; color: #fff; }
+
+    /* ── Header ── */
+    .head {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem 1.5rem;
+      text-align: center;
+    }
+    .head h1 {
+      font-size: clamp(1.5rem, 4vw, 2.1rem);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #202124;
+      margin-bottom: 0.85rem;
+    }
+    .g-dots {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .g-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .head p {
+      font-size: 0.95rem;
+      color: #5f6368;
+      line-height: 1.8;
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* ── Link list ── */
+    .links {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 1.5rem 5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .doc-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      background: #fff;
+      border: 1px solid #e8eaed;
+      border-left: 4px solid var(--accent, #4285F4);
+      border-radius: 8px;
+      padding: 1.15rem 1.35rem;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.2s, transform 0.15s, border-color 0.2s;
+    }
+    .doc-card:hover {
+      box-shadow: 0 4px 12px rgba(60,64,67,0.14), 0 8px 24px rgba(60,64,67,0.08);
+      transform: translateY(-1px);
+    }
+
+    .doc-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--accent-soft, #e8f0fe);
+      color: var(--accent, #4285F4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      margin-top: 2px;
+    }
+
+    .doc-text { flex: 1; min-width: 0; }
+    .doc-tag {
+      font-size: 0.6rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #80868b;
+      margin-bottom: 0.25rem;
+    }
+    .doc-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #202124;
+      line-height: 1.3;
+      margin-bottom: 0.35rem;
+    }
+    .doc-card:hover .doc-title { color: var(--accent, #4285F4); }
+    .doc-desc {
+      font-size: 0.83rem;
+      color: #5f6368;
+      line-height: 1.6;
+    }
+    .doc-arrow {
+      flex-shrink: 0;
+      color: #bdc1c6;
+      font-size: 1.1rem;
+      align-self: center;
+      transition: color 0.2s, transform 0.15s;
+    }
+    .doc-card:hover .doc-arrow { color: var(--accent, #4285F4); transform: translateX(2px); }
+
+    /* ── Footer ── */
+    footer {
+      font-size: 0.75rem;
+      color: #80868b;
+      text-align: center;
+      padding: 1.5rem 2rem;
+      border-top: 1px solid #e8eaed;
+      background: #fff;
+    }
+    footer a { color: #5f6368; text-decoration: none; }
+    footer a:hover { color: var(--g-blue); text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav data-testid="pc-control-nav">
+  <a data-testid="pc-control-nav-logo" class="nav-logo" href="index.html">Connections of History</a>
+  <a data-testid="pc-control-nav-link-diagram" class="nav-link" href="diagram.html">Diagram</a>
+  <a data-testid="pc-control-nav-link-matrix" class="nav-link" href="matrix.html">Matrix</a>
+  <a data-testid="pc-control-nav-link-fill-rate" class="nav-link" href="stats.html">Fill Rate</a>
+  <a data-testid="pc-control-nav-link-sources" class="nav-link" href="sources.html">Sources</a>
+  <a data-testid="pc-control-nav-link-map" class="nav-link" href="../mapa.html">Map</a>
+  <a data-testid="pc-control-nav-link-about" class="nav-link" href="sobre.html">About</a>
+  <a data-testid="pc-control-nav-link-control" class="nav-link active" href="control.html">Project Control &amp; Documentation</a>
+  <div class="lang-toggle" data-testid="pc-control-nav-toggle-lang">
+    <a class="lang-btn" href="../control.html" data-testid="pc-control-nav-button-pt">PT</a>
+    <span class="lang-btn active" data-testid="pc-control-nav-button-en">EN</span>
+  </div>
+</nav>
+
+<!-- Header -->
+<header class="head" data-testid="pc-control-head">
+  <div class="g-dots">
+    <div class="g-dot" style="background:var(--g-blue)"></div>
+    <div class="g-dot" style="background:var(--g-red)"></div>
+    <div class="g-dot" style="background:var(--g-yellow)"></div>
+    <div class="g-dot" style="background:var(--g-green)"></div>
+  </div>
+  <h1>Project Control and Documentation</h1>
+  <p>
+    Behind-the-scenes views of how the <em>Connections of Recife's History</em> project is
+    built, monitored and documented — architecture, delivery tracking, data-quality
+    matrices and process records.
+  </p>
+</header>
+
+<!-- Links -->
+<main class="links" data-testid="pc-control-links">
+
+  <a class="doc-card" style="--accent:#4285F4;--accent-soft:#e8f0fe;"
+     href="https://antonioaurel.github.io/data/docs/architecture.html"
+     data-testid="pc-control-links-architecture">
+    <div class="doc-icon">🏛️</div>
+    <div class="doc-text">
+      <div class="doc-tag">System design</div>
+      <div class="doc-title">Architecture</div>
+      <div class="doc-desc">System design and the key technical decisions behind the project — how the pieces (data, pipeline, site) fit together and why.</div>
+    </div>
+    <div class="doc-arrow">→</div>
+  </a>
+
+  <a class="doc-card" style="--accent:#EA4335;--accent-soft:#fce8e6;"
+     href="https://antonioaurel.github.io/data/projects/recife-history-connections/dashboard/dashboard.html"
+     data-testid="pc-control-links-dashboard">
+    <div class="doc-icon">📊</div>
+    <div class="doc-text">
+      <div class="doc-tag">Delivery tracking</div>
+      <div class="doc-title">Monitoring Dashboard</div>
+      <div class="doc-desc">Operator view of delivery: tasks × pull requests × impact — what is being worked on, what has shipped, and which parts of the system it touches.</div>
+    </div>
+    <div class="doc-arrow">→</div>
+  </a>
+
+  <a class="doc-card" style="--accent:#FBBC05;--accent-soft:#fef7e0;"
+     href="https://antonioaurel.github.io/data/projects/recife-history-connections/Quality/modules-features-matrix/matrix.html"
+     data-testid="pc-control-links-modules-matrix">
+    <div class="doc-icon">🧩</div>
+    <div class="doc-text">
+      <div class="doc-tag">Data quality</div>
+      <div class="doc-title">Modules &amp; Features Matrix</div>
+      <div class="doc-desc">Coverage matrix crossing the project's modules against its features — a map of what each part of the system is responsible for.</div>
+    </div>
+    <div class="doc-arrow">→</div>
+  </a>
+
+  <a class="doc-card" style="--accent:#34A853;--accent-soft:#e6f4ea;"
+     href="https://antonioaurel.github.io/data/projects/recife-history-connections/Quality/modules-features-matrix/pr-impact.html"
+     data-testid="pc-control-links-pr-impact">
+    <div class="doc-icon">🔀</div>
+    <div class="doc-text">
+      <div class="doc-tag">Change impact</div>
+      <div class="doc-title">PR Impact</div>
+      <div class="doc-desc">Which pull requests touch which modules — a traceable link between each change and the parts of the system it affects.</div>
+    </div>
+    <div class="doc-arrow">→</div>
+  </a>
+
+  <a class="doc-card" style="--accent:#4285F4;--accent-soft:#e8f0fe;"
+     href="https://antonioaurel.github.io/data/projects/recife-history-connections/docs/documentation-review-chatgpt-claude.html"
+     data-testid="pc-control-links-doc-review">
+    <div class="doc-icon">🤖</div>
+    <div class="doc-text">
+      <div class="doc-tag">Documentation</div>
+      <div class="doc-title">Cross-model Documentation Review</div>
+      <div class="doc-desc">A review of the project documentation compared across AI models (ChatGPT and Claude) — where they agree, differ and what each surfaced.</div>
+    </div>
+    <div class="doc-arrow">→</div>
+  </a>
+
+  <a class="doc-card" style="--accent:#EA4335;--accent-soft:#fce8e6;"
+     href="https://antonioaurel.github.io/data/projects/recife-history-connections/docs/pr-review-flow.html"
+     data-testid="pc-control-links-pr-flow">
+    <div class="doc-icon">🔁</div>
+    <div class="doc-text">
+      <div class="doc-tag">Process</div>
+      <div class="doc-title">PR Review Flow</div>
+      <div class="doc-desc">How changes move from task to merge: the pull-request review cycle used on the project, step by step.</div>
+    </div>
+    <div class="doc-arrow">→</div>
+  </a>
+
+  <a class="doc-card" style="--accent:#FBBC05;--accent-soft:#fef7e0;"
+     href="https://antonioaurel.github.io/data/projects/historical-base-cleaning/data-cleaning-story-telling.html#1"
+     data-testid="pc-control-links-data-cleaning">
+    <div class="doc-icon">🧹</div>
+    <div class="doc-text">
+      <div class="doc-tag">Data quality</div>
+      <div class="doc-title">Data Cleaning — Storytelling</div>
+      <div class="doc-desc">A narrative walkthrough of cleaning and validating the base: completeness, uniqueness, integrity and validity of nodes and connections.</div>
+    </div>
+    <div class="doc-arrow">→</div>
+  </a>
+
+</main>
+
+<footer>
+  Project by <a href="https://conexoesdahistoria.com/" target="_blank">Antonio Aureliano</a>
+  &nbsp;·&nbsp;
+  <a href="https://conexoesdahistoria.com/" target="_blank">conexoesdahistoria.com</a>
+</footer>
+
+</body>
+</html>
