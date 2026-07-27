@@ -333,32 +333,6 @@
     </section>
 
     <section>
-      <h2>Flow Diagram</h2>
-      <p class="section-note">
-        Claude implementation agents open PRs and report them to the Orchestrator.
-        The Orchestrator triggers the local Codex review bridge, Codex posts review
-        comments, and Claude iterates on fixes until the PR is ready for the user decision.
-      </p>
-      <div class="flow-panel">
-        <div class="flow" aria-label="Pull request review flow diagram">
-          <div class="node claude"><span class="step">1</span><h3>Claude creates PR</h3><p>Implementation branch is opened as a GitHub pull request.</p></div>
-          <div class="node claude"><span class="step">2</span><h3>Claude reports PR</h3><p>The implementation agent sends the PR number to the Orchestrator queue.</p></div>
-          <div class="node user"><span class="step">3</span><h3>Orchestrator runs bridge</h3><p><code>python3 tools/review_pr_with_codex_cli.py &lt;PR&gt; --notify-claude --notify-from-pr</code></p></div>
-          <div class="node codex"><span class="step">4</span><h3>Read PR metadata</h3><p>The bridge uses <code>gh pr view</code> for title, URL, base, and head.</p></div>
-          <div class="node codex"><span class="step">5</span><h3>Fetch PR branch</h3><p>The PR head is fetched into an isolated remote ref.</p></div>
-          <div class="node codex"><span class="step">6</span><h3>Create worktree</h3><p>A temporary checkout is created under <code>/private/tmp/codex-pr-*</code>.</p></div>
-          <div class="node codex"><span class="step">7</span><h3>Run Codex review</h3><p><code>codex review --base origin/&lt;base&gt;</code> reviews the PR.</p></div>
-          <div class="node codex"><span class="step">8</span><h3>Post review</h3><p>Codex findings are posted as a GitHub PR comment.</p></div>
-          <div class="node codex"><span class="step">9</span><h3>Post completion</h3><p>Completion summary includes discussion points and merge guidance.</p></div>
-          <div class="node codex"><span class="step">10</span><h3>Clean up</h3><p>The temporary worktree is removed after the run.</p></div>
-          <div class="node user"><span class="step">11</span><h3>Orchestrator monitors</h3><p>Terminal output and <code>.pr-review-logs/dashboard.md</code> show status.</p></div>
-          <div class="node claude"><span class="step">12</span><h3>Claude addresses</h3><p>Claude reads review comments and updates the PR branch, then the Orchestrator reruns review.</p></div>
-          <div class="node decision"><span class="step">13</span><h3>User decides</h3><p>The user decides whether to merge or accept remaining risk after Codex is satisfied.</p></div>
-        </div>
-      </div>
-    </section>
-
-    <section>
       <h2>Handoff Sequence</h2>
       <p class="section-note seq-note">
         The same flow read as handoffs between owners. Each lane is one owner, time flows
@@ -464,6 +438,33 @@
       })();
       </script>
     </section>
+
+    <section>
+      <h2>Flow Diagram</h2>
+      <p class="section-note">
+        Claude implementation agents open PRs and report them to the Orchestrator.
+        The Orchestrator triggers the local Codex review bridge, Codex posts review
+        comments, and Claude iterates on fixes until the PR is ready for the user decision.
+      </p>
+      <div class="flow-panel">
+        <div class="flow" aria-label="Pull request review flow diagram">
+          <div class="node claude"><span class="step">1</span><h3>Claude creates PR</h3><p>Implementation branch is opened as a GitHub pull request.</p></div>
+          <div class="node claude"><span class="step">2</span><h3>Claude reports PR</h3><p>The implementation agent sends the PR number to the Orchestrator queue.</p></div>
+          <div class="node user"><span class="step">3</span><h3>Orchestrator runs bridge</h3><p><code>python3 tools/review_pr_with_codex_cli.py &lt;PR&gt; --notify-claude --notify-from-pr</code></p></div>
+          <div class="node codex"><span class="step">4</span><h3>Read PR metadata</h3><p>The bridge uses <code>gh pr view</code> for title, URL, base, and head.</p></div>
+          <div class="node codex"><span class="step">5</span><h3>Fetch PR branch</h3><p>The PR head is fetched into an isolated remote ref.</p></div>
+          <div class="node codex"><span class="step">6</span><h3>Create worktree</h3><p>A temporary checkout is created under <code>/private/tmp/codex-pr-*</code>.</p></div>
+          <div class="node codex"><span class="step">7</span><h3>Run Codex review</h3><p><code>codex review --base origin/&lt;base&gt;</code> reviews the PR.</p></div>
+          <div class="node codex"><span class="step">8</span><h3>Post review</h3><p>Codex findings are posted as a GitHub PR comment.</p></div>
+          <div class="node codex"><span class="step">9</span><h3>Post completion</h3><p>Completion summary includes discussion points and merge guidance.</p></div>
+          <div class="node codex"><span class="step">10</span><h3>Clean up</h3><p>The temporary worktree is removed after the run.</p></div>
+          <div class="node user"><span class="step">11</span><h3>Orchestrator monitors</h3><p>Terminal output and <code>.pr-review-logs/dashboard.md</code> show status.</p></div>
+          <div class="node claude"><span class="step">12</span><h3>Claude addresses</h3><p>Claude reads review comments and updates the PR branch, then the Orchestrator reruns review.</p></div>
+          <div class="node decision"><span class="step">13</span><h3>User decides</h3><p>The user decides whether to merge or accept remaining risk after Codex is satisfied.</p></div>
+        </div>
+      </div>
+    </section>
+
 
     <section>
       <h2>Responsibilities</h2>
